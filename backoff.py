@@ -158,7 +158,7 @@ def _invoc_repr(f, args, kwargs):
     if args and kwargs:
         str_args += ", "
     if kwargs:
-        str_args += ", ".join("%s=%s" % i for i in kwargs.iteritems())
+        str_args += ", ".join("%s=%s" % i for i in kwargs.items())
 
     return "%s(%s)" % (f.__name__, str_args)
 

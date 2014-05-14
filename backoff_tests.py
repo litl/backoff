@@ -7,13 +7,13 @@ import pytest
 
 def test_expo():
     gen = backoff.expo()
-    for i in xrange(9):
+    for i in range(9):
         assert 2 ** i == next(gen)
 
 
 def test_expo_base3():
     gen = backoff.expo(base=3)
-    for i in xrange(9):
+    for i in range(9):
         assert 3 ** i == next(gen)
 
 
@@ -40,7 +40,7 @@ def test_fibo_max_value():
 
 def test_constant():
     gen = backoff.constant(interval=3)
-    for i in xrange(9):
+    for i in range(9):
         assert 3 == next(gen)
 
 
