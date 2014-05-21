@@ -25,7 +25,7 @@ classifiers = ['Development Status :: 5 - Production/Stable',
 
 
 core.setup(name='backoff',
-           version='1.0.1',
+           version='1.0.2',
            py_modules=['backoff'],
            author="Bob Green",
            author_email="bgreen@litl.com",

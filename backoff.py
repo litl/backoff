@@ -207,8 +207,8 @@ def on_predicate(wait_gen,
                                      (invoc, tries))
 
                     seconds = next(wait) + jitter()
-                    logger.error("Backing off %s: %.1fs" %
-                                 (invoc, round(seconds, 1)))
+                    logger.info("Backing off %s: %.1fs" %
+                                (invoc, round(seconds, 1)))
                     time.sleep(seconds)
                     continue
                 else:
