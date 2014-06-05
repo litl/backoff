@@ -152,15 +152,15 @@ def constant(interval):
         yield interval
 
 
-# Formats a function invocation as a string for logging.
+# Formats a function invocation as a unicode string for logging.
 def _invoc_repr(f, args, kwargs):
-    str_args = ", ".join(str(a) for a in args)
+    args_out = ", ".join(unicode(a) for a in args)
     if args and kwargs:
-        str_args += ", "
+        args_out += ", "
     if kwargs:
-        str_args += ", ".join("%s=%s" % i for i in kwargs.items())
+        args_out += ", ".join("%s=%s" % i for i in kwargs.items())
 
-    return "%s(%s)" % (f.__name__, str_args)
+    return "%s(%s)" % (f.__name__, args_out)
 
 
 def on_predicate(wait_gen,

@@ -113,3 +113,5 @@ def test_invoc_repr():
                                                     {"c": "c"})
     assert "func(c=c)" == backoff._invoc_repr(func, [], {"c": "c"})
     assert "func(a, b)" == backoff._invoc_repr(func, ["a", "b"], {})
+    assert u"func(ユニコーン, ア=あ)" == \
+        backoff._invoc_repr(func, [u"ユニコーン"], {u"ア": u"あ"})
