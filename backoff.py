@@ -97,11 +97,20 @@ import operator
 import logging
 import random
 import time
+import sys
 
 
 # Use module-specific logger with a default null handler.
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+
+if sys.version_info < (2, 7, 0):
+    class NullHandler(logging.Handler):
+        def emit(self, record):
+            pass
+    logger.addHandler(NullHandler())
+else:
+    logger.addHandler(logging.NullHandler())
+
 logger.setLevel(logging.ERROR)
 
 
