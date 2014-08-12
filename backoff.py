@@ -110,7 +110,7 @@ if sys.version_info < (2, 7, 0):  # pragma: no cover
             pass
     logger.addHandler(NullHandler())
 else:
-    logger.addHandler(logging.NullHandler())
+    logger.addHandler(logging.NullHandler())  # pragma: no cover
 
 logger.setLevel(logging.ERROR)
 
