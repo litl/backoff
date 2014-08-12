@@ -1,5 +1,7 @@
 # backoff
 
+[![Build Status](https://travis-ci.org/litl/backoff.png?branch=master)](https://travis-ci.org/litl/backoff?branch=master)
+
 Function decoration for pluggable backoff and retry
 
 This module provides function decorators which can be used to wrap a

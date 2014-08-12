@@ -1,4 +1,5 @@
 # coding:utf-8
+from __future__ import unicode_literals
 
 """
 Function decoration for pluggable backoff and retry
@@ -163,7 +164,7 @@ def constant(interval):
 
 # Formats a function invocation as a unicode string for logging.
 def _invoc_repr(f, args, kwargs):
-    args_out = ", ".join(unicode(a) for a in args)
+    args_out = ", ".join("%s" % a for a in args)
     if args and kwargs:
         args_out += ", "
     if kwargs:
