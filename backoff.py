@@ -103,7 +103,7 @@ import sys
 # Use module-specific logger with a default null handler.
 logger = logging.getLogger(__name__)
 
-if sys.version_info < (2, 7, 0):
+if sys.version_info < (2, 7, 0):  # pragma: no cover
     class NullHandler(logging.Handler):
         def emit(self, record):
             pass
