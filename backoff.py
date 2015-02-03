@@ -161,18 +161,6 @@ def constant(interval=1):
         yield interval
 
 
-# Formats a function invocation as a unicode string for logging.
-def _invoc_repr(f, args, kwargs):
-    args_out = ", ".join("{0}".format(a) for a in args)
-    if args and kwargs:
-        args_out += ", "
-    if kwargs:
-        args_out += ", ".join("{0}={1}".format(k, v)
-                              for k, v in kwargs.items())
-
-    return "{0}({1})".format(f.__name__, args_out)
-
-
 def on_predicate(wait_gen,
                  predicate=operator.not_,
                  max_tries=None,
@@ -287,3 +275,15 @@ def on_exception(wait_gen,
 
     # Return a function which decorates a target with a retry loop.
     return decorate
+
+
+def _invoc_repr(invoc):
+    f, args, kwargs = invoc
+    args_out = ", ".join("{0}".format(a) for a in args)
+    if args and kwargs:
+        args_out += ", "
+    if kwargs:
+        args_out += ", ".join("{0}={1}".format(k, v)
+                              for k, v in kwargs.items())
+
+    return "{0}({1})".format(f.__name__, args_out)
