@@ -52,7 +52,7 @@ so the above can more concisely be written:
     def poll_for_message(queue)
         return queue.get()
 
-More simply, function which continues polling every second until it
+More simply, a function which continues polling every second until it
 gets a non falsey result could be defined like like this:
 
     @backoff.on_predicate(backoff.constant, interval=1)
