@@ -152,7 +152,7 @@ def fibo(max_value=None):
             yield max_value
 
 
-def constant(interval):
+def constant(interval=1):
     """Generator for constant intervals.
 
     Args:
