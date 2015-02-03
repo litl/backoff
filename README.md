@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/litl/backoff.svg?branch=master)](https://travis-ci.org/litl/backoff?branch=master) [![Coverage Status](https://coveralls.io/repos/litl/backoff/badge.svg?branch=master)](https://coveralls.io/r/litl/backoff?branch=master)
 
-Function decoration for pluggable backoff and retry
+Function decoration for backoff and retry
 
 This module provides function decorators which can be used to wrap a
 function such that it will be retried until some condition is met. It
@@ -54,7 +54,7 @@ so the above can more concisely be written:
     def poll_for_message(queue)
         return queue.get()
 
-More simply, function which continues polling every second until it
+More simply, a function which continues polling every second until it
 gets a non falsey result could be defined like like this:
 
     @backoff.on_predicate(backoff.constant, interval=1)
@@ -75,6 +75,44 @@ different backoff behavior for different cases:
                           max_tries=8)
     def poll_for_message(queue):
         return queue.get()
+
+### Event handlers
+
+Both backoff decorators optionally accept event handler functions as the
+keyword arguments: on_success, on_backoff, and on_giveup. This may be
+useful in reporting statistics or other custom logging. Here's an
+example of using event handler to log statsd statistics for each event
+type:
+
+    import statsd
+
+    def success_stat(invoc, tries):
+        f, args, kwargs = invoc
+        statsd.statsd.histogram("backoff.success.%s" % f.name, tries)
+
+    def backoff_stat(invoc, wait, exception):
+        f, args, kwargs = invoc
+        statsd.statsd.histogram("backoff.retry.%s" % f.name, wait)
+
+    def giveup_stat(invoc, tries, exception):
+        f, args, kwargs = invoc
+        statsd.statsd.histogram("backoff.giveup.%s" % f.name, tries)
+
+    @backoff.on_exception(backoff.expo,
+                          requests.exceptions.RequestException,
+                          max_tries=8,
+                          on_success=success_stat,
+                          on_backoff=backoff_stat,
+                          on_giveup=giveup_stat)
+    def get_url(url):
+        return requests.get(url)
+
+The first parameter to all three handler types is a tuple consisting of
+the consisting of the function being invoked, the args lists and the
+kwargs dict. The remainder of the parameters are defined as keyword
+arguments appropriate to the handler type.
+
+Iterables of handler functions are also accepted.
 
 ### Logging configuration
 

@@ -74,6 +74,44 @@ different backoff behavior for different cases:
     def poll_for_message(queue):
         return queue.get()
 
+### Event handlers
+
+Both backoff decorators optionally accept event handler functions as the
+keyword arguments: on_success, on_backoff, and on_giveup. This may be
+useful in reporting statistics or other custom logging. Here's an
+example of using event handler to log statsd statistics for each event
+type:
+
+    import statsd
+
+    def success_stat(invoc, tries):
+        f, args, kwargs = invoc
+        statsd.statsd.histogram("backoff.success.%s" % f.name, tries)
+
+    def backoff_stat(invoc, wait, exception):
+        f, args, kwargs = invoc
+        statsd.statsd.histogram("backoff.retry.%s" % f.name, wait)
+
+    def giveup_stat(invoc, tries, exception):
+        f, args, kwargs = invoc
+        statsd.statsd.histogram("backoff.giveup.%s" % f.name, tries)
+
+    @backoff.on_exception(backoff.expo,
+                          requests.exceptions.RequestException,
+                          max_tries=8,
+                          on_success=success_stat,
+                          on_backoff=backoff_stat,
+                          on_giveup=giveup_stat)
+    def get_url(url):
+        return requests.get(url)
+
+The first parameter to all three handler types is a tuple consisting of
+the consisting of the function being invoked, the args lists and the
+kwargs dict. The remainder of the parameters are defined as keyword
+arguments appropriate to the handler type.
+
+Iterables of handler functions are also accepted.
+
 ### Logging configuration
 
 Errors and backoff/retry attempts are logged to the 'backoff' logger.
@@ -165,6 +203,9 @@ def on_predicate(wait_gen,
                  predicate=operator.not_,
                  max_tries=None,
                  jitter=random.random,
+                 on_success=None,
+                 on_backoff=None,
+                 on_giveup=None,
                  **wait_gen_kwargs):
     """Returns decorator for pluggable backoff triggered by predicate.
 
@@ -184,15 +225,25 @@ def on_predicate(wait_gen,
             random function, this staggers wait times a random number
             of milliseconds to help spread out load in the case that
             there are multiple simultaneous retries occuring.
-        **wait_gen_kwargs: Any additional keyword args specified will be passed
-            to the wait_gen when it is initialized.
+        on_success: Function with signature (invoc, tries), called
+            in the event of a successful invocation of the target.
+        on_backoff: Function (or iterable of functions) with signature
+            (invoc, tries) called in the event of a backoff.
+        on_giveup: Function (or iterable of functions) with signature
+            (invoc, tries) called in the event that max_tries is
+            exceeded.
+        **wait_gen_kwargs: Any additional keyword args specified will be
+            passed to wait_gen when it is initialized.
     """
+    success_hdlrs = _handlers(on_success)
+    backoff_hdlrs = _handlers(on_backoff, _log_backoff)
+    giveup_hdlrs = _handlers(on_giveup, _log_giveup)
+
     def decorate(target):
 
         @functools.wraps(target)
         def retry(*args, **kwargs):
-            # format function invocation to be made for logging
-            invoc = _invoc_repr(target, args, kwargs)
+            invoc = target, args, kwargs
 
             tries = 0
             wait = wait_gen(**wait_gen_kwargs)
@@ -201,16 +252,20 @@ def on_predicate(wait_gen,
                 if predicate(ret):
                     tries += 1
                     if max_tries is not None and tries == max_tries:
-                        logger.error("Giving up %s after %s tries" %
-                                     (invoc, tries))
+                        for hdlr in giveup_hdlrs:
+                            hdlr(invoc, tries)
                         break
 
                     seconds = next(wait) + jitter()
-                    logger.info("Backing off %s: %.1fs" %
-                                (invoc, round(seconds, 1)))
+
+                    for hdlr in backoff_hdlrs:
+                        hdlr(invoc, tries)
+
                     time.sleep(seconds)
                     continue
                 else:
+                    for hdlr in success_hdlrs:
+                        hdlr(invoc, tries)
                     break
 
             return ret
@@ -225,13 +280,17 @@ def on_exception(wait_gen,
                  exception,
                  max_tries=None,
                  jitter=random.random,
+                 on_success=None,
+                 on_backoff=None,
+                 on_giveup=None,
                  **wait_gen_kwargs):
     """Returns decorator for pluggable backoff triggered by exception.
 
     Args:
         wait_gen: A generator yielding successive wait times in
             seconds.
-        exception: An exception type which triggers backoff.
+        exception: An exception type (or tuple of types) which triggers
+            backoff.
         max_tries: The maximum number of attempts to make before giving
             up. Once exhausted, the exception will be allowed to escape.
             The default value of None means their is no limit to the
@@ -241,34 +300,50 @@ def on_exception(wait_gen,
             random function, this staggers wait times a random number
             of milliseconds to help spread out load in the case that
             there are multiple simultaneous retries occuring.
+        on_success: Function (or iterable of functions) with signature
+            (invoc, tries) called in the event of a successful
+            invocation of the target.
+        on_backoff: Function (or iterable of functions) with signature
+            (invoc, tries) called in the event of a backoff.
+        on_giveup: Function (or iterable of functions) with signature
+            (invoc, tries) called in the event that max_tries
+            is exceeded.
         **wait_gen_kwargs: Any additional keyword args specified will be
-            passed to the wait_generator when it is initialized.
+            passed to wait_gen when it is initialized.
 
     """
+    success_hdlrs = _handlers(on_success)
+    backoff_hdlrs = _handlers(on_backoff, _log_backoff)
+    giveup_hdlrs = _handlers(on_giveup, _log_giveup)
+
     def decorate(target):
 
         @functools.wraps(target)
         def retry(*args, **kwargs):
-            # format function invocation to be made for logging
-            invoc = _invoc_repr(target, args, kwargs)
+            invoc = target, args, kwargs
 
             tries = 0
             wait = wait_gen(**wait_gen_kwargs)
             while True:
                 try:
                     ret = target(*args, **kwargs)
-                except exception as e:
+                except exception:
                     tries += 1
                     if max_tries is not None and tries == max_tries:
-                        logger.error("Giving up %s after %s tries: %s" %
-                                     (invoc, tries, e))
+                        for hdlr in giveup_hdlrs:
+                            hdlr(invoc, tries)
                         raise
 
                     seconds = next(wait) + jitter()
-                    logger.error("Backing off %s %.1fs for exception: %s" %
-                                 (invoc, round(seconds, 1), e))
+
+                    for hdlr in backoff_hdlrs:
+                        hdlr(invoc, tries)
+
                     time.sleep(seconds)
                 else:
+                    for hdlr in success_hdlrs:
+                        hdlr(invoc, tries)
+
                     return ret
 
         return retry
@@ -277,6 +352,20 @@ def on_exception(wait_gen,
     return decorate
 
 
+# Create default handler list from keyword argument
+def _handlers(hdlr, default=None):
+    defaults = [default] if default is not None else []
+
+    if hdlr is None:
+        return defaults
+
+    if hasattr(hdlr, '__iter__'):
+        return defaults + list(hdlr)
+
+    return defaults + [hdlr]
+
+
+# Formats a function invocation as a unicode string for logging.
 def _invoc_repr(invoc):
     f, args, kwargs = invoc
     args_out = ", ".join("{0}".format(a) for a in args)
@@ -287,3 +376,25 @@ def _invoc_repr(invoc):
                               for k, v in kwargs.items())
 
     return "{0}({1})".format(f.__name__, args_out)
+
+
+# Default backoff handler
+def _log_backoff(invoc, tries):
+    msg = "Backing off %s after %s tries" % (_invoc_repr(invoc), tries)
+
+    _, exception, _ = sys.exc_info()
+    if exception is not None:
+        msg += " (exception %s)" % exception
+
+    logger.error(msg)
+
+
+# Default giveup handler
+def _log_giveup(invoc, tries):
+    msg = "Giving up %s after %s tries" % (_invoc_repr(invoc), tries)
+
+    _, exception, _ = sys.exc_info()
+    if exception is not None:
+        msg += " (exception %s)" % exception
+
+    logger.error(msg)
