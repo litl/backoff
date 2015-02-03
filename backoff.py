@@ -208,13 +208,14 @@ def on_predicate(wait_gen,
 
             tries = 0
             wait = wait_gen(**wait_gen_kwargs)
-            while max_tries is None or tries < max_tries:
+            while True:
                 ret = target(*args, **kwargs)
                 if predicate(ret):
                     tries += 1
-                    if tries == max_tries:
+                    if max_tries is not None and tries == max_tries:
                         logger.error("Giving up %s after %s tries" %
                                      (invoc, tries))
+                        break
 
                     seconds = next(wait) + jitter()
                     logger.info("Backing off %s: %.1fs" %
@@ -265,12 +266,12 @@ def on_exception(wait_gen,
 
             tries = 0
             wait = wait_gen(**wait_gen_kwargs)
-            while max_tries is None or tries < max_tries:
+            while True:
                 try:
                     ret = target(*args, **kwargs)
                 except exception as e:
                     tries += 1
-                    if tries == max_tries:
+                    if max_tries is not None and tries == max_tries:
                         logger.error("Giving up %s after %s tries: %s" %
                                      (invoc, tries, e))
                         raise
