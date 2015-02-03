@@ -1,6 +1,6 @@
 # coding:utf-8
 """
-Function decoration for pluggable backoff and retry
+Function decoration for backoff and retry
 
 This module provides function decorators which can be used to wrap a
 function such that it will be retried until some condition is met. It
