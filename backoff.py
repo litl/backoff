@@ -1,6 +1,4 @@
 # coding:utf-8
-from __future__ import unicode_literals
-
 """
 Function decoration for pluggable backoff and retry
 
@@ -92,6 +90,7 @@ instead set the logger level to INFO:
 
     logging.getLogger('backoff').setLevel(logging.INFO)
 """
+from __future__ import unicode_literals
 
 import functools
 import operator

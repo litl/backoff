@@ -25,4 +25,4 @@ check: pep8 pyflakes test
 	@coverage report | grep 100% >/dev/null || { echo 'Unit tests coverage is incomplete.'; exit 1; }
 
 docs:
-	@python -c 'import backoff ; print "# backoff" ; print backoff.__doc__' > README.md
+	@python -c 'import backoff ; print "# backoff" ; print "\n[![Build Status](https://travis-ci.org/litl/backoff.png?branch=master)](https://travis-ci.org/litl/backoff?branch=master)" ; print backoff.__doc__' > README.md
