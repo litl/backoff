@@ -18,9 +18,9 @@ the backoff module.*
 
 ### @backoff.on_exception
 
-The on_exception decorator is used to retry when a specified exception
+The `on_exception` decorator is used to retry when a specified exception
 is raised. Here's an example using exponential backoff when any
-requests exception is raised:
+`requests` exception is raised:
 
     @backoff.on_exception(backoff.expo,
                           requests.exceptions.RequestException,
@@ -30,9 +30,9 @@ requests exception is raised:
 
 ### @backoff.on_predicate
 
-The on_predicate decorator is used to retry when a particular condition
-is true of the return value of the target function.  This may be useful
-when polling a resource for externally generated content.
+The `on_predicate` decorator is used to retry when a particular
+condition is true of the return value of the target function.  This may
+be useful when polling a resource for externally generated content.
 
 Here's an example which uses a fibonacci sequence backoff when the
 return value of the target function is the empty list:
@@ -42,8 +42,8 @@ return value of the target function is the empty list:
         return queue.get()
 
 Extra keyword arguments are passed when initializing the
-wait_generator, so the max_value param above is used to initialize the
-fibo generator.
+wait generator, so the `max_value` param above is passed as a keyword
+arg when initializing the fibo generator.
 
 When not specified, the predicate param defaults to the falsey test,
 so the above can more concisely be written:
@@ -53,7 +53,7 @@ so the above can more concisely be written:
         return queue.get()
 
 More simply, a function which continues polling every second until it
-gets a non falsey result could be defined like like this:
+gets a non-falsey result could be defined like like this:
 
     @backoff.on_predicate(backoff.constant, interval=1)
     def poll_for_message(queue)
@@ -61,8 +61,8 @@ gets a non falsey result could be defined like like this:
 
 ### Using multiple decorators
 
-It can also be useful to combine backoff decorators to define
-different backoff behavior for different cases:
+The backoff decorators may also be combined to specify different
+backoff behavior for different cases:
 
     @backoff.on_predicate(backoff.fibo, max_value=13)
     @backoff.on_exception(backoff.expo,
@@ -76,55 +76,57 @@ different backoff behavior for different cases:
 
 ### Event handlers
 
-Both backoff decorators optionally accept event handler functions as the
-keyword arguments: on_success, on_backoff, and on_giveup. This may be
-useful in reporting statistics or other custom logging. Here's an
-example of using event handler to log statsd statistics for each event
-type:
+Both backoff decorators optionally accept event handler functions
+using the keyword arguments `on_success`, `on_backoff`, and `on_giveup`.
+This may be useful in reporting statistics or performing other custom
+logging.
 
-    import statsd
+All three handler functions have the same two parameter signature. The
+first argument is a tuple consisting of the function reference,
+argument list, and keyword dictionary of the invocation being made. The
+second argument is a count of number of tries that have occured in the
+current invocation.
 
-    def success_stat(invoc, tries):
-        f, args, kwargs = invoc
-        statsd.statsd.histogram("backoff.success.%s" % f.name, tries)
+    def backoff_hdlr(invoc, tries):
+        func, args, kwargs = invoc
 
-    def backoff_stat(invoc, wait, exception):
-        f, args, kwargs = invoc
-        statsd.statsd.histogram("backoff.retry.%s" % f.name, wait)
-
-    def giveup_stat(invoc, tries, exception):
-        f, args, kwargs = invoc
-        statsd.statsd.histogram("backoff.giveup.%s" % f.name, tries)
+        print ("Backing off after %s tries calling "
+               "function %s with args %s and kwargs %s"
+               % (tries, func.__name__, args, kwargs))
 
     @backoff.on_exception(backoff.expo,
                           requests.exceptions.RequestException,
-                          max_tries=8,
-                          on_success=success_stat,
-                          on_backoff=backoff_stat,
-                          on_giveup=giveup_stat)
+                          on_backoff=backoff_hdlr)
     def get_url(url):
         return requests.get(url)
 
-The first parameter to all three handler types is a tuple consisting of
-the consisting of the function being invoked, the args lists and the
-kwargs dict. The remainder of the parameters are defined as keyword
-arguments appropriate to the handler type.
+#### Multiple handlers per event type
 
-Iterables of handler functions are also accepted.
+In all cases, iterables of handler functions are also accepted, which
+are called in turn.
+
+#### Getting exception info
+
+In the case of the `on_exception` decorator, all `on_backoff` and
+`on_giveup` handlers are called from within the except block for the
+exception being handled. Therefore exception info is available to the
+handler functions via the python standard library, specifically
+`sys.exc_info()` or the `traceback` module.
 
 ### Logging configuration
 
-Errors and backoff/retry attempts are logged to the 'backoff' logger.
-By default, this logger is configured with a NullHandler, so there will
-be nothing output unless you configure a handler. Programmatically,
-this might be accomplished with something as simple as:
+Errors and backoff and retry attempts are logged to the 'backoff'
+logger. By default, this logger is configured with a NullHandler, so
+there will be nothing output unless you configure a handler.
+Programmatically, this might be accomplished with something as simple
+as:
 
     logging.getLogger('backoff').addHandler(logging.StreamHandler())
 
-The default logging level is ERROR, which correponds to logging anytime
-max_tries is exceeded as well as any time a retryable exception is
+The default logging level is ERROR, which corresponds to logging anytime
+`max_tries` is exceeded as well as any time a retryable exception is
 raised. If you would instead like to log any type of retry, you can
-instead set the logger level to INFO:
+set the logger level to INFO:
 
     logging.getLogger('backoff').setLevel(logging.INFO)
 """
