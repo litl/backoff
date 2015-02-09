@@ -1,6 +1,6 @@
 # backoff
 
-[![Build Status](https://travis-ci.org/litl/backoff.svg?branch=master)](https://travis-ci.org/litl/backoff?branch=master) [![Coverage Status](https://coveralls.io/repos/litl/backoff/badge.svg?branch=master)](https://coveralls.io/r/edx/opaque-keys?branch=master)
+[![Build Status](https://travis-ci.org/litl/backoff.svg?branch=master)](https://travis-ci.org/litl/backoff?branch=master) [![Coverage Status](https://coveralls.io/repos/litl/backoff/badge.svg?branch=master)](https://coveralls.io/r/litl/backoff?branch=master)
 
 Function decoration for pluggable backoff and retry
 
