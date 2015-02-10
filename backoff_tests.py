@@ -227,7 +227,7 @@ def test_on_predicate_giveup():
 
 
 def test_on_predicate_iterable_handlers():
-    hdlrs = [_log_hdlrs() for _ in xrange(3)]
+    hdlrs = [_log_hdlrs() for _ in range(3)]
 
     @backoff.on_predicate(backoff.constant,
                           on_success=(h[1] for h in hdlrs),
@@ -241,7 +241,7 @@ def test_on_predicate_iterable_handlers():
 
     emptiness()
 
-    for i in xrange(3):
+    for i in range(3):
         assert hdlrs[i][0]['success'] == 0
         assert hdlrs[i][0]['backoff'] == 2
         assert hdlrs[i][0]['giveup'] == 1
