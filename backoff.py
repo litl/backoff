@@ -163,13 +163,14 @@ def constant(interval=1):
 
 # Formats a function invocation as a unicode string for logging.
 def _invoc_repr(f, args, kwargs):
-    args_out = ", ".join("%s" % a for a in args)
+    args_out = ", ".join("{}".format(a) for a in args)
     if args and kwargs:
         args_out += ", "
     if kwargs:
-        args_out += ", ".join("%s=%s" % i for i in kwargs.items())
+        args_out += ", ".join("{}={}".format(k, v)
+                              for k, v in kwargs.items())
 
-    return "%s(%s)" % (f.__name__, args_out)
+    return "{}({})".format(f.__name__, args_out)
 
 
 def on_predicate(wait_gen,

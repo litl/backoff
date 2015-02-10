@@ -115,3 +115,6 @@ def test_invoc_repr():
     assert "func(a, b)" == backoff._invoc_repr(func, ["a", "b"], {})
     assert u"func(ユニコーン, ア=あ)" == \
         backoff._invoc_repr(func, [u"ユニコーン"], {u"ア": u"あ"})
+
+    # tuple args caused a string formatting exception
+    assert "func((1, 2, 3))" == backoff._invoc_repr(func, [(1, 2, 3)], {})
