@@ -382,21 +382,21 @@ def _invoc_repr(invoc):
 
 # Default backoff handler
 def _log_backoff(invoc, tries):
-    msg = "Backing off %s after %s tries" % (_invoc_repr(invoc), tries)
+    msg = "Backing off {0} after {1} tries".format(_invoc_repr(invoc), tries)
 
     _, exception, _ = sys.exc_info()
     if exception is not None:
-        msg += " (exception %s)" % exception
+        msg = "{0} (exception {1})".format(msg, exception)
 
     logger.error(msg)
 
 
 # Default giveup handler
 def _log_giveup(invoc, tries):
-    msg = "Giving up %s after %s tries" % (_invoc_repr(invoc), tries)
+    msg = "Giving up {0} after {1} tries".format(_invoc_repr(invoc), tries)
 
     _, exception, _ = sys.exc_info()
     if exception is not None:
-        msg += " (exception %s)" % exception
+        msg = "{0} (exception {1})".format(msg, exception)
 
     logger.error(msg)
