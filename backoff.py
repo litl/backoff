@@ -387,8 +387,9 @@ def _log_backoff(invoc, tries):
     _, exception, _ = sys.exc_info()
     if exception is not None:
         msg = "{0} (exception {1})".format(msg, exception)
-
-    logger.error(msg)
+        logger.error(msg)
+    else:
+        logger.info(msg)
 
 
 # Default giveup handler
