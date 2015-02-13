@@ -83,18 +83,24 @@ using the keyword arguments `on_success`, `on_backoff`, and `on_giveup`.
 This may be useful in reporting statistics or performing other custom
 logging.
 
-All three handler functions have the same two parameter signature. The
-first argument is a tuple consisting of the function reference,
-argument list, and keyword dictionary of the invocation being made. The
-second argument is a count of number of tries that have occured in the
-current invocation.
+Handlers must be callables with a unary signature accepting a dict
+argument. This dict contains the details of the invocation. Valid keys
+include:
 
-    def backoff_hdlr(invoc, tries):
-        func, args, kwargs = invoc
+  * 'target' - reference to the function or method being invoked
+  * 'args' - positional arguments to func
+  * 'kwargs' - keyword arguments to func
+  * 'tries' - number of invocation tries so far
+  * 'wait' - seconds to wait (`on_backoff` handler only)
+  * 'value' - value triggering backoff (`on_predicate` decorator only)
 
-        print ("Backing off after %s tries calling "
-               "function %s with args %s and kwargs %s"
-               % (tries, func.__name__, args, kwargs))
+A handler which prints the details of the backoff event could be
+implemented like so:
+
+    def backoff_hdlr(details):
+        print ("Backing off {wait:0.1f} seconds afters {tries} tries "
+               "calling function {func} with args {args} and kwargs "
+               "{kwargs}".format(**details))
 
     @backoff.on_exception(backoff.expo,
                           requests.exceptions.RequestException,

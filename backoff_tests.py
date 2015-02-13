@@ -106,7 +106,7 @@ def test_on_exception_max_tries():
     assert 3 == len(log)
 
 
-def test_invoc_repr():
+def _test_invoc_repr():
     def func(a, b, c=None):
         pass
 
@@ -124,18 +124,23 @@ def test_invoc_repr():
 
 # create event handler which log their invocations to a dict
 def _log_hdlrs():
-    log = collections.defaultdict(int)
+    log = collections.defaultdict(list)
 
-    def log_hdlr(event,
-                 invoc,
-                 wait=None, tries=None, exception=None, value=None):
-        log[event] += 1
+    def log_hdlr(event, details):
+        log[event].append(details)
 
     log_success = functools.partial(log_hdlr, 'success')
     log_backoff = functools.partial(log_hdlr, 'backoff')
     log_giveup = functools.partial(log_hdlr, 'giveup')
 
     return log, log_success, log_backoff, log_giveup
+
+
+# decorator that that saves the target as
+# an attribute of the decorated function
+def _save_target(f):
+    f._target = f
+    return f
 
 
 def test_on_exception_success():
@@ -148,17 +153,32 @@ def test_on_exception_success():
                           on_giveup=log_giveup,
                           jitter=lambda: 0,
                           interval=0)
-    def succeeder():
+    @_save_target
+    def succeeder(*args, **kwargs):
         # succeed after we've backed off twice
-        if log['backoff'] < 2:
+        if len(log['backoff']) < 2:
             raise ValueError("catch me")
 
-    succeeder()
+    succeeder(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice before succeeding
-    assert log['success'] == 1
-    assert log['backoff'] == 2
-    assert log['giveup'] == 0
+    assert len(log['success']) == 1
+    assert len(log['backoff']) == 2
+    assert len(log['giveup']) == 0
+
+    for i in range(2):
+        details = log['backoff'][i]
+        assert details == {'args': (1, 2, 3),
+                           'kwargs': {'foo': 1, 'bar': 2},
+                           'target': succeeder._target,
+                           'tries': i + 1,
+                           'wait': 0}
+
+    details = log['success'][0]
+    assert details == {'args': (1, 2, 3),
+                       'kwargs': {'foo': 1, 'bar': 2},
+                       'target': succeeder._target,
+                       'tries': 3}
 
 
 def test_on_exception_giveup():
@@ -172,16 +192,23 @@ def test_on_exception_giveup():
                           max_tries=3,
                           jitter=lambda: 0,
                           interval=0)
-    def exceptor():
+    @_save_target
+    def exceptor(*args, **kwargs):
         raise ValueError("catch me")
 
     with pytest.raises(ValueError):
-        exceptor()
+        exceptor(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice and giving up once
-    assert log['success'] == 0
-    assert log['backoff'] == 2
-    assert log['giveup'] == 1
+    assert len(log['success']) == 0
+    assert len(log['backoff']) == 2
+    assert len(log['giveup']) == 1
+
+    details = log['giveup'][0]
+    assert details == {'args': (1, 2, 3),
+                       'kwargs': {'foo': 1, 'bar': 2},
+                       'target': exceptor._target,
+                       'tries': 3}
 
 
 def test_on_predicate_success():
@@ -193,16 +220,33 @@ def test_on_predicate_success():
                           on_giveup=log_giveup,
                           jitter=lambda: 0,
                           interval=0)
-    def success():
+    @_save_target
+    def success(*args, **kwargs):
         # succeed after we've backed off twice
-        return log['backoff'] == 2
+        return len(log['backoff']) == 2
 
-    success()
+    success(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice before succeeding
-    assert log['success'] == 1
-    assert log['backoff'] == 2
-    assert log['giveup'] == 0
+    assert len(log['success']) == 1
+    assert len(log['backoff']) == 2
+    assert len(log['giveup']) == 0
+
+    for i in range(2):
+        details = log['backoff'][i]
+        assert details == {'args': (1, 2, 3),
+                           'kwargs': {'foo': 1, 'bar': 2},
+                           'target': success._target,
+                           'tries': i + 1,
+                           'value': False,
+                           'wait': 0}
+
+    details = log['success'][0]
+    assert details == {'args': (1, 2, 3),
+                       'kwargs': {'foo': 1, 'bar': 2},
+                       'target': success._target,
+                       'tries': 3,
+                       'value': True}
 
 
 def test_on_predicate_giveup():
@@ -215,15 +259,23 @@ def test_on_predicate_giveup():
                           max_tries=3,
                           jitter=lambda: 0,
                           interval=0)
-    def emptiness():
+    @_save_target
+    def emptiness(*args, **kwargs):
         pass
 
-    emptiness()
+    emptiness(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice and giving up once
-    assert log['success'] == 0
-    assert log['backoff'] == 2
-    assert log['giveup'] == 1
+    assert len(log['success']) == 0
+    assert len(log['backoff']) == 2
+    assert len(log['giveup']) == 1
+
+    details = log['giveup'][0]
+    assert details == {'args': (1, 2, 3),
+                       'kwargs': {'foo': 1, 'bar': 2},
+                       'target': emptiness._target,
+                       'tries': 3,
+                       'value': None}
 
 
 def test_on_predicate_iterable_handlers():
@@ -236,12 +288,20 @@ def test_on_predicate_iterable_handlers():
                           max_tries=3,
                           jitter=lambda: 0,
                           interval=0)
-    def emptiness():
+    @_save_target
+    def emptiness(*args, **kwargs):
         pass
 
-    emptiness()
+    emptiness(1, 2, 3, foo=1, bar=2)
 
     for i in range(3):
-        assert hdlrs[i][0]['success'] == 0
-        assert hdlrs[i][0]['backoff'] == 2
-        assert hdlrs[i][0]['giveup'] == 1
+        assert len(hdlrs[i][0]['success']) == 0
+        assert len(hdlrs[i][0]['backoff']) == 2
+        assert len(hdlrs[i][0]['giveup']) == 1
+
+        details = hdlrs[i][0]['giveup'][0]
+        assert details == {'args': (1, 2, 3),
+                           'kwargs': {'foo': 1, 'bar': 2},
+                           'target': emptiness._target,
+                           'tries': 3,
+                           'value': None}

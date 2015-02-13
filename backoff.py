@@ -81,18 +81,24 @@ using the keyword arguments `on_success`, `on_backoff`, and `on_giveup`.
 This may be useful in reporting statistics or performing other custom
 logging.
 
-All three handler functions have the same two parameter signature. The
-first argument is a tuple consisting of the function reference,
-argument list, and keyword dictionary of the invocation being made. The
-second argument is a count of number of tries that have occured in the
-current invocation.
+Handlers must be callables with a unary signature accepting a dict
+argument. This dict contains the details of the invocation. Valid keys
+include:
 
-    def backoff_hdlr(invoc, tries):
-        func, args, kwargs = invoc
+  * 'target' - reference to the function or method being invoked
+  * 'args' - positional arguments to func
+  * 'kwargs' - keyword arguments to func
+  * 'tries' - number of invocation tries so far
+  * 'wait' - seconds to wait (`on_backoff` handler only)
+  * 'value' - value triggering backoff (`on_predicate` decorator only)
 
-        print ("Backing off after %s tries calling "
-               "function %s with args %s and kwargs %s"
-               % (tries, func.__name__, args, kwargs))
+A handler which prints the details of the backoff event could be
+implemented like so:
+
+    def backoff_hdlr(details):
+        print ("Backing off {wait:0.1f} seconds afters {tries} tries "
+               "calling function {func} with args {args} and kwargs "
+               "{kwargs}".format(**details))
 
     @backoff.on_exception(backoff.expo,
                           requests.exceptions.RequestException,
@@ -137,6 +143,7 @@ import operator
 import logging
 import random
 import time
+import traceback
 import sys
 
 
@@ -209,7 +216,7 @@ def on_predicate(wait_gen,
                  on_backoff=None,
                  on_giveup=None,
                  **wait_gen_kwargs):
-    """Returns decorator for pluggable backoff triggered by predicate.
+    """Returns decorator for backoff and retry triggered by predicate.
 
     Args:
         wait_gen: A generator yielding successive wait times in
@@ -227,13 +234,16 @@ def on_predicate(wait_gen,
             random function, this staggers wait times a random number
             of milliseconds to help spread out load in the case that
             there are multiple simultaneous retries occuring.
-        on_success: Function with signature (invoc, tries), called
-            in the event of a successful invocation of the target.
-        on_backoff: Function (or iterable of functions) with signature
-            (invoc, tries) called in the event of a backoff.
-        on_giveup: Function (or iterable of functions) with signature
-            (invoc, tries) called in the event that max_tries is
-            exceeded.
+        on_success: Callable (or iterable of callables) with a unary
+            signature to be called in the event of success. The
+            parameter is a dict containing details about the invocation.
+        on_backoff: Callable (or iterable of callables) with a unary
+            signature to be called in the event of a backoff. The
+            parameter is a dict containing details about the invocation.
+        on_giveup: Callable (or iterable of callables) wutg a unary
+            signature to be called in the event that max_tries
+            is exceeded.  The parameter is a dict containing details
+            about the invocation.
         **wait_gen_kwargs: Any additional keyword args specified will be
             passed to wait_gen when it is initialized.
     """
@@ -245,29 +255,41 @@ def on_predicate(wait_gen,
 
         @functools.wraps(target)
         def retry(*args, **kwargs):
-            invoc = target, args, kwargs
-
             tries = 0
+
             wait = wait_gen(**wait_gen_kwargs)
             while True:
+                tries += 1
                 ret = target(*args, **kwargs)
                 if predicate(ret):
-                    tries += 1
                     if max_tries is not None and tries == max_tries:
                         for hdlr in giveup_hdlrs:
-                            hdlr(invoc, tries)
+                            hdlr({'target': target,
+                                  'args': args,
+                                  'kwargs': kwargs,
+                                  'tries': tries,
+                                  'value': ret})
                         break
 
                     seconds = next(wait) + jitter()
 
                     for hdlr in backoff_hdlrs:
-                        hdlr(invoc, tries)
+                        hdlr({'target': target,
+                              'args': args,
+                              'kwargs': kwargs,
+                              'tries': tries,
+                              'value': ret,
+                              'wait': seconds})
 
                     time.sleep(seconds)
                     continue
                 else:
                     for hdlr in success_hdlrs:
-                        hdlr(invoc, tries)
+                        hdlr({'target': target,
+                              'args': args,
+                              'kwargs': kwargs,
+                              'tries': tries,
+                              'value': ret})
                     break
 
             return ret
@@ -286,7 +308,7 @@ def on_exception(wait_gen,
                  on_backoff=None,
                  on_giveup=None,
                  **wait_gen_kwargs):
-    """Returns decorator for pluggable backoff triggered by exception.
+    """Returns decorator for backoff and retry triggered by exception.
 
     Args:
         wait_gen: A generator yielding successive wait times in
@@ -302,14 +324,16 @@ def on_exception(wait_gen,
             random function, this staggers wait times a random number
             of milliseconds to help spread out load in the case that
             there are multiple simultaneous retries occuring.
-        on_success: Function (or iterable of functions) with signature
-            (invoc, tries) called in the event of a successful
-            invocation of the target.
-        on_backoff: Function (or iterable of functions) with signature
-            (invoc, tries) called in the event of a backoff.
-        on_giveup: Function (or iterable of functions) with signature
-            (invoc, tries) called in the event that max_tries
-            is exceeded.
+        on_success: Callable (or iterable of callables) with a unary
+            signature to be called in the event of success. The
+            parameter is a dict containing details about the invocation.
+        on_backoff: Callable (or iterable of callables) with a unary
+            signature to be called in the event of a backoff. The
+            parameter is a dict containing details about the invocation.
+        on_giveup: Callable (or iterable of callables) wutg a unary
+            signature to be called in the event that max_tries
+            is exceeded.  The parameter is a dict containing details
+            about the invocation.
         **wait_gen_kwargs: Any additional keyword args specified will be
             passed to wait_gen when it is initialized.
 
@@ -322,29 +346,37 @@ def on_exception(wait_gen,
 
         @functools.wraps(target)
         def retry(*args, **kwargs):
-            invoc = target, args, kwargs
-
             tries = 0
             wait = wait_gen(**wait_gen_kwargs)
             while True:
                 try:
+                    tries += 1
                     ret = target(*args, **kwargs)
                 except exception:
-                    tries += 1
                     if max_tries is not None and tries == max_tries:
                         for hdlr in giveup_hdlrs:
-                            hdlr(invoc, tries)
+                            hdlr({'target': target,
+                                  'args': args,
+                                  'kwargs': kwargs,
+                                  'tries': tries})
                         raise
 
                     seconds = next(wait) + jitter()
 
                     for hdlr in backoff_hdlrs:
-                        hdlr(invoc, tries)
+                        hdlr({'target': target,
+                              'args': args,
+                              'kwargs': kwargs,
+                              'tries': tries,
+                              'wait': seconds})
 
                     time.sleep(seconds)
                 else:
                     for hdlr in success_hdlrs:
-                        hdlr(invoc, tries)
+                        hdlr({'target': target,
+                              'args': args,
+                              'kwargs': kwargs,
+                              'tries': tries})
 
                     return ret
 
@@ -368,8 +400,8 @@ def _handlers(hdlr, default=None):
 
 
 # Formats a function invocation as a unicode string for logging.
-def _invoc_repr(invoc):
-    f, args, kwargs = invoc
+def _invoc_repr(details):
+    f, args, kwargs = details['target'], details['args'], details['kwargs']
     args_out = ", ".join("{0}".format(a) for a in args)
     if args and kwargs:
         args_out += ", "
@@ -381,23 +413,30 @@ def _invoc_repr(invoc):
 
 
 # Default backoff handler
-def _log_backoff(invoc, tries):
-    msg = "Backing off {0} after {1} tries".format(_invoc_repr(invoc), tries)
+def _log_backoff(details):
+    msg = "Backing off {0} {1:.1f}s".format(_invoc_repr(details),
+                                            details['wait'])
 
-    _, exception, _ = sys.exc_info()
-    if exception is not None:
-        msg = "{0} (exception {1})".format(msg, exception)
+    exc_typ, exc, _ = sys.exc_info()
+    if exc is not None:
+        exc_fmt = traceback.format_exception_only(exc_typ, exc)[-1]
+        msg = "{0} ({1})".format(msg, exc_fmt.rstrip("\n"))
         logger.error(msg)
     else:
+        msg = "{0} ({1})".format(msg, details['value'])
         logger.info(msg)
 
 
 # Default giveup handler
-def _log_giveup(invoc, tries):
-    msg = "Giving up {0} after {1} tries".format(_invoc_repr(invoc), tries)
+def _log_giveup(details):
+    msg = "Giving up {0} after {1} tries".format(_invoc_repr(details),
+                                                 details['tries'])
 
-    _, exception, _ = sys.exc_info()
-    if exception is not None:
-        msg = "{0} (exception {1})".format(msg, exception)
+    exc_typ, exc, _ = sys.exc_info()
+    if exc is not None:
+        exc_fmt = traceback.format_exception_only(exc_typ, exc)[-1]
+        msg = "{0} ({1})".format(msg, exc_fmt.rstrip("\n"))
+    else:
+        msg = "{0} ({1})".format(msg, details['value'])
 
     logger.error(msg)
