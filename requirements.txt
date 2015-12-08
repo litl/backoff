@@ -2,4 +2,3 @@ pep8==1.6.2
 pyflakes==1.0.0
 pytest==2.8.4
 pytest-cov==2.2.0
-mock==1.0.1

@@ -3,7 +3,6 @@
 import backoff
 import collections
 import functools
-import mock
 import pytest
 
 
@@ -46,8 +45,9 @@ def test_constant():
         assert 3 == next(gen)
 
 
-@mock.patch('time.sleep', lambda x: None)
-def test_on_predicate():
+def test_on_predicate(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
     @backoff.on_predicate(backoff.expo)
     def return_true(log, n):
         val = (len(log) == n - 1)
@@ -60,8 +60,9 @@ def test_on_predicate():
     assert 3 == len(log)
 
 
-@mock.patch('time.sleep', lambda x: None)
-def test_on_predicate_max_tries():
+def test_on_predicate_max_tries(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
     @backoff.on_predicate(backoff.expo, max_tries=3)
     def return_true(log, n):
         val = (len(log) == n)
@@ -74,8 +75,9 @@ def test_on_predicate_max_tries():
     assert 3 == len(log)
 
 
-@mock.patch('time.sleep', lambda x: None)
-def test_on_exception():
+def test_on_exception(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
     @backoff.on_exception(backoff.expo, KeyError)
     def keyerror_then_true(log, n):
         if len(log) == n:
@@ -89,8 +91,9 @@ def test_on_exception():
     assert 3 == len(log)
 
 
-@mock.patch('time.sleep', lambda x: None)
-def test_on_exception_max_tries():
+def test_on_exception_max_tries(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
     @backoff.on_exception(backoff.expo, KeyError, max_tries=3)
     def keyerror_then_true(log, n, foo=None):
         if len(log) == n:
