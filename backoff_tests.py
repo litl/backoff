@@ -56,7 +56,7 @@ def test_on_predicate():
 
     log = []
     ret = return_true(log, 3)
-    assert True == ret
+    assert ret is True
     assert 3 == len(log)
 
 
@@ -70,7 +70,7 @@ def test_on_predicate_max_tries():
 
     log = []
     ret = return_true(log, 10)
-    assert False == ret
+    assert ret is False
     assert 3 == len(log)
 
 
@@ -85,7 +85,7 @@ def test_on_exception():
         raise e
 
     log = []
-    assert True == keyerror_then_true(log, 3)
+    assert keyerror_then_true(log, 3) is True
     assert 3 == len(log)
 
 
