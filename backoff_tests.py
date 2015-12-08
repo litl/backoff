@@ -91,6 +91,27 @@ def test_on_exception(monkeypatch):
     assert 3 == len(log)
 
 
+def test_on_exception_tuple(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
+    @backoff.on_exception(backoff.expo, (KeyError, ValueError))
+    def keyerror_valueerror_then_true(log):
+        if len(log) == 2:
+            return True
+        if len(log) == 0:
+            e = KeyError()
+        if len(log) == 1:
+            e = ValueError()
+        log.append(e)
+        raise e
+
+    log = []
+    assert keyerror_valueerror_then_true(log) is True
+    assert 2 == len(log)
+    assert isinstance(log[0], KeyError)
+    assert isinstance(log[1], ValueError)
+
+
 def test_on_exception_max_tries(monkeypatch):
     monkeypatch.setattr('time.sleep', lambda x: None)
 

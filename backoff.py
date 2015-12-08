@@ -28,6 +28,16 @@ is raised. Here's an example using exponential backoff when any
     def get_url(url):
         return requests.get(url)
 
+The decorator will also accept a tuple of exceptions for cases where
+you want the same backoff behavior for more than one exception type:
+
+    @backoff.on_exception(backoff.expo,
+                          (requests.exceptions.Timeout,
+                           requests.exceptions.ConnectionError),
+                          max_tries=8)
+    def get_url(url):
+        return requests.get(url)
+
 ### @backoff.on_predicate
 
 The `on_predicate` decorator is used to retry when a particular
