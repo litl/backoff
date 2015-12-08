@@ -4,3 +4,4 @@ __pycache__/
 virtualenv
 MANIFEST
 dist/
+.cache/
