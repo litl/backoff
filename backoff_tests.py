@@ -4,6 +4,23 @@ import backoff
 import collections
 import functools
 import pytest
+import random
+
+
+def test_full_jitter():
+    for input in range(100):
+        for i in range(100):
+            jitter = backoff.full_jitter(input)
+        assert jitter >= 0
+        assert jitter <= input
+
+
+def test_equal_jitter():
+    for input in range(100):
+        for i in range(100):
+            jitter = backoff.equal_jitter(input)
+            assert jitter >= input/2.0
+            assert jitter <= input
 
 
 def test_expo():
@@ -16,6 +33,18 @@ def test_expo_base3():
     gen = backoff.expo(base=3)
     for i in range(9):
         assert 3 ** i == next(gen)
+
+
+def test_expo_init3():
+    gen = backoff.expo(init_value=3)
+    for i in range(9):
+        assert 3 * 2 ** i == next(gen)
+
+
+def test_expo_base3_init5():
+    gen = backoff.expo(base=3, init_value=5)
+    for i in range(9):
+        assert 5 * 3 ** i == next(gen)
 
 
 def test_expo_max_value():
@@ -63,7 +92,7 @@ def test_on_predicate(monkeypatch):
 def test_on_predicate_max_tries(monkeypatch):
     monkeypatch.setattr('time.sleep', lambda x: None)
 
-    @backoff.on_predicate(backoff.expo, max_tries=3)
+    @backoff.on_predicate(backoff.expo, jitter=None, max_tries=3)
     def return_true(log, n):
         val = (len(log) == n)
         log.append(val)
@@ -115,7 +144,7 @@ def test_on_exception_tuple(monkeypatch):
 def test_on_exception_max_tries(monkeypatch):
     monkeypatch.setattr('time.sleep', lambda x: None)
 
-    @backoff.on_exception(backoff.expo, KeyError, max_tries=3)
+    @backoff.on_exception(backoff.expo, KeyError, jitter=None, max_tries=3)
     def keyerror_then_true(log, n, foo=None):
         if len(log) == n:
             return True
@@ -165,6 +194,97 @@ def _log_hdlrs():
 def _save_target(f):
     f._target = f
     return f
+
+
+def test_on_exception_success_random_jitter(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
+    log, log_success, log_backoff, log_giveup = _log_hdlrs()
+
+    @backoff.on_exception(backoff.expo,
+                          Exception,
+                          on_success=log_success,
+                          on_backoff=log_backoff,
+                          on_giveup=log_giveup,
+                          jitter=backoff.random_jitter,
+                          init_value=0.5)
+    @_save_target
+    def succeeder(*args, **kwargs):
+        # succeed after we've backed off twice
+        if len(log['backoff']) < 2:
+            raise ValueError("catch me")
+
+    succeeder(1, 2, 3, foo=1, bar=2)
+
+    # we try 3 times, backing off twice before succeeding
+    assert len(log['success']) == 1
+    assert len(log['backoff']) == 2
+    assert len(log['giveup']) == 0
+
+    for i in range(2):
+        details = log['backoff'][i]
+        assert details['wait'] >= 0.5 * 2 ** i
+
+
+def test_on_exception_success_full_jitter(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
+    log, log_success, log_backoff, log_giveup = _log_hdlrs()
+
+    @backoff.on_exception(backoff.expo,
+                          Exception,
+                          on_success=log_success,
+                          on_backoff=log_backoff,
+                          on_giveup=log_giveup,
+                          jitter=backoff.full_jitter,
+                          init_value=0.5)
+    @_save_target
+    def succeeder(*args, **kwargs):
+        # succeed after we've backed off twice
+        if len(log['backoff']) < 2:
+            raise ValueError("catch me")
+
+    succeeder(1, 2, 3, foo=1, bar=2)
+
+    # we try 3 times, backing off twice before succeeding
+    assert len(log['success']) == 1
+    assert len(log['backoff']) == 2
+    assert len(log['giveup']) == 0
+
+    for i in range(2):
+        details = log['backoff'][i]
+        assert details['wait'] <= 0.5 * 2 ** i
+
+
+def test_on_exception_success_equal_jitter(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
+    log, log_success, log_backoff, log_giveup = _log_hdlrs()
+
+    @backoff.on_exception(backoff.expo,
+                          Exception,
+                          on_success=log_success,
+                          on_backoff=log_backoff,
+                          on_giveup=log_giveup,
+                          jitter=backoff.equal_jitter,
+                          init_value=0.5)
+    @_save_target
+    def succeeder(*args, **kwargs):
+        # succeed after we've backed off twice
+        if len(log['backoff']) < 2:
+            raise ValueError("catch me")
+
+    succeeder(1, 2, 3, foo=1, bar=2)
+
+    # we try 3 times, backing off twice before succeeding
+    assert len(log['success']) == 1
+    assert len(log['backoff']) == 2
+    assert len(log['giveup']) == 0
+
+    for i in range(2):
+        details = log['backoff'][i]
+        assert details['wait'] >= (0.5 * 2 ** i) / 2.0
+        assert details['wait'] <= 0.5 * 2 ** i
 
 
 def test_on_exception_success():
@@ -329,3 +449,89 @@ def test_on_predicate_iterable_handlers():
                            'target': emptiness._target,
                            'tries': 3,
                            'value': None}
+
+
+# To maintain backward compatibility,
+# on_predicate should support 0-argument jitter function.
+def test_on_exception_success_0_arg_jitter(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+    monkeypatch.setattr('random.random', lambda: 0)
+
+    log, log_success, log_backoff, log_giveup = _log_hdlrs()
+
+    @backoff.on_exception(backoff.constant,
+                          Exception,
+                          on_success=log_success,
+                          on_backoff=log_backoff,
+                          on_giveup=log_giveup,
+                          jitter=random.random,
+                          interval=0)
+    @_save_target
+    def succeeder(*args, **kwargs):
+        # succeed after we've backed off twice
+        if len(log['backoff']) < 2:
+            raise ValueError("catch me")
+
+    succeeder(1, 2, 3, foo=1, bar=2)
+
+    # we try 3 times, backing off twice before succeeding
+    assert len(log['success']) == 1
+    assert len(log['backoff']) == 2
+    assert len(log['giveup']) == 0
+
+    for i in range(2):
+        details = log['backoff'][i]
+        assert details == {'args': (1, 2, 3),
+                           'kwargs': {'foo': 1, 'bar': 2},
+                           'target': succeeder._target,
+                           'tries': i + 1,
+                           'wait': 0}
+
+    details = log['success'][0]
+    assert details == {'args': (1, 2, 3),
+                       'kwargs': {'foo': 1, 'bar': 2},
+                       'target': succeeder._target,
+                       'tries': 3}
+
+
+# To maintain backward compatibility,
+# on_predicate should support 0-argument jitter function.
+def test_on_predicate_success_0_arg_jitter(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+    monkeypatch.setattr('random.random', lambda: 0)
+
+    log, log_success, log_backoff, log_giveup = _log_hdlrs()
+
+    @backoff.on_predicate(backoff.constant,
+                          on_success=log_success,
+                          on_backoff=log_backoff,
+                          on_giveup=log_giveup,
+                          jitter=random.random,
+                          interval=0)
+    @_save_target
+    def success(*args, **kwargs):
+        # succeed after we've backed off twice
+        return len(log['backoff']) == 2
+
+    success(1, 2, 3, foo=1, bar=2)
+
+    # we try 3 times, backing off twice before succeeding
+    assert len(log['success']) == 1
+    assert len(log['backoff']) == 2
+    assert len(log['giveup']) == 0
+
+    for i in range(2):
+        details = log['backoff'][i]
+        assert details == {'args': (1, 2, 3),
+                           'kwargs': {'foo': 1, 'bar': 2},
+                           'target': success._target,
+                           'tries': i + 1,
+                           'value': False,
+                           'wait': 0}
+
+    details = log['success'][0]
+    assert details == {'args': (1, 2, 3),
+                       'kwargs': {'foo': 1, 'bar': 2},
+                       'target': success._target,
+                       'tries': 3,
+                       'value': True}
