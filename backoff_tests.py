@@ -6,16 +6,43 @@ import functools
 import pytest
 
 
+def test_aws_expo():
+    gen = backoff.aws_expo(full_jitter=False)
+    for i in range(9):
+        assert 0.5 * 2 ** i == next(gen)
+
+
 def test_expo():
     gen = backoff.expo()
     for i in range(9):
         assert 2 ** i == next(gen)
 
 
+def test_aws_expo_base3():
+    gen = backoff.aws_expo(base=3, full_jitter=False)
+    for i in range(9):
+        assert 3 * 2 ** i == next(gen)
+
+
 def test_expo_base3():
     gen = backoff.expo(base=3)
     for i in range(9):
         assert 3 ** i == next(gen)
+
+
+def test_aws_expo_max_value():
+    gen = backoff.aws_expo(base=0.5, max_value=2 ** 4, full_jitter=False)
+    expected = [0.5, 1, 2, 4, 8, 16, 16, 16]
+    for expect in expected:
+        assert expect == next(gen)
+
+
+def test_aws_expo_max_random_value():
+    gen = backoff.aws_expo(base=0.5, max_value=2)
+    expected = [0.5, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+
+    for expect in expected:
+        assert expect >= next(gen)
 
 
 def test_expo_max_value():
@@ -45,6 +72,22 @@ def test_constant():
         assert 3 == next(gen)
 
 
+def test_on_predicate_aws(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
+    @backoff.on_predicate(backoff.aws_expo,
+                          jitter=lambda: 0)
+    def return_true(log, n):
+        val = (len(log) == n - 1)
+        log.append(val)
+        return val
+
+    log = []
+    ret = return_true(log, 3)
+    assert ret is True
+    assert 3 == len(log)
+
+
 def test_on_predicate(monkeypatch):
     monkeypatch.setattr('time.sleep', lambda x: None)
 
@@ -57,6 +100,21 @@ def test_on_predicate(monkeypatch):
     log = []
     ret = return_true(log, 3)
     assert ret is True
+    assert 3 == len(log)
+
+
+def test_on_predicate_aws_max_tries(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
+    @backoff.on_predicate(backoff.aws_expo, max_tries=3)
+    def return_true(log, n):
+        val = (len(log) == n)
+        log.append(val)
+        return val
+
+    log = []
+    ret = return_true(log, 10)
+    assert ret is False
     assert 3 == len(log)
 
 
@@ -75,6 +133,22 @@ def test_on_predicate_max_tries(monkeypatch):
     assert 3 == len(log)
 
 
+def test_on_exception_aws(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
+    @backoff.on_exception(backoff.aws_expo, KeyError)
+    def keyerror_then_true(log, n):
+        if len(log) == n:
+            return True
+        e = KeyError()
+        log.append(e)
+        raise e
+
+    log = []
+    assert keyerror_then_true(log, 3) is True
+    assert 3 == len(log)
+
+
 def test_on_exception(monkeypatch):
     monkeypatch.setattr('time.sleep', lambda x: None)
 
@@ -89,6 +163,27 @@ def test_on_exception(monkeypatch):
     log = []
     assert keyerror_then_true(log, 3) is True
     assert 3 == len(log)
+
+
+def test_on_exception_aws_tuple(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
+    @backoff.on_exception(backoff.aws_expo, (KeyError, ValueError))
+    def keyerror_valueerror_then_true(log):
+        if len(log) == 2:
+            return True
+        if len(log) == 0:
+            e = KeyError()
+        if len(log) == 1:
+            e = ValueError()
+        log.append(e)
+        raise e
+
+    log = []
+    assert keyerror_valueerror_then_true(log) is True
+    assert 2 == len(log)
+    assert isinstance(log[0], KeyError)
+    assert isinstance(log[1], ValueError)
 
 
 def test_on_exception_tuple(monkeypatch):
@@ -110,6 +205,24 @@ def test_on_exception_tuple(monkeypatch):
     assert 2 == len(log)
     assert isinstance(log[0], KeyError)
     assert isinstance(log[1], ValueError)
+
+
+def test_on_exception_aws_max_tries(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
+    @backoff.on_exception(backoff.aws_expo, KeyError, max_tries=3)
+    def keyerror_then_true(log, n, foo=None):
+        if len(log) == n:
+            return True
+        e = KeyError()
+        log.append(e)
+        raise e
+
+    log = []
+    with pytest.raises(KeyError):
+        keyerror_then_true(log, 10, foo="bar")
+
+    assert 3 == len(log)
 
 
 def test_on_exception_max_tries(monkeypatch):

@@ -148,3 +148,71 @@ set the logger level to INFO:
 
     logging.getLogger('backoff').setLevel(logging.INFO)
 
+## Examples for Full Jitter
+
+*Full Jitter algorithm comes from [AWS Blog](http://www.awsarchitectureblog.com/2015/03/backoff.html), basically usage is almost identical to aforementioned examples, hence the unique difference would be described in this session.*
+
+### @backoff.on_exception
+
+The ``on_exception`` decorator is used to retry when a specified exception is raised. Here's an example using AWS exponential backoff when any requests exception is raised:
+
+    @backoff.on_exception(backoff.aws_expo,
+                          jitter=lambda: 0,
+                          requests.exceptions.RequestException,
+                          max_tries=8)
+    def get_url(url):
+        return requests.get(url)
+
+To take advantage of Full Jitter, you may just specify ``backoff.aws_expo`` and it should work as expected
+
+    sleep = random_between(0, min(max_value, base * 2 ** attempt))
+
+Actually both ``on_exception`` and ``on_predicate`` does slightly jitter as well by default, the idea is adding additional random milliseconds. Since ``aws_expo`` includes jitter, you are able to disable default random jitter by specifying ``jitter=lambda: 0``.
+
+## Make sure you are ready to 'commit'
+
+### Virtual Python Environment builder
+
+``virtualenv`` is a tool to create isolated testing environments which could prevent from pollution.
+
+	# Install virtualenv
+	$ sudo pip install virtualenv
+	
+	# Create virtual environment
+	$ virtualenv mytest
+	
+	# Activate virtual environment
+	$ cd mytest
+	$ source bin/activate
+
+### Python style guide checker
+
+    (mytest)$ sudo pip install pep8
+
+### Passive checker of Python programs
+
+    (mytest)$ sudo pip install pyflakes
+     
+### Pytest plugin for measuring coverage
+
+    (mytest)$ sudo pip install pytest-cov
+
+### Secure quality for your changes
+
+    # Switch to backoff.py and backoff_tests.py folder
+    (mytest)$ make check
+    
+    ============================= test session starts ==============================
+    platform darwin -- Python 2.7.10, pytest-2.8.5, py-1.4.31, pluggy-0.3.1
+    rootdir: /Github/backoff, inifile: 
+    plugins: cov-2.2.0
+    collected 16 items 
+
+    backoff_tests.py ................
+    --------------- coverage: platform darwin, python 2.7.10-final-0 ---------------
+    Name         Stmts   Miss  Cover   Missing
+    ------------------------------------------
+    backoff.py     123      0   100%   
+
+    ========================== 25 passed in 0.18 seconds ===========================
+

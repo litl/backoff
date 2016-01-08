@@ -171,6 +171,28 @@ else:
 logger.setLevel(logging.ERROR)
 
 
+def aws_expo(base=0.5, max_value=None, full_jitter=True):
+    """Generator for exponential decay base on AWS Blog.
+    Ref: http://www.awsarchitectureblog.com/2015/03/backoff.html
+
+    Args:
+        base: The mathematical base of the exponentiation operation
+        max_value: The maximum value to yield. Once the value in the
+             true exponential sequence exceeds this, the value
+             of max_value will forever after be yielded.
+        full_jitter: Enable Full Jitter algorithm, the default value
+             is true
+    """
+    n = 0
+    while True:
+        a = base * 2 ** n
+        if max_value is None or a < max_value:
+            yield random.uniform(0, a) if full_jitter else a
+            n += 1
+        else:
+            yield random.uniform(0, max_value) if full_jitter else max_value
+
+
 def expo(base=2, max_value=None):
     """Generator for exponential decay.
 
