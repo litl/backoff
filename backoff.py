@@ -233,7 +233,7 @@ def equal_jitter(value):
 def on_predicate(wait_gen,
                  predicate=operator.not_,
                  max_tries=None,
-                 jitter=random_jitter,
+                 jitter=full_jitter,
                  on_success=None,
                  on_backoff=None,
                  on_giveup=None,
@@ -292,10 +292,15 @@ def on_predicate(wait_gen,
                                   'value': ret})
                         break
 
-                    if jitter is not None:
-                        seconds = jitter(next(wait))
-                    else:
-                        seconds = next(wait)
+                    try:
+                        if jitter is not None:
+                            seconds = jitter(next(wait))
+                        else:
+                            seconds = next(wait)
+                    except TypeError:
+                        # support deprecated nullary jitter function signature
+                        # which returns a delta rather than a jittered value
+                        seconds = next(wait) + jitter()
 
                     for hdlr in backoff_hdlrs:
                         hdlr({'target': target,
@@ -327,7 +332,7 @@ def on_predicate(wait_gen,
 def on_exception(wait_gen,
                  exception,
                  max_tries=None,
-                 jitter=random_jitter,
+                 jitter=full_jitter,
                  on_success=None,
                  on_backoff=None,
                  on_giveup=None,
@@ -384,10 +389,15 @@ def on_exception(wait_gen,
                                   'tries': tries})
                         raise
 
-                    if jitter is not None:
-                        seconds = jitter(next(wait))
-                    else:
-                        seconds = next(wait)
+                    try:
+                        if jitter is not None:
+                            seconds = jitter(next(wait))
+                        else:
+                            seconds = next(wait)
+                    except TypeError:
+                        # support deprecated nullary jitter function signature
+                        # which returns a delta rather than a jittered value
+                        seconds = next(wait) + jitter()
 
                     for hdlr in backoff_hdlrs:
                         hdlr({'target': target,

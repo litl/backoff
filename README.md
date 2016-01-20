@@ -208,7 +208,7 @@ To take advantage of Full Jitter, you may just specify ``backoff.expo``, ``jitte
     --------------- coverage: platform darwin, python 2.7.10-final-0 ---------------
     Name         Stmts   Miss  Cover   Missing
     ------------------------------------------
-    backoff.py     125      0   100%
+    backoff.py     131      0   100%
 
     ========================== 25 passed in 0.18 seconds ===========================
 
