@@ -171,29 +171,7 @@ else:
 logger.setLevel(logging.ERROR)
 
 
-def aws_expo(base=0.5, max_value=None, full_jitter=True):
-    """Generator for exponential decay base on AWS Blog.
-    Ref: http://www.awsarchitectureblog.com/2015/03/backoff.html
-
-    Args:
-        base: The mathematical base of the exponentiation operation
-        max_value: The maximum value to yield. Once the value in the
-             true exponential sequence exceeds this, the value
-             of max_value will forever after be yielded.
-        full_jitter: Enable Full Jitter algorithm, the default value
-             is true
-    """
-    n = 0
-    while True:
-        a = base * 2 ** n
-        if max_value is None or a < max_value:
-            yield random.uniform(0, a) if full_jitter else a
-            n += 1
-        else:
-            yield random.uniform(0, max_value) if full_jitter else max_value
-
-
-def expo(base=2, max_value=None):
+def expo(init_value=1, base=2, max_value=None):
     """Generator for exponential decay.
 
     Args:
@@ -204,7 +182,7 @@ def expo(base=2, max_value=None):
     """
     n = 0
     while True:
-        a = base ** n
+        a = init_value * base ** n
         if max_value is None or a < max_value:
             yield a
             n += 1
@@ -240,10 +218,22 @@ def constant(interval=1):
         yield interval
 
 
+def random_jitter(value):
+    return value+random.random()
+
+
+def full_jitter(value):
+    return random.uniform(0, value)
+
+
+def equal_jitter(value):
+    return (value/2.0) + (random.uniform(0, value/2.0))
+
+
 def on_predicate(wait_gen,
                  predicate=operator.not_,
                  max_tries=None,
-                 jitter=random.random,
+                 jitter=None,
                  on_success=None,
                  on_backoff=None,
                  on_giveup=None,
@@ -261,11 +251,10 @@ def on_predicate(wait_gen,
             up. In the case of failure, the result of the last attempt
             will be returned.  The default value of None means their
             is no limit to the number of tries.
-        jitter: Callable returning an offset in seconds to add to the
-            value yielded by wait_gen. When used with the default
-            random function, this staggers wait times a random number
-            of milliseconds to help spread out load in the case that
-            there are multiple simultaneous retries occuring.
+        jitter: Callable returning an offset to the value yielded by wait_gen.
+            This staggers wait times a random number of milliseconds to help
+            spread out load in the case that there are multiple simultaneous
+            retries occuring.
         on_success: Callable (or iterable of callables) with a unary
             signature to be called in the event of success. The
             parameter is a dict containing details about the invocation.
@@ -303,7 +292,10 @@ def on_predicate(wait_gen,
                                   'value': ret})
                         break
 
-                    seconds = next(wait) + jitter()
+                    if jitter is not None:
+                        seconds = jitter(next(wait))
+                    else:
+                        seconds = next(wait)
 
                     for hdlr in backoff_hdlrs:
                         hdlr({'target': target,
@@ -335,7 +327,7 @@ def on_predicate(wait_gen,
 def on_exception(wait_gen,
                  exception,
                  max_tries=None,
-                 jitter=random.random,
+                 jitter=None,
                  on_success=None,
                  on_backoff=None,
                  on_giveup=None,
@@ -351,11 +343,10 @@ def on_exception(wait_gen,
             up. Once exhausted, the exception will be allowed to escape.
             The default value of None means their is no limit to the
             number of tries.
-        jitter: Callable returning an offset in seconds to add to the
-            value yielded by wait_gen. When used with the default
-            random function, this staggers wait times a random number
-            of milliseconds to help spread out load in the case that
-            there are multiple simultaneous retries occuring.
+        jitter: Callable returning an offset to the value yielded by wait_gen.
+            This staggers wait times a random number of milliseconds to help
+            spread out load in the case that there are multiple simultaneous
+            retries occuring.
         on_success: Callable (or iterable of callables) with a unary
             signature to be called in the event of success. The
             parameter is a dict containing details about the invocation.
@@ -393,7 +384,10 @@ def on_exception(wait_gen,
                                   'tries': tries})
                         raise
 
-                    seconds = next(wait) + jitter()
+                    if jitter is not None:
+                        seconds = jitter(next(wait))
+                    else:
+                        seconds = next(wait)
 
                     for hdlr in backoff_hdlrs:
                         hdlr({'target': target,
