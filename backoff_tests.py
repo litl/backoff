@@ -91,7 +91,7 @@ def test_on_predicate(monkeypatch):
 def test_on_predicate_max_tries(monkeypatch):
     monkeypatch.setattr('time.sleep', lambda x: None)
 
-    @backoff.on_predicate(backoff.expo, max_tries=3)
+    @backoff.on_predicate(backoff.expo, jitter=None, max_tries=3)
     def return_true(log, n):
         val = (len(log) == n)
         log.append(val)
@@ -143,7 +143,7 @@ def test_on_exception_tuple(monkeypatch):
 def test_on_exception_max_tries(monkeypatch):
     monkeypatch.setattr('time.sleep', lambda x: None)
 
-    @backoff.on_exception(backoff.expo, KeyError, max_tries=3)
+    @backoff.on_exception(backoff.expo, KeyError, jitter=None, max_tries=3)
     def keyerror_then_true(log, n, foo=None):
         if len(log) == n:
             return True
