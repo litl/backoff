@@ -292,15 +292,16 @@ def on_predicate(wait_gen,
                                   'value': ret})
                         break
 
+                    value = next(wait)
                     try:
                         if jitter is not None:
-                            seconds = jitter(next(wait))
+                            seconds = jitter(value)
                         else:
-                            seconds = next(wait)
+                            seconds = value
                     except TypeError:
                         # support deprecated nullary jitter function signature
                         # which returns a delta rather than a jittered value
-                        seconds = next(wait) + jitter()
+                        seconds = value + jitter()
 
                     for hdlr in backoff_hdlrs:
                         hdlr({'target': target,
@@ -389,15 +390,16 @@ def on_exception(wait_gen,
                                   'tries': tries})
                         raise
 
+                    value = next(wait)
                     try:
                         if jitter is not None:
-                            seconds = jitter(next(wait))
+                            seconds = jitter(value)
                         else:
-                            seconds = next(wait)
+                            seconds = value
                     except TypeError:
                         # support deprecated nullary jitter function signature
                         # which returns a delta rather than a jittered value
-                        seconds = next(wait) + jitter()
+                        seconds = value + jitter()
 
                     for hdlr in backoff_hdlrs:
                         hdlr({'target': target,
