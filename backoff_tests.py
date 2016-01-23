@@ -287,10 +287,7 @@ def test_on_exception_success_equal_jitter(monkeypatch):
         assert details['wait'] <= 0.5 * 2 ** i
 
 
-def test_on_exception_success(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
-    monkeypatch.setattr('random.random', lambda: 1)
-
+def test_on_exception_success():
     log, log_success, log_backoff, log_giveup = _log_hdlrs()
 
     @backoff.on_exception(backoff.constant,
@@ -298,7 +295,7 @@ def test_on_exception_success(monkeypatch):
                           on_success=log_success,
                           on_backoff=log_backoff,
                           on_giveup=log_giveup,
-                          jitter=backoff.random_jitter,
+                          jitter=lambda: 0,
                           interval=0)
     @_save_target
     def succeeder(*args, **kwargs):
@@ -319,7 +316,7 @@ def test_on_exception_success(monkeypatch):
                            'kwargs': {'foo': 1, 'bar': 2},
                            'target': succeeder._target,
                            'tries': i + 1,
-                           'wait': 1}
+                           'wait': 0}
 
     details = log['success'][0]
     assert details == {'args': (1, 2, 3),
@@ -337,7 +334,7 @@ def test_on_exception_giveup():
                           on_backoff=log_backoff,
                           on_giveup=log_giveup,
                           max_tries=3,
-                          jitter=backoff.random_jitter,
+                          jitter=lambda: 0,
                           interval=0)
     @_save_target
     def exceptor(*args, **kwargs):
@@ -365,7 +362,7 @@ def test_on_predicate_success():
                           on_success=log_success,
                           on_backoff=log_backoff,
                           on_giveup=log_giveup,
-                          jitter=backoff.full_jitter,
+                          jitter=lambda: 0,
                           interval=0)
     @_save_target
     def success(*args, **kwargs):
@@ -404,6 +401,7 @@ def test_on_predicate_giveup():
                           on_backoff=log_backoff,
                           on_giveup=log_giveup,
                           max_tries=3,
+                          jitter=lambda: 0,
                           interval=0)
     @_save_target
     def emptiness(*args, **kwargs):
@@ -432,7 +430,7 @@ def test_on_predicate_iterable_handlers():
                           on_backoff=(h[2] for h in hdlrs),
                           on_giveup=(h[3] for h in hdlrs),
                           max_tries=3,
-                          jitter=backoff.equal_jitter,
+                          jitter=lambda: 0,
                           interval=0)
     @_save_target
     def emptiness(*args, **kwargs):
