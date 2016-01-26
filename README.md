@@ -147,4 +147,3 @@ raised. If you would instead like to log any type of retry, you can
 set the logger level to INFO:
 
     logging.getLogger('backoff').setLevel(logging.INFO)
-
