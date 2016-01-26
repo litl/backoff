@@ -23,6 +23,3 @@ test: clean
 
 check: pep8 pyflakes test
 	@coverage report | grep 100% >/dev/null || { echo 'Unit tests coverage is incomplete.'; exit 1; }
-
-docs:
-	@python -c 'import backoff ; print "# backoff" ; print "\n[![Build Status](https://travis-ci.org/litl/backoff.svg?branch=master)](https://travis-ci.org/litl/backoff?branch=master) [![Coverage Status](https://coveralls.io/repos/litl/backoff/badge.svg?branch=master)](https://coveralls.io/r/litl/backoff?branch=master)" ; print backoff.__doc__' > README.md
