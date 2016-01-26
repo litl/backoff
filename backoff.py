@@ -85,14 +85,40 @@ def constant(interval=1):
 
 
 def random_jitter(value):
+    """Jitter the value a random number of milliseconds.
+
+    This adds up to 1 second of additional time to the original value.
+    Prior to backoff version 1.2 this was the default jitter behavior.
+
+    Args:
+        value: The unadulterated backoff value.
+    """
     return value + random.random()
 
 
 def full_jitter(value):
+    """Jitter the value across the full range (value to 0).
+
+    This corresponds to the "Full Jitter" algorithm specified in the AWS
+    blog's post on the performance of various jitter algorithms.
+    (http://www.awsarchitectureblog.com/2015/03/backoff.html)
+
+    Args:
+        value: The unadulterated backoff value.
+    """
     return random.uniform(0, value)
 
 
 def equal_jitter(value):
+    """Jitter the value across half the range (½ value to value).
+
+    This corresponds to the "Equal Jitter" algorithm specified in the AWS
+    blog's post on the performance of various jitter algorithms.
+    (http://www.awsarchitectureblog.com/2015/03/backoff.html)
+
+    Args:
+        value: The unadulterated backoff value.
+    """
     return (value/2.0) + (random.uniform(0, value/2.0))
 
 
