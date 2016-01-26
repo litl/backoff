@@ -85,7 +85,7 @@ def constant(interval=1):
 
 
 def random_jitter(value):
-    return value+random.random()
+    return value + random.random()
 
 
 def full_jitter(value):
