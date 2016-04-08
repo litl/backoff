@@ -78,6 +78,13 @@ gets a non-falsey result could be defined like like this::
     def poll_for_message(queue)
         return queue.get()
 
+Jitter
+------
+
+By default, the backoff decorators use the 'Full Jitter' algorithm as
+defined in the AWS Architecture Blog's "Exponential Backoff And Jitter"
+post <https://www.awsarchitectureblog.com/2015/03/backoff.html>.
+
 Using multiple decorators
 -------------------------
 
@@ -130,7 +137,14 @@ implemented like so::
 **Multiple handlers per event type**
 
 In all cases, iterables of handler functions are also accepted, which
-are called in turn.
+are called in turn. For example, you might provide a simple list of
+handle functions as the value of the on_backoff keyword arg.
+
+    @backoff.on_exception(backoff.expo,
+                          requests.exceptions.RequestException,
+                          on_backoff=[backoff_hdlr1, backoff_hdlr2])
+    def get_url(url):
+        return requests.get(url)
 
 **Getting exception info**
 
