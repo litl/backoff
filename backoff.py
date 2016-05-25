@@ -109,19 +109,6 @@ def full_jitter(value):
     return random.uniform(0, value)
 
 
-def equal_jitter(value):
-    """Jitter the value across half the range (½ value to value).
-
-    This corresponds to the "Equal Jitter" algorithm specified in the AWS
-    blog's post on the performance of various jitter algorithms.
-    (http://www.awsarchitectureblog.com/2015/03/backoff.html)
-
-    Args:
-        value: The unadulterated backoff value.
-    """
-    return (value/2.0) + (random.uniform(0, value/2.0))
-
-
 def on_predicate(wait_gen,
                  predicate=operator.not_,
                  max_tries=None,

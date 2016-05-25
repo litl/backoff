@@ -15,14 +15,6 @@ def test_full_jitter():
         assert jitter <= input
 
 
-def test_equal_jitter():
-    for input in range(100):
-        for i in range(100):
-            jitter = backoff.equal_jitter(input)
-            assert jitter >= input/2.0
-            assert jitter <= input
-
-
 def test_expo():
     gen = backoff.expo()
     for i in range(9):
@@ -253,37 +245,6 @@ def test_on_exception_success_full_jitter(monkeypatch):
 
     for i in range(2):
         details = log['backoff'][i]
-        assert details['wait'] <= 0.5 * 2 ** i
-
-
-def test_on_exception_success_equal_jitter(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
-
-    log, log_success, log_backoff, log_giveup = _log_hdlrs()
-
-    @backoff.on_exception(backoff.expo,
-                          Exception,
-                          on_success=log_success,
-                          on_backoff=log_backoff,
-                          on_giveup=log_giveup,
-                          jitter=backoff.equal_jitter,
-                          init_value=0.5)
-    @_save_target
-    def succeeder(*args, **kwargs):
-        # succeed after we've backed off twice
-        if len(log['backoff']) < 2:
-            raise ValueError("catch me")
-
-    succeeder(1, 2, 3, foo=1, bar=2)
-
-    # we try 3 times, backing off twice before succeeding
-    assert len(log['success']) == 1
-    assert len(log['backoff']) == 2
-    assert len(log['giveup']) == 0
-
-    for i in range(2):
-        details = log['backoff'][i]
-        assert details['wait'] >= (0.5 * 2 ** i) / 2.0
         assert details['wait'] <= 0.5 * 2 ** i
 
 
