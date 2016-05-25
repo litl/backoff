@@ -81,9 +81,25 @@ gets a non-falsey result could be defined like like this::
 Jitter
 ------
 
-By default, the backoff decorators use the 'Full Jitter' algorithm as
-defined in the AWS Architecture Blog's "Exponential Backoff And Jitter"
-post <https://www.awsarchitectureblog.com/2015/03/backoff.html>.
+A jitter algorithm can be supplied by way of the jitter keyword arg to
+either of the backoff decorators. This argument should be a function
+accepting the original unadulterated backoff value and returning it's
+jittered counterpart.
+
+As of version 1.2, the default jitter algorithm is the 'Full Jitter'
+algorithm as defined in the AWS Architecture Blog's
+`Exponential Backoff And Jitter 
+<https://www.awsarchitectureblog.com/2015/03/backoff.html>`_ post.
+Previous versions of backoff used the less aggressive method of
+adding to the original value some random number of milliseconds up
+to 1s. If desired, this behavior can be replicated by specifying
+the `random_jitter` function::
+
+    @backoff.on_predicate(backoff.constant,
+                          interval=1,
+                          jitter=backoff.random_jitter):
+    def poll_for_message(queue):
+        return queue.get()
 
 Using multiple decorators
 -------------------------

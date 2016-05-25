@@ -98,10 +98,10 @@ def random_jitter(value):
 
 
 def full_jitter(value):
-    """Jitter the value across the full range (value to 0).
+    """Jitter the value across the full range (0 to value).
 
-    This corresponds to the "Full Jitter" algorithm specified in the AWS
-    blog's post on the performance of various jitter algorithms.
+    This corresponds to the "Full Jitter" algorithm specified in the
+    AWS blog's post on the performance of various jitter algorithms.
     (http://www.awsarchitectureblog.com/2015/03/backoff.html)
 
     Args:
