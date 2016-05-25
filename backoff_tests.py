@@ -27,14 +27,14 @@ def test_expo_base3():
         assert 3 ** i == next(gen)
 
 
-def test_expo_init3():
-    gen = backoff.expo(init_value=3)
+def test_expo_factor3():
+    gen = backoff.expo(factor=3)
     for i in range(9):
         assert 3 * 2 ** i == next(gen)
 
 
-def test_expo_base3_init5():
-    gen = backoff.expo(base=3, init_value=5)
+def test_expo_base3_factor5():
+    gen = backoff.expo(base=3, factor=5)
     for i in range(9):
         assert 5 * 3 ** i == next(gen)
 
@@ -199,7 +199,7 @@ def test_on_exception_success_random_jitter(monkeypatch):
                           on_backoff=log_backoff,
                           on_giveup=log_giveup,
                           jitter=backoff.random_jitter,
-                          init_value=0.5)
+                          factor=0.5)
     @_save_target
     def succeeder(*args, **kwargs):
         # succeed after we've backed off twice
@@ -229,7 +229,7 @@ def test_on_exception_success_full_jitter(monkeypatch):
                           on_backoff=log_backoff,
                           on_giveup=log_giveup,
                           jitter=backoff.full_jitter,
-                          init_value=0.5)
+                          factor=0.5)
     @_save_target
     def succeeder(*args, **kwargs):
         # succeed after we've backed off twice
