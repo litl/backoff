@@ -26,9 +26,9 @@ the backoff module.
 @backoff.on_exception
 ---------------------
 
-The `on_exception` decorator is used to retry when a specified exception
+The ``on_exception`` decorator is used to retry when a specified exception
 is raised. Here's an example using exponential backoff when any
-`requests` exception is raised::
+``requests`` exception is raised::
 
     @backoff.on_exception(backoff.expo,
                           requests.exceptions.RequestException,
@@ -49,7 +49,7 @@ you want the same backoff behavior for more than one exception type::
 @backoff.on_predicate
 ---------------------
 
-The `on_predicate` decorator is used to retry when a particular
+The ``on_predicate`` decorator is used to retry when a particular
 condition is true of the return value of the target function.  This may
 be useful when polling a resource for externally generated content.
 
@@ -61,7 +61,7 @@ return value of the target function is the empty list::
         return queue.get()
 
 Extra keyword arguments are passed when initializing the
-wait generator, so the `max_value` param above is passed as a keyword
+wait generator, so the ``max_value`` param above is passed as a keyword
 arg when initializing the fibo generator.
 
 When not specified, the predicate param defaults to the falsey test,
@@ -86,14 +86,14 @@ either of the backoff decorators. This argument should be a function
 accepting the original unadulterated backoff value and returning it's
 jittered counterpart.
 
-As of version 1.2, the default jitter function `backoff.full_jitter`
+As of version 1.2, the default jitter function ``backoff.full_jitter``
 implements the 'Full Jitter' algorithm as defined in the AWS
 Architecture Blog's `Exponential Backoff And Jitter
 <https://www.awsarchitectureblog.com/2015/03/backoff.html>`_ post.
 
 Previous versions of backoff defaulted to adding some random number of
 milliseconds (up to 1s) to the raw sleep value. If desired, this
-behavior is now available as `backoff.random_jitter`.
+behavior is now available as ``backoff.random_jitter``.
 
 Using multiple decorators
 -------------------------
@@ -115,7 +115,7 @@ Event handlers
 --------------
 
 Both backoff decorators optionally accept event handler functions
-using the keyword arguments `on_success`, `on_backoff`, and `on_giveup`.
+using the keyword arguments ``on_success``, ``on_backoff``, and ``on_giveup``.
 This may be useful in reporting statistics or performing other custom
 logging.
 
@@ -127,8 +127,8 @@ include:
 * *args*: positional arguments to func
 * *kwargs*: keyword arguments to func
 * *tries*: number of invocation tries so far
-* *wait*: seconds to wait (`on_backoff` handler only)
-* *value*: value triggering backoff (`on_predicate` decorator only)
+* *wait*: seconds to wait (``on_backoff`` handler only)
+* *value*: value triggering backoff (``on_predicate`` decorator only)
 
 A handler which prints the details of the backoff event could be
 implemented like so::
@@ -148,7 +148,7 @@ implemented like so::
 
 In all cases, iterables of handler functions are also accepted, which
 are called in turn. For example, you might provide a simple list of
-handle functions as the value of the `on_backoff` keyword arg::
+handle functions as the value of the ``on_backoff`` keyword arg::
 
     @backoff.on_exception(backoff.expo,
                           requests.exceptions.RequestException,
@@ -158,11 +158,11 @@ handle functions as the value of the `on_backoff` keyword arg::
 
 **Getting exception info**
 
-In the case of the `on_exception` decorator, all `on_backoff` and
-`on_giveup` handlers are called from within the except block for the
+In the case of the ``on_exception`` decorator, all ``on_backoff`` and
+``on_giveup`` handlers are called from within the except block for the
 exception being handled. Therefore exception info is available to the
 handler functions via the python standard library, specifically
-`sys.exc_info()` or the `traceback` module.
+``sys.exc_info()`` or the ``traceback`` module.
 
 Logging configuration
 ---------------------
@@ -176,7 +176,7 @@ as::
     logging.getLogger('backoff').addHandler(logging.StreamHandler())
 
 The default logging level is ERROR, which corresponds to logging anytime
-`max_tries` is exceeded as well as any time a retryable exception is
+``max_tries`` is exceeded as well as any time a retryable exception is
 raised. If you would instead like to log any type of retry, you can
 set the logger level to INFO::
 
