@@ -18,7 +18,7 @@ polling resources for externally generated content.
 Examples
 ========
 
-*Since Kenneth Reitz's requests <http://python-requests.org> module
+*Since Kenneth Reitz's `requests <http://python-requests.org>`_ module
 has become a defacto standard for HTTP clients in python, networking
 examples below are written using it, but it is in no way required by
 the backoff module.*
@@ -81,25 +81,19 @@ gets a non-falsey result could be defined like like this::
 Jitter
 ------
 
-A jitter algorithm can be supplied by way of the jitter keyword arg to
+A jitter algorithm can be supplied with the jitter keyword arg to
 either of the backoff decorators. This argument should be a function
 accepting the original unadulterated backoff value and returning it's
 jittered counterpart.
 
-As of version 1.2, the default jitter algorithm is the 'Full Jitter'
-algorithm as defined in the AWS Architecture Blog's
-`Exponential Backoff And Jitter 
+As of version 1.2, the default jitter function `backoff.full_jitter`
+implements the 'Full Jitter' algorithm as defined in the AWS
+Architecture Blog's `Exponential Backoff And Jitter
 <https://www.awsarchitectureblog.com/2015/03/backoff.html>`_ post.
-Previous versions of backoff used the less aggressive method of
-adding to the original value some random number of milliseconds up
-to 1s. If desired, this behavior can be replicated by specifying
-the `random_jitter` function::
 
-    @backoff.on_predicate(backoff.constant,
-                          interval=1,
-                          jitter=backoff.random_jitter):
-    def poll_for_message(queue):
-        return queue.get()
+*Previous versions of backoff defaulted to adding some random number of
+milliseconds (up to 1s) to the raw sleep value. If desired, this
+behavior is now available as `backoff.random_jitter`.*
 
 Using multiple decorators
 -------------------------
@@ -154,7 +148,7 @@ implemented like so::
 
 In all cases, iterables of handler functions are also accepted, which
 are called in turn. For example, you might provide a simple list of
-handle functions as the value of the on_backoff keyword arg.
+handle functions as the value of the `on_backoff` keyword arg::
 
     @backoff.on_exception(backoff.expo,
                           requests.exceptions.RequestException,
