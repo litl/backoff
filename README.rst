@@ -18,10 +18,10 @@ polling resources for externally generated content.
 Examples
 ========
 
-*Since Kenneth Reitz's `requests <http://python-requests.org>`_ module
+Since Kenneth Reitz's `requests <http://python-requests.org>`_ module
 has become a defacto standard for HTTP clients in python, networking
 examples below are written using it, but it is in no way required by
-the backoff module.*
+the backoff module.
 
 @backoff.on_exception
 ---------------------
