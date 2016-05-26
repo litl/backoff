@@ -36,3 +36,12 @@
 ### Changed
 - Docs and test for multi exception invocations
 - Update dev environment test dependencies
+
+## [v1.2.0] - 2016-05-26
+### Added
+- 'Full jitter' algorithm from @jonascheng
+
+### Changed
+- Jitter function now accepts raw value and returns jittered value
+- Change README to reST for the benefit of pypi :(
+- Remove docstring doc generation and make README canonical
