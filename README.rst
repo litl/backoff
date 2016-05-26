@@ -91,9 +91,9 @@ implements the 'Full Jitter' algorithm as defined in the AWS
 Architecture Blog's `Exponential Backoff And Jitter
 <https://www.awsarchitectureblog.com/2015/03/backoff.html>`_ post.
 
-*Previous versions of backoff defaulted to adding some random number of
+Previous versions of backoff defaulted to adding some random number of
 milliseconds (up to 1s) to the raw sleep value. If desired, this
-behavior is now available as `backoff.random_jitter`.*
+behavior is now available as `backoff.random_jitter`.
 
 Using multiple decorators
 -------------------------
