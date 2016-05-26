@@ -26,14 +26,14 @@ classifiers = ['Development Status :: 5 - Production/Stable',
 
 
 core.setup(name='backoff',
-           version='1.1.0',
+           version='1.2.0',
            py_modules=['backoff'],
            author="Bob Green",
            author_email="bgreen@litl.com",
            description="Function decoration for backoff and retry",
            keywords = "backoff function decorator",
            url="https://github.com/litl/backoff",
-           download_url="https://github.com/litl/backoff/tarball/v1.1.0",
+           download_url="https://github.com/litl/backoff/tarball/v1.2.0",
            license="MIT",
            long_description=backoff.__doc__,
            classifiers=classifiers)
