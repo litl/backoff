@@ -81,7 +81,7 @@ gets a non-falsey result could be defined like like this::
 Jitter
 ------
 
-A jitter algorithm can be supplied with the jitter keyword arg to
+A jitter algorithm can be supplied with the ``jitter`` keyword arg to
 either of the backoff decorators. This argument should be a function
 accepting the original unadulterated backoff value and returning it's
 jittered counterpart.
