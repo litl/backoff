@@ -143,7 +143,7 @@ def on_predicate(wait_gen,
         on_backoff: Callable (or iterable of callables) with a unary
             signature to be called in the event of a backoff. The
             parameter is a dict containing details about the invocation.
-        on_giveup: Callable (or iterable of callables) wutg a unary
+        on_giveup: Callable (or iterable of callables) with a unary
             signature to be called in the event that max_tries
             is exceeded.  The parameter is a dict containing details
             about the invocation.
@@ -243,7 +243,7 @@ def on_exception(wait_gen,
         on_backoff: Callable (or iterable of callables) with a unary
             signature to be called in the event of a backoff. The
             parameter is a dict containing details about the invocation.
-        on_giveup: Callable (or iterable of callables) wutg a unary
+        on_giveup: Callable (or iterable of callables) with a unary
             signature to be called in the event that max_tries
             is exceeded.  The parameter is a dict containing details
             about the invocation.
