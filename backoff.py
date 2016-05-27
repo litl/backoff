@@ -232,7 +232,7 @@ def on_exception(wait_gen,
             The default value of None means their is no limit to the
             number of tries.
         jitter: A function of the value yielded by wait_gen returning
-            the actual time to wait. This distributed wait times
+            the actual time to wait. This distributes wait times
             stochastically in order to avoid timing collisions across
             concurrent clients. Wait times are jittered by default
             using the full_jitter function. Jittering may be disabled
