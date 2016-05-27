@@ -131,10 +131,10 @@ def on_predicate(wait_gen,
             up. In the case of failure, the result of the last attempt
             will be returned.  The default value of None means their
             is no limit to the number of tries.
-        jitter: Callable returning an offset to the value yielded by wait_gen.
-            This staggers wait times a random number of milliseconds to help
-            spread out load in the case that there are multiple simultaneous
-            retries occuring.
+        jitter: Callable returning an offset to the value yielded by
+            wait_gen. This staggers wait times a random number of
+            milliseconds to help spread out load in the case that there
+            are multiple simultaneous retries occuring.
         on_success: Callable (or iterable of callables) with a unary
             signature to be called in the event of success. The
             parameter is a dict containing details about the invocation.
@@ -229,10 +229,10 @@ def on_exception(wait_gen,
             up. Once exhausted, the exception will be allowed to escape.
             The default value of None means their is no limit to the
             number of tries.
-        jitter: Callable returning an offset to the value yielded by wait_gen.
-            This staggers wait times a random number of milliseconds to help
-            spread out load in the case that there are multiple simultaneous
-            retries occuring.
+        jitter: Callable returning an offset to the value yielded by
+            wait_gen. This staggers wait times a random number of
+            milliseconds to help spread out load in the case that
+            there are multiple simultaneousretries occuring.
         on_success: Callable (or iterable of callables) with a unary
             signature to be called in the event of success. The
             parameter is a dict containing details about the invocation.
