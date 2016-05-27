@@ -45,3 +45,7 @@
 - Jitter function now accepts raw value and returns jittered value
 - Change README to reST for the benefit of pypi :(
 - Remove docstring doc generation and make README canonical
+
+## [v1.2.1] - 2016-05-27
+### Changed
+- Documentation fixes
