@@ -148,7 +148,7 @@ implemented like so::
 
 In all cases, iterables of handler functions are also accepted, which
 are called in turn. For example, you might provide a simple list of
-handle functions as the value of the ``on_backoff`` keyword arg::
+handler functions as the value of the ``on_backoff`` keyword arg::
 
     @backoff.on_exception(backoff.expo,
                           requests.exceptions.RequestException,
