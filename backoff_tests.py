@@ -316,6 +316,26 @@ def test_on_exception_giveup():
                        'tries': 3}
 
 
+def test_on_exception_giveup_predicate(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
+    def on_baz(e):
+        return str(e) == "baz"
+
+    vals = ["baz", "bar", "foo"]
+
+    @backoff.on_exception(backoff.constant,
+                          ValueError,
+                          giveup=on_baz)
+    def foo_bar_baz():
+        raise ValueError(vals.pop())
+
+    with pytest.raises(ValueError):
+        foo_bar_baz()
+
+    assert not vals
+
+
 def test_on_predicate_success():
     log, log_success, log_backoff, log_giveup = _log_hdlrs()
 

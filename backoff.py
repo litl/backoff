@@ -216,6 +216,7 @@ def on_exception(wait_gen,
                  exception,
                  max_tries=None,
                  jitter=full_jitter,
+                 giveup=lambda e: False,
                  on_success=None,
                  on_backoff=None,
                  on_giveup=None,
@@ -237,6 +238,9 @@ def on_exception(wait_gen,
             concurrent clients. Wait times are jittered by default
             using the full_jitter function. Jittering may be disabled
             altogether by passing jitter=None.
+        giveup: Function accepting an exception instance and
+            returning whether or not to give up. Optional. The default
+            is to always continue.
         on_success: Callable (or iterable of callables) with a unary
             signature to be called in the event of success. The
             parameter is a dict containing details about the invocation.
@@ -265,8 +269,8 @@ def on_exception(wait_gen,
                 try:
                     tries += 1
                     ret = target(*args, **kwargs)
-                except exception:
-                    if tries == max_tries:
+                except exception as e:
+                    if giveup(e) or tries == max_tries:
 
                         for hdlr in giveup_hdlrs:
                             hdlr({'target': target,
