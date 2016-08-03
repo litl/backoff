@@ -165,7 +165,7 @@ def on_predicate(wait_gen,
                 tries += 1
                 ret = target(*args, **kwargs)
                 if predicate(ret):
-                    if max_tries is not None and tries == max_tries:
+                    if tries == max_tries:
                         for hdlr in giveup_hdlrs:
                             hdlr({'target': target,
                                   'args': args,
@@ -266,7 +266,8 @@ def on_exception(wait_gen,
                     tries += 1
                     ret = target(*args, **kwargs)
                 except exception:
-                    if max_tries is not None and tries == max_tries:
+                    if tries == max_tries:
+
                         for hdlr in giveup_hdlrs:
                             hdlr({'target': target,
                                   'args': args,
