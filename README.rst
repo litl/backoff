@@ -128,6 +128,37 @@ backoff behavior for different cases::
     def poll_for_message(queue):
         return queue.get()
 
+Runtime Configuration
+---------------------
+
+The decorator functions ``on_exception`` and ``on_predicate`` are
+generally evaluated at import time. This is fine when the keyword args
+are passed as constant values, but suppose we want to consult a
+dictionary with configuration options that only become available at
+runtime. The relevant values are not available at import time. Instead,
+decorator functions can be passed callables which are evaluated at
+runtime to obtain the value::
+
+    def lookup_max_tries():
+        # pretend we have a global reference to 'app' here
+        # and that it has a dictionary-like 'config' property
+        return app.config["BACKOFF_MAX_TRIES"]
+
+    @backoff.on_exception(backoff.expo,
+                          ValueError,
+                          max_tries=lookup_max_tries)
+
+More cleverly, you might define a function which returns a lookup
+function for a specified variable::
+
+    def config(app, name):
+        return functools.partial(app.config.get, name)
+
+    @backoff.on_exception(backoff.expo,
+                          ValueError,
+                          max_value=config(app, "BACKOFF_MAX_VALUE")
+                          max_tries=config(app, "BACKOFF_MAX_TRIES"))
+
 Event handlers
 --------------
 

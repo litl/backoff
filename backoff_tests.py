@@ -516,3 +516,48 @@ def test_on_predicate_success_0_arg_jitter(monkeypatch):
                        'target': success._target,
                        'tries': 3,
                        'value': True}
+
+
+def test_on_exception_callable_max_tries(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
+    def lookup_max_tries():
+        return 3
+
+    log = []
+
+    @backoff.on_exception(backoff.constant,
+                          ValueError,
+                          max_tries=lookup_max_tries)
+    def exceptor():
+        log.append(True)
+        raise ValueError()
+
+    with pytest.raises(ValueError):
+        exceptor()
+
+    assert len(log) == 3
+
+
+def test_on_exception_callable_gen_kwargs():
+
+    def lookup_foo():
+        return "foo"
+
+    def wait_gen(foo=None, bar=None):
+        assert foo == "foo"
+        assert bar == "bar"
+
+        while True:
+            yield 0
+
+    @backoff.on_exception(wait_gen,
+                          ValueError,
+                          max_tries=2,
+                          foo=lookup_foo,
+                          bar="bar")
+    def exceptor():
+        raise ValueError("aah")
+
+    with pytest.raises(ValueError):
+        exceptor()

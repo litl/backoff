@@ -148,7 +148,9 @@ def on_predicate(wait_gen,
             is exceeded.  The parameter is a dict containing details
             about the invocation.
         **wait_gen_kwargs: Any additional keyword args specified will be
-            passed to wait_gen when it is initialized.
+            passed to wait_gen when it is initialized.  Any callable
+            args will first be evaluated and their return values passed.
+            This is useful for runtime configuration.
     """
     success_hdlrs = _handlers(on_success)
     backoff_hdlrs = _handlers(on_backoff, _log_backoff)
@@ -158,14 +160,19 @@ def on_predicate(wait_gen,
 
         @functools.wraps(target)
         def retry(*args, **kwargs):
-            tries = 0
+            # change names because python 2.x doesn't have nonlocal
+            max_tries_ = _maybe_call(max_tries)
 
-            wait = wait_gen(**wait_gen_kwargs)
+            # there are no dictionary comprehensions in python 2.6
+            wait = wait_gen(**dict((k, _maybe_call(v))
+                                   for k, v in wait_gen_kwargs.items()))
+
+            tries = 0
             while True:
                 tries += 1
                 ret = target(*args, **kwargs)
                 if predicate(ret):
-                    if tries == max_tries:
+                    if tries == max_tries_:
                         for hdlr in giveup_hdlrs:
                             hdlr({'target': target,
                                   'args': args,
@@ -231,7 +238,8 @@ def on_exception(wait_gen,
         max_tries: The maximum number of attempts to make before giving
             up. Once exhausted, the exception will be allowed to escape.
             The default value of None means their is no limit to the
-            number of tries.
+            number of tries. If a callable is passed, it will be
+            evaluated at runtime and its return value used.
         jitter: A function of the value yielded by wait_gen returning
             the actual time to wait. This distributes wait times
             stochastically in order to avoid timing collisions across
@@ -252,8 +260,9 @@ def on_exception(wait_gen,
             is exceeded.  The parameter is a dict containing details
             about the invocation.
         **wait_gen_kwargs: Any additional keyword args specified will be
-            passed to wait_gen when it is initialized.
-
+            passed to wait_gen when it is initialized.  Any callable
+            args will first be evaluated and their return values passed.
+            This is useful for runtime configuration.
     """
     success_hdlrs = _handlers(on_success)
     backoff_hdlrs = _handlers(on_backoff, _log_backoff)
@@ -263,15 +272,20 @@ def on_exception(wait_gen,
 
         @functools.wraps(target)
         def retry(*args, **kwargs):
+            # change names because python 2.x doesn't have nonlocal
+            max_tries_ = _maybe_call(max_tries)
+
+            # there are no dictionary comprehensions in python 2.6
+            wait = wait_gen(**dict((k, _maybe_call(v))
+                                   for k, v in wait_gen_kwargs.items()))
+
             tries = 0
-            wait = wait_gen(**wait_gen_kwargs)
             while True:
                 try:
                     tries += 1
                     ret = target(*args, **kwargs)
                 except exception as e:
-                    if giveup(e) or tries == max_tries:
-
+                    if giveup(e) or tries == max_tries_:
                         for hdlr in giveup_hdlrs:
                             hdlr({'target': target,
                                   'args': args,
@@ -324,6 +338,11 @@ def _handlers(hdlr, default=None):
         return defaults + list(hdlr)
 
     return defaults + [hdlr]
+
+
+# Evaluate arg that can be either a fixed value or a callable.
+def _maybe_call(f, *args, **kwargs):
+    return f(*args, **kwargs) if callable(f) else f
 
 
 # Formats a function invocation as a unicode string for logging.
