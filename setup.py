@@ -22,15 +22,20 @@ classifiers = ['Development Status :: 5 - Production/Stable',
                'Topic :: Utilities']
 
 
+def readme():
+    with open("README.rst", "r") as infile:
+        return infile.read()
+
+
 core.setup(name='backoff',
-           version='1.2.1',
+           version='1.3.0',
+           description="Function decoration for backoff and retry",
+           long_description=readme(),
            py_modules=['backoff'],
            author="Bob Green",
            author_email="bgreen@litl.com",
-           description="Function decoration for backoff and retry",
            keywords = "backoff function decorator",
            url="https://github.com/litl/backoff",
-           download_url="https://github.com/litl/backoff/tarball/v1.2.1",
+           download_url="https://github.com/litl/backoff/tarball/v1.3.0",
            license="MIT",
-           long_description=backoff.__doc__,
            classifiers=classifiers)

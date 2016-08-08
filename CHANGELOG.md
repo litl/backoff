@@ -49,3 +49,11 @@
 ## [v1.2.1] - 2016-05-27
 ### Changed
 - Documentation fixes
+
+## [v1.3.0] - 2016-08-08
+### Added
+- Support runtime configuration with optional callable kwargs
+- Add giveup kwarg for exception inspection
+
+### Changed
+- Documentation fixes
