@@ -17,7 +17,7 @@ pyflakes:
 clean:
 	@find . -name "*.pyc" -delete
 	@find . -name "__pycache__" -delete
-	@rm -rf build
+	@rm -rf build dist
 
 test: clean
 	@PYTHONPATH=. py.test --cov-report term-missing --cov backoff.py backoff_tests.py
