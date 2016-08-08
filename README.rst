@@ -46,6 +46,23 @@ you want the same backoff behavior for more than one exception type::
     def get_url(url):
         return requests.get(url)
 
+In some cases the raised exception instance itself may need to be
+inspected in order to determine if it is a retryable condition. The
+``giveup`` keyword arg can be used to specify a function which accepts
+the exception and returns a truthy value if the exception should not
+be retried::
+
+    def fatal_code(e):
+        return 400 <= e.response.status_code < 500
+
+    @backoff.on_exception(backoff.expo,
+                          requests.exceptions.RequestException,
+                          max_tries=8,
+                          giveup=fatal_code)
+    def get_url(url):
+        return requests.get(url)
+
+
 @backoff.on_predicate
 ---------------------
 
