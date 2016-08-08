@@ -57,3 +57,7 @@
 
 ### Changed
 - Documentation fixes
+
+## [v1.3.1] - 2016-08-08
+### Changed
+- Include README.rst in source distribution (fixes package)
