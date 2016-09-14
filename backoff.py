@@ -345,23 +345,10 @@ def _maybe_call(f, *args, **kwargs):
     return f(*args, **kwargs) if callable(f) else f
 
 
-# Formats a function invocation as a unicode string for logging.
-def _invoc_repr(details):
-    f, args, kwargs = details['target'], details['args'], details['kwargs']
-    args_out = ", ".join("{0}".format(a) for a in args)
-    if args and kwargs:
-        args_out += ", "
-    if kwargs:
-        args_out += ", ".join("{0}={1}".format(k, v)
-                              for k, v in kwargs.items())
-
-    return "{0}({1})".format(f.__name__, args_out)
-
-
 # Default backoff handler
 def _log_backoff(details):
-    msg = "Backing off {0} {1:.1f}s".format(_invoc_repr(details),
-                                            details['wait'])
+    fmt = "Backing off {0}(...) for {1:.1f}s"
+    msg = fmt.format(details['target'].__name__, details['wait'])
 
     exc_typ, exc, _ = sys.exc_info()
     if exc is not None:
@@ -375,8 +362,8 @@ def _log_backoff(details):
 
 # Default giveup handler
 def _log_giveup(details):
-    msg = "Giving up {0} after {1} tries".format(_invoc_repr(details),
-                                                 details['tries'])
+    fmt = "Giving up {0}(...) after {1} tries"
+    msg = fmt.format(details['target'].__name__, details['tries'])
 
     exc_typ, exc, _ = sys.exc_info()
     if exc is not None:
