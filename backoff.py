@@ -85,6 +85,22 @@ def constant(interval=1):
         yield interval
 
 
+def factor(wait_gen, f):
+    """Wrapped decay by factor.
+
+    Args:
+        wait_gen: A generator yielding successive wait times in
+            seconds.
+        factor: Factor to multiply the wait_gen by.
+    """
+    @functools.wraps(wait_gen)
+    def deco(*args, **kwargs):
+        wait = wait_gen(*args, **kwargs)
+        while True:
+            yield next(wait) * f
+    return deco
+
+
 def random_jitter(value):
     """Jitter the value a random number of milliseconds.
 
