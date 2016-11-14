@@ -28,7 +28,9 @@ the backoff module.
 
 The ``on_exception`` decorator is used to retry when a specified exception
 is raised. Here's an example using exponential backoff when any
-``requests`` exception is raised::
+``requests`` exception is raised:
+
+.. code-block:: python
 
     @backoff.on_exception(backoff.expo,
                           requests.exceptions.RequestException,
@@ -37,7 +39,9 @@ is raised. Here's an example using exponential backoff when any
         return requests.get(url)
 
 The decorator will also accept a tuple of exceptions for cases where
-you want the same backoff behavior for more than one exception type::
+you want the same backoff behavior for more than one exception type:
+
+.. code-block:: python
 
     @backoff.on_exception(backoff.expo,
                           (requests.exceptions.Timeout,
@@ -50,7 +54,9 @@ In some cases the raised exception instance itself may need to be
 inspected in order to determine if it is a retryable condition. The
 ``giveup`` keyword arg can be used to specify a function which accepts
 the exception and returns a truthy value if the exception should not
-be retried::
+be retried:
+
+.. code-block:: python
 
     def fatal_code(e):
         return 400 <= e.response.status_code < 500
@@ -71,7 +77,9 @@ condition is true of the return value of the target function.  This may
 be useful when polling a resource for externally generated content.
 
 Here's an example which uses a fibonacci sequence backoff when the
-return value of the target function is the empty list::
+return value of the target function is the empty list:
+
+.. code-block:: python
 
     @backoff.on_predicate(backoff.fibo, lambda x: x == [], max_value=13)
     def poll_for_messages(queue):
@@ -82,14 +90,18 @@ wait generator, so the ``max_value`` param above is passed as a keyword
 arg when initializing the fibo generator.
 
 When not specified, the predicate param defaults to the falsey test,
-so the above can more concisely be written::
+so the above can more concisely be written:
+
+.. code-block:: python
 
     @backoff.on_predicate(backoff.fibo, max_value=13)
     def poll_for_message(queue)
         return queue.get()
 
 More simply, a function which continues polling every second until it
-gets a non-falsey result could be defined like like this::
+gets a non-falsey result could be defined like like this:
+
+.. code-block:: python
 
     @backoff.on_predicate(backoff.constant, interval=1)
     def poll_for_message(queue)
@@ -116,7 +128,9 @@ Using multiple decorators
 -------------------------
 
 The backoff decorators may also be combined to specify different
-backoff behavior for different cases::
+backoff behavior for different cases:
+
+.. code-block:: python
 
     @backoff.on_predicate(backoff.fibo, max_value=13)
     @backoff.on_exception(backoff.expo,
@@ -137,7 +151,9 @@ are passed as constant values, but suppose we want to consult a
 dictionary with configuration options that only become available at
 runtime. The relevant values are not available at import time. Instead,
 decorator functions can be passed callables which are evaluated at
-runtime to obtain the value::
+runtime to obtain the value:
+
+.. code-block:: python
 
     def lookup_max_tries():
         # pretend we have a global reference to 'app' here
@@ -149,7 +165,9 @@ runtime to obtain the value::
                           max_tries=lookup_max_tries)
 
 More cleverly, you might define a function which returns a lookup
-function for a specified variable::
+function for a specified variable:
+
+.. code-block:: python
 
     def config(app, name):
         return functools.partial(app.config.get, name)
@@ -179,7 +197,9 @@ include:
 * *value*: value triggering backoff (``on_predicate`` decorator only)
 
 A handler which prints the details of the backoff event could be
-implemented like so::
+implemented like so:
+
+.. code-block:: python
 
     def backoff_hdlr(details):
         print ("Backing off {wait:0.1f} seconds afters {tries} tries "
@@ -196,7 +216,9 @@ implemented like so::
 
 In all cases, iterables of handler functions are also accepted, which
 are called in turn. For example, you might provide a simple list of
-handler functions as the value of the ``on_backoff`` keyword arg::
+handler functions as the value of the ``on_backoff`` keyword arg:
+
+.. code-block:: python
 
     @backoff.on_exception(backoff.expo,
                           requests.exceptions.RequestException,
@@ -219,13 +241,17 @@ Errors and backoff and retry attempts are logged to the 'backoff'
 logger. By default, this logger is configured with a NullHandler, so
 there will be nothing output unless you configure a handler.
 Programmatically, this might be accomplished with something as simple
-as::
+as:
+
+.. code-block:: python
 
     logging.getLogger('backoff').addHandler(logging.StreamHandler())
 
 The default logging level is ERROR, which corresponds to logging anytime
 ``max_tries`` is exceeded as well as any time a retryable exception is
 raised. If you would instead like to log any type of retry, you can
-set the logger level to INFO::
+set the logger level to INFO:
+
+.. code-block:: python
 
     logging.getLogger('backoff').setLevel(logging.INFO)
