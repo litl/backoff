@@ -28,14 +28,14 @@ def readme():
 
 
 core.setup(name='backoff',
-           version='1.3.1',
+           version='1.3.2',
            description="Function decoration for backoff and retry",
            long_description=readme(),
            py_modules=['backoff'],
            author="Bob Green",
-           author_email="bgreen@litl.com",
+           author_email="rgreen@goscoutgo.com",
            keywords = "backoff function decorator",
            url="https://github.com/litl/backoff",
-           download_url="https://github.com/litl/backoff/tarball/v1.3.1",
+           download_url="https://github.com/litl/backoff/tarball/v1.3.2",
            license="MIT",
            classifiers=classifiers)

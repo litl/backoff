@@ -61,3 +61,8 @@
 ## [v1.3.1] - 2016-08-08
 ### Changed
 - Include README.rst in source distribution (fixes package)
+
+## [v1.3.2] - 2016-11-18
+### Changed
+- Don't log retried args and kwargs by default
+- README.rst syntax highlighting from @dethi
