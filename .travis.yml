@@ -6,6 +6,11 @@ python:
 env:
   - PYTHONASYNCIODEBUG=x
   - PYTHONASYNCIODEBUG=
+matrix:
+  exclude:
+  # On Python 3.4 PYTHONASYNCIODEBUG mode is broken
+  - python: "3.4"
+    env: PYTHONASYNCIODEBUG=x
 install:
   - pip install -r requirements.txt
   - pip install coveralls
