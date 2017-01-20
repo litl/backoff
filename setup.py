@@ -27,14 +27,15 @@ def readme():
         return infile.read()
 
 
-core.setup(name='backoff',
-           version='1.3.2',
-           description="Function decoration for backoff and retry",
+core.setup(name='aiobackoff',
+           #version='1.3.2',
+           version='0.0.1',
+           description="Function decoration for backoff and retry for asyncio",
            long_description=readme(),
            py_modules=['backoff'],
            author="Bob Green",
            author_email="rgreen@goscoutgo.com",
-           keywords = "backoff function decorator",
+           keywords="backoff function decorator",
            url="https://github.com/litl/backoff",
            download_url="https://github.com/litl/backoff/tarball/v1.3.2",
            license="MIT",
