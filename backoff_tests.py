@@ -1,10 +1,12 @@
 # coding:utf-8
 
+import asyncio
 import backoff
 import collections
 import functools
 import pytest
 import random
+import sys
 
 
 def test_full_jitter():
@@ -66,23 +68,26 @@ def test_constant():
         assert 3 == next(gen)
 
 
+@pytest.mark.asyncio
 def test_on_predicate(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
 
     @backoff.on_predicate(backoff.expo)
+    @asyncio.coroutine
     def return_true(log, n):
         val = (len(log) == n - 1)
         log.append(val)
         return val
 
     log = []
-    ret = return_true(log, 3)
+    ret = yield from return_true(log, 3)
     assert ret is True
     assert 3 == len(log)
 
 
+@pytest.mark.asyncio
 def test_on_predicate_max_tries(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
 
     @backoff.on_predicate(backoff.expo, jitter=None, max_tries=3)
     def return_true(log, n):
@@ -91,15 +96,17 @@ def test_on_predicate_max_tries(monkeypatch):
         return val
 
     log = []
-    ret = return_true(log, 10)
+    ret = yield from return_true(log, 10)
     assert ret is False
     assert 3 == len(log)
 
 
+@pytest.mark.asyncio
 def test_on_exception(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
 
     @backoff.on_exception(backoff.expo, KeyError)
+    @asyncio.coroutine
     def keyerror_then_true(log, n):
         if len(log) == n:
             return True
@@ -108,14 +115,16 @@ def test_on_exception(monkeypatch):
         raise e
 
     log = []
-    assert keyerror_then_true(log, 3) is True
+    assert (yield from keyerror_then_true(log, 3)) is True
     assert 3 == len(log)
 
 
+@pytest.mark.asyncio
 def test_on_exception_tuple(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
 
     @backoff.on_exception(backoff.expo, (KeyError, ValueError))
+    @asyncio.coroutine
     def keyerror_valueerror_then_true(log):
         if len(log) == 2:
             return True
@@ -127,16 +136,18 @@ def test_on_exception_tuple(monkeypatch):
         raise e
 
     log = []
-    assert keyerror_valueerror_then_true(log) is True
+    assert (yield from keyerror_valueerror_then_true(log)) is True
     assert 2 == len(log)
     assert isinstance(log[0], KeyError)
     assert isinstance(log[1], ValueError)
 
 
+@pytest.mark.asyncio
 def test_on_exception_max_tries(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
 
     @backoff.on_exception(backoff.expo, KeyError, jitter=None, max_tries=3)
+    @asyncio.coroutine
     def keyerror_then_true(log, n, foo=None):
         if len(log) == n:
             return True
@@ -146,7 +157,7 @@ def test_on_exception_max_tries(monkeypatch):
 
     log = []
     with pytest.raises(KeyError):
-        keyerror_then_true(log, 10, foo="bar")
+        yield from keyerror_then_true(log, 10, foo="bar")
 
     assert 3 == len(log)
 
@@ -188,8 +199,9 @@ def _save_target(f):
     return f
 
 
+@pytest.mark.asyncio
 def test_on_exception_success_random_jitter(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
 
     log, log_success, log_backoff, log_giveup = _log_hdlrs()
 
@@ -201,12 +213,13 @@ def test_on_exception_success_random_jitter(monkeypatch):
                           jitter=backoff.random_jitter,
                           factor=0.5)
     @_save_target
+    @asyncio.coroutine
     def succeeder(*args, **kwargs):
         # succeed after we've backed off twice
         if len(log['backoff']) < 2:
             raise ValueError("catch me")
 
-    succeeder(1, 2, 3, foo=1, bar=2)
+    yield from succeeder(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice before succeeding
     assert len(log['success']) == 1
@@ -218,8 +231,9 @@ def test_on_exception_success_random_jitter(monkeypatch):
         assert details['wait'] >= 0.5 * 2 ** i
 
 
+@pytest.mark.asyncio
 def test_on_exception_success_full_jitter(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
 
     log, log_success, log_backoff, log_giveup = _log_hdlrs()
 
@@ -231,12 +245,13 @@ def test_on_exception_success_full_jitter(monkeypatch):
                           jitter=backoff.full_jitter,
                           factor=0.5)
     @_save_target
+    @asyncio.coroutine
     def succeeder(*args, **kwargs):
         # succeed after we've backed off twice
         if len(log['backoff']) < 2:
             raise ValueError("catch me")
 
-    succeeder(1, 2, 3, foo=1, bar=2)
+    yield from succeeder(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice before succeeding
     assert len(log['success']) == 1
@@ -248,6 +263,7 @@ def test_on_exception_success_full_jitter(monkeypatch):
         assert details['wait'] <= 0.5 * 2 ** i
 
 
+@pytest.mark.asyncio
 def test_on_exception_success():
     log, log_success, log_backoff, log_giveup = _log_hdlrs()
 
@@ -259,12 +275,13 @@ def test_on_exception_success():
                           jitter=lambda: 0,
                           interval=0)
     @_save_target
+    @asyncio.coroutine
     def succeeder(*args, **kwargs):
         # succeed after we've backed off twice
         if len(log['backoff']) < 2:
             raise ValueError("catch me")
 
-    succeeder(1, 2, 3, foo=1, bar=2)
+    yield from succeeder(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice before succeeding
     assert len(log['success']) == 1
@@ -286,6 +303,7 @@ def test_on_exception_success():
                        'tries': 3}
 
 
+@pytest.mark.asyncio
 def test_on_exception_giveup():
     log, log_success, log_backoff, log_giveup = _log_hdlrs()
 
@@ -298,11 +316,12 @@ def test_on_exception_giveup():
                           jitter=lambda: 0,
                           interval=0)
     @_save_target
+    @asyncio.coroutine
     def exceptor(*args, **kwargs):
         raise ValueError("catch me")
 
     with pytest.raises(ValueError):
-        exceptor(1, 2, 3, foo=1, bar=2)
+        yield from exceptor(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice and giving up once
     assert len(log['success']) == 0
@@ -316,8 +335,9 @@ def test_on_exception_giveup():
                        'tries': 3}
 
 
+@pytest.mark.asyncio
 def test_on_exception_giveup_predicate(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
 
     def on_baz(e):
         return str(e) == "baz"
@@ -327,15 +347,40 @@ def test_on_exception_giveup_predicate(monkeypatch):
     @backoff.on_exception(backoff.constant,
                           ValueError,
                           giveup=on_baz)
+    @asyncio.coroutine
     def foo_bar_baz():
         raise ValueError(vals.pop())
 
     with pytest.raises(ValueError):
-        foo_bar_baz()
+        yield from foo_bar_baz()
 
     assert not vals
 
 
+@pytest.mark.asyncio
+def test_on_exception_giveup_coro(monkeypatch):
+    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
+
+    @asyncio.coroutine
+    def on_baz(e):
+        return str(e) == "baz"
+
+    vals = ["baz", "bar", "foo"]
+
+    @backoff.on_exception(backoff.constant,
+                          ValueError,
+                          giveup=on_baz)
+    @asyncio.coroutine
+    def foo_bar_baz():
+        raise ValueError(vals.pop())
+
+    with pytest.raises(ValueError):
+        yield from foo_bar_baz()
+
+    assert not vals
+
+
+@pytest.mark.asyncio
 def test_on_predicate_success():
     log, log_success, log_backoff, log_giveup = _log_hdlrs()
 
@@ -346,11 +391,12 @@ def test_on_predicate_success():
                           jitter=lambda: 0,
                           interval=0)
     @_save_target
+    @asyncio.coroutine
     def success(*args, **kwargs):
         # succeed after we've backed off twice
         return len(log['backoff']) == 2
 
-    success(1, 2, 3, foo=1, bar=2)
+    yield from success(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice before succeeding
     assert len(log['success']) == 1
@@ -374,6 +420,7 @@ def test_on_predicate_success():
                        'value': True}
 
 
+@pytest.mark.asyncio
 def test_on_predicate_giveup():
     log, log_success, log_backoff, log_giveup = _log_hdlrs()
 
@@ -385,10 +432,11 @@ def test_on_predicate_giveup():
                           jitter=lambda: 0,
                           interval=0)
     @_save_target
+    @asyncio.coroutine
     def emptiness(*args, **kwargs):
         pass
 
-    emptiness(1, 2, 3, foo=1, bar=2)
+    yield from emptiness(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice and giving up once
     assert len(log['success']) == 0
@@ -403,6 +451,7 @@ def test_on_predicate_giveup():
                        'value': None}
 
 
+@pytest.mark.asyncio
 def test_on_predicate_iterable_handlers():
     hdlrs = [_log_hdlrs() for _ in range(3)]
 
@@ -414,10 +463,11 @@ def test_on_predicate_iterable_handlers():
                           jitter=lambda: 0,
                           interval=0)
     @_save_target
+    @asyncio.coroutine
     def emptiness(*args, **kwargs):
         pass
 
-    emptiness(1, 2, 3, foo=1, bar=2)
+    yield from emptiness(1, 2, 3, foo=1, bar=2)
 
     for i in range(3):
         assert len(hdlrs[i][0]['success']) == 0
@@ -434,8 +484,9 @@ def test_on_predicate_iterable_handlers():
 
 # To maintain backward compatibility,
 # on_predicate should support 0-argument jitter function.
+@pytest.mark.asyncio
 def test_on_exception_success_0_arg_jitter(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
     monkeypatch.setattr('random.random', lambda: 0)
 
     log, log_success, log_backoff, log_giveup = _log_hdlrs()
@@ -448,12 +499,13 @@ def test_on_exception_success_0_arg_jitter(monkeypatch):
                           jitter=random.random,
                           interval=0)
     @_save_target
+    @asyncio.coroutine
     def succeeder(*args, **kwargs):
         # succeed after we've backed off twice
         if len(log['backoff']) < 2:
             raise ValueError("catch me")
 
-    succeeder(1, 2, 3, foo=1, bar=2)
+    yield from succeeder(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice before succeeding
     assert len(log['success']) == 1
@@ -477,8 +529,9 @@ def test_on_exception_success_0_arg_jitter(monkeypatch):
 
 # To maintain backward compatibility,
 # on_predicate should support 0-argument jitter function.
+@pytest.mark.asyncio
 def test_on_predicate_success_0_arg_jitter(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
     monkeypatch.setattr('random.random', lambda: 0)
 
     log, log_success, log_backoff, log_giveup = _log_hdlrs()
@@ -490,11 +543,12 @@ def test_on_predicate_success_0_arg_jitter(monkeypatch):
                           jitter=random.random,
                           interval=0)
     @_save_target
+    @asyncio.coroutine
     def success(*args, **kwargs):
         # succeed after we've backed off twice
         return len(log['backoff']) == 2
 
-    success(1, 2, 3, foo=1, bar=2)
+    yield from success(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice before succeeding
     assert len(log['success']) == 1
@@ -518,8 +572,9 @@ def test_on_predicate_success_0_arg_jitter(monkeypatch):
                        'value': True}
 
 
+@pytest.mark.asyncio
 def test_on_exception_callable_max_tries(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
 
     def lookup_max_tries():
         return 3
@@ -529,16 +584,18 @@ def test_on_exception_callable_max_tries(monkeypatch):
     @backoff.on_exception(backoff.constant,
                           ValueError,
                           max_tries=lookup_max_tries)
+    @asyncio.coroutine
     def exceptor():
         log.append(True)
         raise ValueError()
 
     with pytest.raises(ValueError):
-        exceptor()
+        yield from exceptor()
 
     assert len(log) == 3
 
 
+@pytest.mark.asyncio
 def test_on_exception_callable_gen_kwargs():
 
     def lookup_foo():
@@ -556,8 +613,34 @@ def test_on_exception_callable_gen_kwargs():
                           max_tries=2,
                           foo=lookup_foo,
                           bar="bar")
+    @asyncio.coroutine
     def exceptor():
         raise ValueError("aah")
 
     with pytest.raises(ValueError):
-        exceptor()
+        yield from exceptor()
+
+
+@pytest.mark.asyncio
+def test_on_exception_coro_cancelling(event_loop):
+    sleep_started_event = asyncio.Event()
+
+    @backoff.on_predicate(backoff.expo)
+    @asyncio.coroutine
+    def coro():
+        sleep_started_event.set()
+
+        try:
+            yield from asyncio.sleep(10)
+        except asyncio.CancelledError:
+            return True
+
+        return False
+
+    task = event_loop.create_task(coro())
+
+    yield from sleep_started_event.wait()
+
+    task.cancel()
+
+    assert (yield from task)

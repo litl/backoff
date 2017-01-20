@@ -14,11 +14,11 @@ https://github.com/litl/backoff
 """
 from __future__ import unicode_literals
 
+import asyncio
 import functools
 import operator
 import logging
 import random
-import time
 import traceback
 import sys
 
@@ -35,6 +35,13 @@ else:
     logger.addHandler(logging.NullHandler())  # pragma: no cover
 
 logger.setLevel(logging.ERROR)
+
+
+def _ensure_coroutine(coro_or_func):
+    if asyncio.iscoroutinefunction(coro_or_func):
+        return coro_or_func
+    else:
+        return asyncio.coroutine(coro_or_func)
 
 
 def expo(base=2, factor=1, max_value=None):
@@ -159,6 +166,7 @@ def on_predicate(wait_gen,
     def decorate(target):
 
         @functools.wraps(target)
+        @asyncio.coroutine
         def retry(*args, **kwargs):
             # change names because python 2.x doesn't have nonlocal
             max_tries_ = _maybe_call(max_tries)
@@ -170,15 +178,17 @@ def on_predicate(wait_gen,
             tries = 0
             while True:
                 tries += 1
-                ret = target(*args, **kwargs)
+                ret = yield from _ensure_coroutine(target)(*args, **kwargs)
                 if predicate(ret):
                     if tries == max_tries_:
                         for hdlr in giveup_hdlrs:
-                            hdlr({'target': target,
-                                  'args': args,
-                                  'kwargs': kwargs,
-                                  'tries': tries,
-                                  'value': ret})
+                            yield from hdlr({
+                                'target': target,
+                                'args': args,
+                                'kwargs': kwargs,
+                                'tries': tries,
+                                'value': ret
+                            })
                         break
 
                     value = next(wait)
@@ -193,22 +203,35 @@ def on_predicate(wait_gen,
                         seconds = value + jitter()
 
                     for hdlr in backoff_hdlrs:
-                        hdlr({'target': target,
-                              'args': args,
-                              'kwargs': kwargs,
-                              'tries': tries,
-                              'value': ret,
-                              'wait': seconds})
+                        yield from hdlr({
+                            'target': target,
+                            'args': args,
+                            'kwargs': kwargs,
+                            'tries': tries,
+                            'value': ret,
+                            'wait': seconds
+                        })
 
-                    time.sleep(seconds)
+                    # Note: there is no convenient way to pass explicit event
+                    # loop to decorator, so here we assume that either default
+                    # thread event loop is set and correct (it mostly is
+                    # by default), or Python >= 3.5.3 or Python >= 3.6 is used
+                    # where loop.get_event_loop() in coroutine guaranteed to
+                    # return correct value.
+                    # See for details:
+                    #   <https://groups.google.com/forum/#!topic/python-tulip/yF9C-rFpiKk>
+                    #   <https://bugs.python.org/issue28613>
+                    yield from asyncio.sleep(seconds)
                     continue
                 else:
                     for hdlr in success_hdlrs:
-                        hdlr({'target': target,
-                              'args': args,
-                              'kwargs': kwargs,
-                              'tries': tries,
-                              'value': ret})
+                        yield from hdlr({
+                            'target': target,
+                            'args': args,
+                            'kwargs': kwargs,
+                            'tries': tries,
+                            'value': ret
+                        })
                     break
 
             return ret
@@ -271,6 +294,7 @@ def on_exception(wait_gen,
     def decorate(target):
 
         @functools.wraps(target)
+        @asyncio.coroutine
         def retry(*args, **kwargs):
             # change names because python 2.x doesn't have nonlocal
             max_tries_ = _maybe_call(max_tries)
@@ -283,14 +307,17 @@ def on_exception(wait_gen,
             while True:
                 try:
                     tries += 1
-                    ret = target(*args, **kwargs)
+                    ret = yield from _ensure_coroutine(target)(*args, **kwargs)
                 except exception as e:
-                    if giveup(e) or tries == max_tries_:
+                    is_giveup = yield from _ensure_coroutine(giveup)(e)
+                    if is_giveup or tries == max_tries_:
                         for hdlr in giveup_hdlrs:
-                            hdlr({'target': target,
-                                  'args': args,
-                                  'kwargs': kwargs,
-                                  'tries': tries})
+                            yield from hdlr({
+                                'target': target,
+                                'args': args,
+                                'kwargs': kwargs,
+                                'tries': tries
+                            })
                         raise
 
                     value = next(wait)
@@ -305,19 +332,32 @@ def on_exception(wait_gen,
                         seconds = value + jitter()
 
                     for hdlr in backoff_hdlrs:
-                        hdlr({'target': target,
-                              'args': args,
-                              'kwargs': kwargs,
-                              'tries': tries,
-                              'wait': seconds})
+                        yield from hdlr({
+                            'target': target,
+                            'args': args,
+                            'kwargs': kwargs,
+                            'tries': tries,
+                            'wait': seconds
+                        })
 
-                    time.sleep(seconds)
+                    # Note: there is no convenient way to pass explicit event
+                    # loop to decorator, so here we assume that either default
+                    # thread event loop is set and correct (it mostly is
+                    # by default), or Python >= 3.5.3 or Python >= 3.6 is used
+                    # where loop.get_event_loop() in coroutine guaranteed to
+                    # return correct value.
+                    # See for details:
+                    #   <https://groups.google.com/forum/#!topic/python-tulip/yF9C-rFpiKk>
+                    #   <https://bugs.python.org/issue28613>
+                    yield from asyncio.sleep(seconds)
                 else:
                     for hdlr in success_hdlrs:
-                        hdlr({'target': target,
-                              'args': args,
-                              'kwargs': kwargs,
-                              'tries': tries})
+                        yield from hdlr({
+                            'target': target,
+                            'args': args,
+                            'kwargs': kwargs,
+                            'tries': tries
+                        })
 
                     return ret
 
@@ -329,15 +369,15 @@ def on_exception(wait_gen,
 
 # Create default handler list from keyword argument
 def _handlers(hdlr, default=None):
-    defaults = [default] if default is not None else []
+    defaults = [_ensure_coroutine(default)] if default is not None else []
 
     if hdlr is None:
         return defaults
 
     if hasattr(hdlr, '__iter__'):
-        return defaults + list(hdlr)
+        return defaults + [_ensure_coroutine(h) for h in hdlr]
 
-    return defaults + [hdlr]
+    return defaults + [_ensure_coroutine(hdlr)]
 
 
 # Evaluate arg that can be either a fixed value or a callable.
