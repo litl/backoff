@@ -3,6 +3,9 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
+env:
+  - PYTHONASYNCIODEBUG=x
+  - PYTHONASYNCIODEBUG=
 install:
   - pip install -r requirements.txt
   - pip install coveralls
