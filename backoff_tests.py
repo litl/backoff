@@ -6,7 +6,6 @@ import collections
 import functools
 import pytest
 import random
-import sys
 
 
 def test_full_jitter():
