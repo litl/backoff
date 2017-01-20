@@ -28,7 +28,8 @@ def readme():
 
 
 core.setup(name='aiobackoff',
-           version='1.3.2',
+           #version='1.3.2',
+           version='0.0.1',
            description="Function decoration for backoff and retry for asyncio",
            long_description=readme(),
            py_modules=['backoff'],
