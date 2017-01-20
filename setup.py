@@ -27,9 +27,9 @@ def readme():
         return infile.read()
 
 
-core.setup(name='backoff',
+core.setup(name='aiobackoff',
            version='1.3.2',
-           description="Function decoration for backoff and retry",
+           description="Function decoration for backoff and retry for asyncio",
            long_description=readme(),
            py_modules=['backoff'],
            author="Bob Green",
