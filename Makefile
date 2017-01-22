@@ -20,7 +20,7 @@ clean:
 	@rm -rf build dist
 
 test: clean
-	@PYTHONPATH=. py.test --cov-report term-missing --cov backoff.py backoff_tests.py
+	@PYTHONPATH=. py.test --cov-report term-missing --cov backoff backoff_tests.py
 
 check: pep8 pyflakes test
 	@coverage report | grep 100% >/dev/null || { echo 'Unit tests coverage is incomplete.'; exit 1; }

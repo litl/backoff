@@ -163,52 +163,27 @@ def on_predicate(wait_gen,
             # change names because python 2.x doesn't have nonlocal
             max_tries_ = _maybe_call(max_tries)
 
-            # there are no dictionary comprehensions in python 2.6
-            wait = wait_gen(**dict((k, _maybe_call(v))
-                                   for k, v in wait_gen_kwargs.items()))
-
             tries = 0
+            wait = _init_wait_gen(wait_gen, wait_gen_kwargs)
             while True:
                 tries += 1
+                details = (target, args, kwargs, tries)
+
                 ret = target(*args, **kwargs)
                 if predicate(ret):
                     if tries == max_tries_:
-                        for hdlr in giveup_hdlrs:
-                            hdlr({'target': target,
-                                  'args': args,
-                                  'kwargs': kwargs,
-                                  'tries': tries,
-                                  'value': ret})
+                        _call_handlers(giveup_hdlrs, *details, value=ret)
                         break
 
-                    value = next(wait)
-                    try:
-                        if jitter is not None:
-                            seconds = jitter(value)
-                        else:
-                            seconds = value
-                    except TypeError:
-                        # support deprecated nullary jitter function signature
-                        # which returns a delta rather than a jittered value
-                        seconds = value + jitter()
+                    seconds = _next_wait(wait, jitter)
 
-                    for hdlr in backoff_hdlrs:
-                        hdlr({'target': target,
-                              'args': args,
-                              'kwargs': kwargs,
-                              'tries': tries,
-                              'value': ret,
-                              'wait': seconds})
+                    _call_handlers(backoff_hdlrs, *details,
+                                   value=ret, wait=seconds)
 
                     time.sleep(seconds)
                     continue
                 else:
-                    for hdlr in success_hdlrs:
-                        hdlr({'target': target,
-                              'args': args,
-                              'kwargs': kwargs,
-                              'tries': tries,
-                              'value': ret})
+                    _call_handlers(success_hdlrs, *details, value=ret)
                     break
 
             return ret
@@ -275,49 +250,26 @@ def on_exception(wait_gen,
             # change names because python 2.x doesn't have nonlocal
             max_tries_ = _maybe_call(max_tries)
 
-            # there are no dictionary comprehensions in python 2.6
-            wait = wait_gen(**dict((k, _maybe_call(v))
-                                   for k, v in wait_gen_kwargs.items()))
-
             tries = 0
+            wait = _init_wait_gen(wait_gen, wait_gen_kwargs)
             while True:
+                tries += 1
+                details = (target, args, kwargs, tries)
+
                 try:
-                    tries += 1
                     ret = target(*args, **kwargs)
                 except exception as e:
                     if giveup(e) or tries == max_tries_:
-                        for hdlr in giveup_hdlrs:
-                            hdlr({'target': target,
-                                  'args': args,
-                                  'kwargs': kwargs,
-                                  'tries': tries})
+                        _call_handlers(giveup_hdlrs, *details)
                         raise
 
-                    value = next(wait)
-                    try:
-                        if jitter is not None:
-                            seconds = jitter(value)
-                        else:
-                            seconds = value
-                    except TypeError:
-                        # support deprecated nullary jitter function signature
-                        # which returns a delta rather than a jittered value
-                        seconds = value + jitter()
+                    seconds = _next_wait(wait, jitter)
 
-                    for hdlr in backoff_hdlrs:
-                        hdlr({'target': target,
-                              'args': args,
-                              'kwargs': kwargs,
-                              'tries': tries,
-                              'wait': seconds})
+                    _call_handlers(backoff_hdlrs, *details, wait=seconds)
 
                     time.sleep(seconds)
                 else:
-                    for hdlr in success_hdlrs:
-                        hdlr({'target': target,
-                              'args': args,
-                              'kwargs': kwargs,
-                              'tries': tries})
+                    _call_handlers(success_hdlrs, *details)
 
                     return ret
 
@@ -325,6 +277,45 @@ def on_exception(wait_gen,
 
     # Return a function which decorates a target with a retry loop.
     return decorate
+
+
+# Evaluate arg that can be either a fixed value or a callable.
+def _maybe_call(f, *args, **kwargs):
+    return f(*args, **kwargs) if callable(f) else f
+
+
+def _init_wait_gen(wait_gen, wait_gen_kwargs):
+    # there are no dictionary comprehensions in python 2.6
+    kwargs = dict((k, _maybe_call(v))
+                  for k, v in wait_gen_kwargs.items())
+    return wait_gen(**kwargs)
+
+
+def _next_wait(wait, jitter):
+    value = next(wait)
+    try:
+        if jitter is not None:
+            seconds = jitter(value)
+        else:
+            seconds = value
+    except TypeError:
+        # support deprecated nullary jitter function signature
+        # which returns a delta rather than a jittered value
+        seconds = value + jitter()
+
+    return seconds
+
+
+def _call_handlers(hdlrs, target, args, kwargs, tries, **extra):
+    details = {
+        'target': target,
+        'args': args,
+        'kwargs': kwargs,
+        'tries': tries,
+    }
+    details.update(extra)
+    for hdlr in hdlrs:
+        hdlr(details)
 
 
 # Create default handler list from keyword argument
@@ -338,11 +329,6 @@ def _handlers(hdlr, default=None):
         return defaults + list(hdlr)
 
     return defaults + [hdlr]
-
-
-# Evaluate arg that can be either a fixed value or a callable.
-def _maybe_call(f, *args, **kwargs):
-    return f(*args, **kwargs) if callable(f) else f
 
 
 # Default backoff handler
