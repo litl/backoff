@@ -167,15 +167,12 @@ def on_predicate(wait_gen,
             wait = _init_wait_gen(wait_gen, wait_gen_kwargs)
             while True:
                 tries += 1
+                details = (target, args, kwargs, tries)
+
                 ret = target(*args, **kwargs)
                 if predicate(ret):
                     if tries == max_tries_:
-                        for hdlr in giveup_hdlrs:
-                            hdlr({'target': target,
-                                  'args': args,
-                                  'kwargs': kwargs,
-                                  'tries': tries,
-                                  'value': ret})
+                        _call_handlers(giveup_hdlrs, *details, value=ret)
                         break
 
                     value = next(wait)
@@ -189,23 +186,13 @@ def on_predicate(wait_gen,
                         # which returns a delta rather than a jittered value
                         seconds = value + jitter()
 
-                    for hdlr in backoff_hdlrs:
-                        hdlr({'target': target,
-                              'args': args,
-                              'kwargs': kwargs,
-                              'tries': tries,
-                              'value': ret,
-                              'wait': seconds})
+                    _call_handlers(backoff_hdlrs, *details,
+                                   value=ret, wait=seconds)
 
                     time.sleep(seconds)
                     continue
                 else:
-                    for hdlr in success_hdlrs:
-                        hdlr({'target': target,
-                              'args': args,
-                              'kwargs': kwargs,
-                              'tries': tries,
-                              'value': ret})
+                    _call_handlers(success_hdlrs, *details, value=ret)
                     break
 
             return ret
@@ -275,16 +262,14 @@ def on_exception(wait_gen,
             tries = 0
             wait = _init_wait_gen(wait_gen, wait_gen_kwargs)
             while True:
+                tries += 1
+                details = (target, args, kwargs, tries)
+
                 try:
-                    tries += 1
                     ret = target(*args, **kwargs)
                 except exception as e:
                     if giveup(e) or tries == max_tries_:
-                        for hdlr in giveup_hdlrs:
-                            hdlr({'target': target,
-                                  'args': args,
-                                  'kwargs': kwargs,
-                                  'tries': tries})
+                        _call_handlers(giveup_hdlrs, *details)
                         raise
 
                     value = next(wait)
@@ -298,20 +283,11 @@ def on_exception(wait_gen,
                         # which returns a delta rather than a jittered value
                         seconds = value + jitter()
 
-                    for hdlr in backoff_hdlrs:
-                        hdlr({'target': target,
-                              'args': args,
-                              'kwargs': kwargs,
-                              'tries': tries,
-                              'wait': seconds})
+                    _call_handlers(backoff_hdlrs, *details, wait=seconds)
 
                     time.sleep(seconds)
                 else:
-                    for hdlr in success_hdlrs:
-                        hdlr({'target': target,
-                              'args': args,
-                              'kwargs': kwargs,
-                              'tries': tries})
+                    _call_handlers(success_hdlrs, *details)
 
                     return ret
 
@@ -331,6 +307,18 @@ def _init_wait_gen(wait_gen, wait_gen_kwargs):
     kwargs = dict((k, _maybe_call(v))
                   for k, v in wait_gen_kwargs.items())
     return wait_gen(**kwargs)
+
+
+def _call_handlers(hdlrs, target, args, kwargs, tries, **extra):
+    details = {
+        'target': target,
+        'args': args,
+        'kwargs': kwargs,
+        'tries': tries,
+    }
+    details.update(extra)
+    for hdlr in hdlrs:
+        hdlr(details)
 
 
 # Create default handler list from keyword argument
