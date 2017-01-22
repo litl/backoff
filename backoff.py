@@ -175,16 +175,7 @@ def on_predicate(wait_gen,
                         _call_handlers(giveup_hdlrs, *details, value=ret)
                         break
 
-                    value = next(wait)
-                    try:
-                        if jitter is not None:
-                            seconds = jitter(value)
-                        else:
-                            seconds = value
-                    except TypeError:
-                        # support deprecated nullary jitter function signature
-                        # which returns a delta rather than a jittered value
-                        seconds = value + jitter()
+                    seconds = _next_wait(wait, jitter)
 
                     _call_handlers(backoff_hdlrs, *details,
                                    value=ret, wait=seconds)
@@ -272,16 +263,7 @@ def on_exception(wait_gen,
                         _call_handlers(giveup_hdlrs, *details)
                         raise
 
-                    value = next(wait)
-                    try:
-                        if jitter is not None:
-                            seconds = jitter(value)
-                        else:
-                            seconds = value
-                    except TypeError:
-                        # support deprecated nullary jitter function signature
-                        # which returns a delta rather than a jittered value
-                        seconds = value + jitter()
+                    seconds = _next_wait(wait, jitter)
 
                     _call_handlers(backoff_hdlrs, *details, wait=seconds)
 
@@ -307,6 +289,21 @@ def _init_wait_gen(wait_gen, wait_gen_kwargs):
     kwargs = dict((k, _maybe_call(v))
                   for k, v in wait_gen_kwargs.items())
     return wait_gen(**kwargs)
+
+
+def _next_wait(wait, jitter):
+    value = next(wait)
+    try:
+        if jitter is not None:
+            seconds = jitter(value)
+        else:
+            seconds = value
+    except TypeError:
+        # support deprecated nullary jitter function signature
+        # which returns a delta rather than a jittered value
+        seconds = value + jitter()
+
+    return seconds
 
 
 def _call_handlers(hdlrs, target, args, kwargs, tries, **extra):
