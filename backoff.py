@@ -163,11 +163,8 @@ def on_predicate(wait_gen,
             # change names because python 2.x doesn't have nonlocal
             max_tries_ = _maybe_call(max_tries)
 
-            # there are no dictionary comprehensions in python 2.6
-            wait = wait_gen(**dict((k, _maybe_call(v))
-                                   for k, v in wait_gen_kwargs.items()))
-
             tries = 0
+            wait = _init_wait_gen(wait_gen, wait_gen_kwargs)
             while True:
                 tries += 1
                 ret = target(*args, **kwargs)
@@ -275,11 +272,8 @@ def on_exception(wait_gen,
             # change names because python 2.x doesn't have nonlocal
             max_tries_ = _maybe_call(max_tries)
 
-            # there are no dictionary comprehensions in python 2.6
-            wait = wait_gen(**dict((k, _maybe_call(v))
-                                   for k, v in wait_gen_kwargs.items()))
-
             tries = 0
+            wait = _init_wait_gen(wait_gen, wait_gen_kwargs)
             while True:
                 try:
                     tries += 1
@@ -327,6 +321,18 @@ def on_exception(wait_gen,
     return decorate
 
 
+# Evaluate arg that can be either a fixed value or a callable.
+def _maybe_call(f, *args, **kwargs):
+    return f(*args, **kwargs) if callable(f) else f
+
+
+def _init_wait_gen(wait_gen, wait_gen_kwargs):
+    # there are no dictionary comprehensions in python 2.6
+    kwargs = dict((k, _maybe_call(v))
+                  for k, v in wait_gen_kwargs.items())
+    return wait_gen(**kwargs)
+
+
 # Create default handler list from keyword argument
 def _handlers(hdlr, default=None):
     defaults = [default] if default is not None else []
@@ -338,11 +344,6 @@ def _handlers(hdlr, default=None):
         return defaults + list(hdlr)
 
     return defaults + [hdlr]
-
-
-# Evaluate arg that can be either a fixed value or a callable.
-def _maybe_call(f, *args, **kwargs):
-    return f(*args, **kwargs) if callable(f) else f
 
 
 # Default backoff handler
