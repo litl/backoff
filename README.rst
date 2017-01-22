@@ -107,6 +107,20 @@ gets a non-falsey result could be defined like like this:
     def poll_for_message(queue)
         return queue.get()
 
+
+@backoff.factor
+---------------
+
+The ``factor`` decorator is used to ajust other wait generator. 
+
+    @backoff.on_predicate(backoff.factor(backoff.constant, 60), interval=1)
+    def poll_for_message(queue)
+        return queue.get()
+
+Here `backoff.factor(backoff.constant, 60)` make backoff to sleep 60 times 
+longer than original wait generator.
+
+
 Jitter
 ------
 
