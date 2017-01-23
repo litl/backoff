@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 import operator
+import sys
 
 from backoff._jitter import full_jitter
 from backoff import _sync
@@ -50,10 +51,22 @@ def on_predicate(wait_gen,
             This is useful for runtime configuration.
     """
     def decorate(target):
-        return _sync.retry_predicate(target, wait_gen, predicate,
-                                     max_tries, jitter,
-                                     on_success, on_backoff, on_giveup,
-                                     wait_gen_kwargs)
+        retry = None
+        if sys.version_info[:2] >= (3, 4):
+            import asyncio
+
+            # FIXME remove this pragma when async support is implemented
+            if asyncio.iscoroutinefunction(target):  # pragma: no cover
+                import _async
+                retry = _async.retry_predicate
+
+        if retry is None:
+            retry = _sync.retry_predicate
+
+        return retry(target, wait_gen, predicate,
+                     max_tries, jitter,
+                     on_success, on_backoff, on_giveup,
+                     wait_gen_kwargs)
 
     # Return a function which decorates a target with a retry loop.
     return decorate
@@ -105,10 +118,22 @@ def on_exception(wait_gen,
             This is useful for runtime configuration.
     """
     def decorate(target):
-        return _sync.retry_exception(target, wait_gen, exception,
-                                     max_tries, jitter, giveup,
-                                     on_success, on_backoff, on_giveup,
-                                     wait_gen_kwargs)
+        retry = None
+        if sys.version_info[:2] >= (3, 4):
+            import asyncio
+
+            # FIXME remove this pragma when async support is implemented
+            if asyncio.iscoroutinefunction(target):  # pragma: no cover
+                import _async
+                retry = _async.retry_exception
+
+        if retry is None:
+            retry = _sync.retry_exception
+
+        return retry(target, wait_gen, exception,
+                     max_tries, jitter, giveup,
+                     on_success, on_backoff, on_giveup,
+                     wait_gen_kwargs)
 
     # Return a function which decorates a target with a retry loop.
     return decorate
