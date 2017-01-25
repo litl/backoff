@@ -9,10 +9,10 @@ all:
 	@echo 'docs              generate README.md from module docstring'
 
 pep8:
-	@pep8 backoff.py backoff_tests.py
+	@pep8 backoff tests
 
 pyflakes:
-	@pyflakes backoff.py backoff_tests.py
+	@pyflakes backoff tests
 
 clean:
 	@find . -name "*.pyc" -delete
@@ -20,7 +20,7 @@ clean:
 	@rm -rf build dist
 
 test: clean
-	@PYTHONPATH=. py.test --cov-report term-missing --cov backoff backoff_tests.py
+	@PYTHONPATH=. py.test --cov-report term-missing --cov backoff tests
 
 check: pep8 pyflakes test
 	@coverage report | grep 100% >/dev/null || { echo 'Unit tests coverage is incomplete.'; exit 1; }
