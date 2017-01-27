@@ -25,12 +25,3 @@ __all__ = [
     'full_jitter',
     'random_jitter'
 ]
-
-# make pyflakes happy
-assert on_predicate
-assert on_exception
-assert constant
-assert expo
-assert fibo
-assert full_jitter
-assert random_jitter
