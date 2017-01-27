@@ -9,7 +9,7 @@ PY_GTE_27 = $(shell echo $(PY_MAJOR).$(PY_MINOR)\>=2.7 | bc)
 
 all:
 	@echo 'pep8              check pep8 compliance'
-	@echo 'pyflakes          check for unused imports (requires pyflakes)'
+	@echo 'flake8            check flake8 compliance'
 	@echo 'clean             cleanup the source tree'
 	@echo 'test              run the unit tests'
 	@echo 'check             make sure you are ready to commit'
