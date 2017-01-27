@@ -52,7 +52,7 @@ def on_predicate(wait_gen,
     """
     def decorate(target):
         retry = None
-        if sys.version_info[:2] >= (3, 4):
+        if sys.version_info[:2] >= (3, 4):  # pragma: python=3.4
             import asyncio
 
             if asyncio.iscoroutinefunction(target):
@@ -129,7 +129,7 @@ def on_exception(wait_gen,
     """
     def decorate(target):
         retry = None
-        if sys.version_info[:2] >= (3, 4):
+        if sys.version_info[:2] >= (3, 4):   # pragma: python=3.4
             import asyncio
 
             if asyncio.iscoroutinefunction(target):
