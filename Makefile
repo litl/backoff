@@ -13,7 +13,6 @@ all:
 	@echo 'clean             cleanup the source tree'
 	@echo 'test              run the unit tests'
 	@echo 'check             make sure you are ready to commit'
-	@echo 'docs              generate README.md from module docstring'
 
 pep8:
 	@pep8 backoff tests
