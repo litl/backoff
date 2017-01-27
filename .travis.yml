@@ -3,6 +3,14 @@ python:
   - "2.6"
   - "2.7"
   - "3.4"
+  - "3.5"
+  - "3.6"
+matrix:
+  include:
+  - python: "3.5"
+    env: PYTHONASYNCIODEBUG=x
+  - python: "3.6"
+    env: PYTHONASYNCIODEBUG=x
 install:
   - pip install -r requirements.txt
   - pip install coveralls

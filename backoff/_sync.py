@@ -2,9 +2,20 @@
 import functools
 import time
 
-from backoff._common import (_call_handlers, _handlers, _init_wait_gen,
-                             _log_backoff, _log_giveup, _maybe_call,
-                             _next_wait)
+from backoff._common import (_handlers, _init_wait_gen, _log_backoff,
+                             _log_giveup, _maybe_call, _next_wait)
+
+
+def _call_handlers(hdlrs, target, args, kwargs, tries, **extra):
+    details = {
+        'target': target,
+        'args': args,
+        'kwargs': kwargs,
+        'tries': tries,
+    }
+    details.update(extra)
+    for hdlr in hdlrs:
+        hdlr(details)
 
 
 def retry_predicate(target, wait_gen, predicate,

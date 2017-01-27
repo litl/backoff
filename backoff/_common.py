@@ -46,18 +46,6 @@ def _next_wait(wait, jitter):
     return seconds
 
 
-def _call_handlers(hdlrs, target, args, kwargs, tries, **extra):
-    details = {
-        'target': target,
-        'args': args,
-        'kwargs': kwargs,
-        'tries': tries,
-    }
-    details.update(extra)
-    for hdlr in hdlrs:
-        hdlr(details)
-
-
 # Create default handler list from keyword argument
 def _handlers(hdlr, default=None):
     defaults = [default] if default is not None else []
