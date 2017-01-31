@@ -15,13 +15,17 @@ potential for intermittent failures i.e. network resources and external
 APIs. Somewhat more generally, it may also be of use for dynamically
 polling resources for externally generated content.
 
+Decorators support both regular functions for synchronous code and
+`asyncio <https://docs.python.org/3/library/asyncio.html>`'s coroutines
+for asynchronous code.
+
 Examples
 ========
 
 Since Kenneth Reitz's `requests <http://python-requests.org>`_ module
-has become a defacto standard for HTTP clients in python, networking
-examples below are written using it, but it is in no way required by
-the backoff module.
+has become a defacto standard for synchronous HTTP clients in Python,
+networking examples below are written using it, but it is in no way required
+by the backoff module.
 
 @backoff.on_exception
 ---------------------
@@ -233,6 +237,51 @@ In the case of the ``on_exception`` decorator, all ``on_backoff`` and
 exception being handled. Therefore exception info is available to the
 handler functions via the python standard library, specifically
 ``sys.exc_info()`` or the ``traceback`` module.
+
+Asynchronous code
+-----------------
+
+To use backoff in asynchronous code based on
+`asyncio <https://docs.python.org/3/library/asyncio.html>`
+you simply need to apply ``backoff.on_exception`` or ``backoff.on_predicate``
+to coroutines.
+Also you can use coroutines as ``on_success``, ``on_backoff``, and
+``on_giveup`` event handlers, otherwise interface is the same as in
+the synchronous code.
+
+Following examples uses `aiohttp <https://aiohttp.readthedocs.io/>`
+asynchronous HTTP client/server library.
+
+On Python 3.5 and above with ``async def`` and ``await`` syntax:
+
+.. code-block:: python
+
+    @backoff.on_exception(backoff.expo,
+                          aiohttp.errors.ClientError,
+                          max_tries=8)
+    async def get_url(url):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                return await response.text()
+
+In case you use Python 3.4 you can use `@asyncio.coroutine` and `yield from`:
+
+.. code-block:: python
+
+    @backoff.on_exception(backoff.expo,
+                          aiohttp.errors.ClientError,
+                          max_tries=8)
+    @asyncio.coroutine
+    def get_url_py34(url):
+        with aiohttp.ClientSession() as session:
+            response = yield from session.get(url)
+            try:
+                return (yield from response.text())
+            except Exception:
+                response.close()
+                raise
+            finally:
+                yield from response.release()
 
 Logging configuration
 ---------------------
