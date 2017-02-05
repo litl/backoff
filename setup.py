@@ -36,6 +36,6 @@ core.setup(name='backoff',
            author_email="rgreen@goscoutgo.com",
            keywords = "backoff function decorator",
            url="https://github.com/litl/backoff",
-           download_url="https://github.com/litl/backoff/tarball/v1.4.0",
+           download_url="https://github.com/litl/backoff/archive/v1.4.0.tar.gz",
            license="MIT",
            classifiers=classifiers)
