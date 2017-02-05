@@ -1,69 +1,10 @@
 # coding:utf-8
 
 import backoff
-import collections
-import functools
 import pytest
 import random
 
-
-def test_full_jitter():
-    for input in range(100):
-        for i in range(100):
-            jitter = backoff.full_jitter(input)
-        assert jitter >= 0
-        assert jitter <= input
-
-
-def test_expo():
-    gen = backoff.expo()
-    for i in range(9):
-        assert 2 ** i == next(gen)
-
-
-def test_expo_base3():
-    gen = backoff.expo(base=3)
-    for i in range(9):
-        assert 3 ** i == next(gen)
-
-
-def test_expo_factor3():
-    gen = backoff.expo(factor=3)
-    for i in range(9):
-        assert 3 * 2 ** i == next(gen)
-
-
-def test_expo_base3_factor5():
-    gen = backoff.expo(base=3, factor=5)
-    for i in range(9):
-        assert 5 * 3 ** i == next(gen)
-
-
-def test_expo_max_value():
-    gen = backoff.expo(max_value=2 ** 4)
-    expected = [1, 2, 4, 8, 16, 16, 16]
-    for expect in expected:
-        assert expect == next(gen)
-
-
-def test_fibo():
-    gen = backoff.fibo()
-    expected = [1, 1, 2, 3, 5, 8, 13]
-    for expect in expected:
-        assert expect == next(gen)
-
-
-def test_fibo_max_value():
-    gen = backoff.fibo(max_value=8)
-    expected = [1, 1, 2, 3, 5, 8, 8, 8]
-    for expect in expected:
-        assert expect == next(gen)
-
-
-def test_constant():
-    gen = backoff.constant(interval=3)
-    for i in range(9):
-        assert 3 == next(gen)
+from tests.common import _log_hdlrs, _save_target
 
 
 def test_on_predicate(monkeypatch):
@@ -149,43 +90,6 @@ def test_on_exception_max_tries(monkeypatch):
         keyerror_then_true(log, 10, foo="bar")
 
     assert 3 == len(log)
-
-
-def _test_invoc_repr():
-    def func(a, b, c=None):
-        pass
-
-    assert "func(a, b, c=c)" == backoff._invoc_repr((func,
-                                                     ["a", "b"],
-                                                     {"c": "c"}))
-    assert "func(c=c)" == backoff._invoc_repr((func, [], {"c": "c"}))
-    assert "func(a, b)" == backoff._invoc_repr((func, ["a", "b"], {}))
-    assert u"func(ユニコーン, ア=あ)" == \
-        backoff._invoc_repr((func, [u"ユニコーン"], {u"ア": u"あ"}))
-
-    # tuple args caused a string formatting exception
-    assert "func((1, 2, 3))" == backoff._invoc_repr((func, [(1, 2, 3)], {}))
-
-
-# create event handler which log their invocations to a dict
-def _log_hdlrs():
-    log = collections.defaultdict(list)
-
-    def log_hdlr(event, details):
-        log[event].append(details)
-
-    log_success = functools.partial(log_hdlr, 'success')
-    log_backoff = functools.partial(log_hdlr, 'backoff')
-    log_giveup = functools.partial(log_hdlr, 'giveup')
-
-    return log, log_success, log_backoff, log_giveup
-
-
-# decorator that that saves the target as
-# an attribute of the decorated function
-def _save_target(f):
-    f._target = f
-    return f
 
 
 def test_on_exception_success_random_jitter(monkeypatch):

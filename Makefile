@@ -21,7 +21,7 @@ flake8:
 ifeq ($(PY_GTE_34),1)
 	@flake8 backoff tests
 else ifeq ($(PY_GTE_27),1)
-	@flake8 --exclude tests/test_backoff_async.py,backoff/_async.py backoff tests
+	@flake8 --exclude tests/python34,backoff/_async.py backoff tests
 else
 	@echo 'Not running flake8 for Python < 2.7'
 endif
@@ -35,7 +35,7 @@ test: clean
 ifeq ($(PY_GTE_34),1)
 	@PYTHONPATH=. py.test --cov-config .coveragerc-py34 --cov backoff tests
 else
-	@PYTHONPATH=. py.test --cov-config .coveragerc-py2 --cov backoff tests/test_backoff.py
+	@PYTHONPATH=. py.test --cov-config .coveragerc-py2 --cov backoff tests/test_*.py
 endif
 
 check: pep8 flake8 test
