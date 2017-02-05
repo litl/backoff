@@ -242,14 +242,13 @@ Asynchronous code
 -----------------
 
 To use backoff in asynchronous code based on
-`asyncio <https://docs.python.org/3/library/asyncio.html>`
+`asyncio <https://docs.python.org/3/library/asyncio.html>`_
 you simply need to apply ``backoff.on_exception`` or ``backoff.on_predicate``
 to coroutines.
-Also you can use coroutines as ``on_success``, ``on_backoff``, and
-``on_giveup`` event handlers, otherwise interface is the same as in
-the synchronous code.
+You can also use coroutines for the ``on_success``, ``on_backoff``, and
+``on_giveup`` event handlers, with the interface otherwise being identical.
 
-Following examples uses `aiohttp <https://aiohttp.readthedocs.io/>`
+The following examples use `aiohttp <https://aiohttp.readthedocs.io/>`_
 asynchronous HTTP client/server library.
 
 On Python 3.5 and above with ``async def`` and ``await`` syntax:
