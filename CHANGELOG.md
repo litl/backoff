@@ -66,3 +66,10 @@
 ### Changed
 - Don't log retried args and kwargs by default
 - README.rst syntax highlighting from @dethi
+
+## [v1.4.0] - 2017-02-05
+### Added
+- Async support via `asyncio` coroutines (Python 3.4) from @rutsky
+
+### Changed
+- Refactor `backoff` module into package with identical API
