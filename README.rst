@@ -16,7 +16,7 @@ APIs. Somewhat more generally, it may also be of use for dynamically
 polling resources for externally generated content.
 
 Decorators support both regular functions for synchronous code and
-`asyncio <https://docs.python.org/3/library/asyncio.html>`'s coroutines
+`asyncio <https://docs.python.org/3/library/asyncio.html>`_'s coroutines
 for asynchronous code.
 
 Examples
