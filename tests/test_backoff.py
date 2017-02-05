@@ -151,22 +151,6 @@ def test_on_exception_max_tries(monkeypatch):
     assert 3 == len(log)
 
 
-def _test_invoc_repr():
-    def func(a, b, c=None):
-        pass
-
-    assert "func(a, b, c=c)" == backoff._invoc_repr((func,
-                                                     ["a", "b"],
-                                                     {"c": "c"}))
-    assert "func(c=c)" == backoff._invoc_repr((func, [], {"c": "c"}))
-    assert "func(a, b)" == backoff._invoc_repr((func, ["a", "b"], {}))
-    assert u"func(ユニコーン, ア=あ)" == \
-        backoff._invoc_repr((func, [u"ユニコーン"], {u"ア": u"あ"}))
-
-    # tuple args caused a string formatting exception
-    assert "func((1, 2, 3))" == backoff._invoc_repr((func, [(1, 2, 3)], {}))
-
-
 def test_on_exception_success_random_jitter(monkeypatch):
     monkeypatch.setattr('time.sleep', lambda x: None)
 
