@@ -255,9 +255,7 @@ On Python 3.5 and above with ``async def`` and ``await`` syntax:
 
 .. code-block:: python
 
-    @backoff.on_exception(backoff.expo,
-                          aiohttp.errors.ClientError,
-                          max_tries=8)
+    @backoff.on_exception(backoff.expo, aiohttp.ClientError, max_tries=8)
     async def get_url(url):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
@@ -267,9 +265,7 @@ In case you use Python 3.4 you can use `@asyncio.coroutine` and `yield from`:
 
 .. code-block:: python
 
-    @backoff.on_exception(backoff.expo,
-                          aiohttp.errors.ClientError,
-                          max_tries=8)
+    @backoff.on_exception(backoff.expo, aiohttp.ClientError, max_tries=8)
     @asyncio.coroutine
     def get_url_py34(url):
         with aiohttp.ClientSession() as session:
