@@ -3,6 +3,7 @@
 import backoff
 import pytest
 import random
+import threading
 
 from tests.common import _log_hdlrs, _save_target
 
@@ -465,3 +466,66 @@ def test_on_exception_callable_gen_kwargs():
 
     with pytest.raises(ValueError):
         exceptor()
+
+
+def test_on_predicate_in_thread(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
+    result = []
+
+    def check():
+        try:
+            @backoff.on_predicate(backoff.expo)
+            def return_true(log, n):
+                val = (len(log) == n - 1)
+                log.append(val)
+                return val
+
+            log = []
+            ret = return_true(log, 3)
+            assert ret is True
+            assert 3 == len(log)
+
+        except Exception as ex:
+            result.append(ex)
+        else:
+            result.append('success')
+
+    t = threading.Thread(target=check)
+    t.start()
+    t.join()
+
+    assert len(result) == 1
+    assert result[0] == 'success'
+
+
+def test_on_exception_in_thread(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
+    result = []
+
+    def check():
+        try:
+            @backoff.on_exception(backoff.expo, KeyError)
+            def keyerror_then_true(log, n):
+                if len(log) == n:
+                    return True
+                e = KeyError()
+                log.append(e)
+                raise e
+
+            log = []
+            assert keyerror_then_true(log, 3) is True
+            assert 3 == len(log)
+
+        except Exception as ex:
+            result.append(ex)
+        else:
+            result.append('success')
+
+    t = threading.Thread(target=check)
+    t.start()
+    t.join()
+
+    assert len(result) == 1
+    assert result[0] == 'success'
