@@ -73,3 +73,11 @@
 
 ### Changed
 - Refactor `backoff` module into package with identical API
+
+## [v1.4.1] - 2017-04-21
+### Added
+- Expose __version__ at package root
+
+### Changed
+- Fix checking for running sync version in coroutine in case when event
+  loop is not set from @rutsky
