@@ -25,3 +25,5 @@ __all__ = [
     'full_jitter',
     'random_jitter'
 ]
+
+__version__ = '1.4.1'

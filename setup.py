@@ -21,6 +21,10 @@ classifiers = ['Development Status :: 5 - Production/Stable',
                'Topic :: Software Development :: Libraries :: Python Modules',
                'Topic :: Utilities']
 
+version = backoff.__version__
+url = "https://github.com/litl/backoff"
+tarball_url = "%s/tarball/v%s" % (url, version)
+
 
 def readme():
     with open("README.rst", "r") as infile:
@@ -28,14 +32,14 @@ def readme():
 
 
 core.setup(name='backoff',
-           version='1.4.0',
+           version=version,
            description="Function decoration for backoff and retry",
            long_description=readme(),
-           py_modules=['backoff'],
+           packages=['backoff'],
            author="Bob Green",
            author_email="rgreen@goscoutgo.com",
            keywords = "backoff function decorator",
-           url="https://github.com/litl/backoff",
-           download_url="https://github.com/litl/backoff/tarball/v1.4.0",
+           url=url,
+           download_url=tarball_url,
            license="MIT",
            classifiers=classifiers)
