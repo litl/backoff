@@ -292,9 +292,8 @@ as:
     logging.getLogger('backoff').addHandler(logging.StreamHandler())
 
 The default logging level is ERROR, which corresponds to logging anytime
-``max_tries`` is exceeded as well as any time a retryable exception is
-raised. If you would instead like to log any type of retry, you can
-set the logger level to INFO:
+``max_tries`` is exceeded. If you would instead like to log retries too,
+you can set the logger level to INFO:
 
 .. code-block:: python
 
