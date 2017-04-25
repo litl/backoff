@@ -81,3 +81,9 @@
 ### Changed
 - Fix checking for running sync version in coroutine in case when event
   loop is not set from @rutsky
+
+## [v1.4.2] - 2017-04-25
+### Changed
+
+- Use documented logger name https://github.com/litl/backoff/pull/32
+  from @pquentin
