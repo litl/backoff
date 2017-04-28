@@ -5,7 +5,9 @@ backoff
     :target: https://travis-ci.org/litl/backoff?branch=master
 .. image:: https://coveralls.io/repos/litl/backoff/badge.svg?branch=master
     :target: https://coveralls.io/r/litl/backoff?branch=master
-
+.. image:: https://img.shields.io/pypi/v/backoff.svg
+    :target: https://pypi.python.org/pypi/backoff
+    
 **Function decoration for backoff and retry**
 
 This module provides function decorators which can be used to wrap a
