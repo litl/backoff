@@ -29,7 +29,7 @@ endif
 clean:
 	@find . -name "*.pyc" -delete
 	@find . -name "__pycache__" -delete
-	@rm -rf build dist .coverage
+	@rm -rf build dist .coverage MANIFEST
 
 test: clean
 ifeq ($(PY_GTE_34),1)
