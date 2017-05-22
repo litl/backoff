@@ -87,3 +87,8 @@
 
 - Use documented logger name https://github.com/litl/backoff/pull/32
   from @pquentin
+
+## [v1.4.3] - 2017-05-22
+### Changed
+
+- Add license to source distribution
