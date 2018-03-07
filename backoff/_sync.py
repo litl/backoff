@@ -4,7 +4,8 @@ import functools
 import time
 
 from backoff._common import (_handlers, _init_wait_gen, _log_backoff,
-                             _log_giveup, _maybe_call, _next_wait)
+                             _log_giveup, _maybe_call, _next_wait,
+                             _total_seconds)
 
 
 def _call_handlers(hdlrs, target, args, kwargs, tries, elapsed, **extra):
@@ -41,7 +42,7 @@ def retry_predicate(target, wait_gen, predicate,
         wait = _init_wait_gen(wait_gen, wait_gen_kwargs)
         while True:
             tries += 1
-            elapsed = (datetime.datetime.now() - start).total_seconds()
+            elapsed = _total_seconds(datetime.datetime.now() - start)
             details = (target, args, kwargs, tries, elapsed)
 
             ret = target(*args, **kwargs)
@@ -91,7 +92,7 @@ def retry_exception(target, wait_gen, exception,
         wait = _init_wait_gen(wait_gen, wait_gen_kwargs)
         while True:
             tries += 1
-            elapsed = (datetime.datetime.now() - start).total_seconds()
+            elapsed = _total_seconds(datetime.datetime.now() - start)
             details = (target, args, kwargs, tries, elapsed)
 
             try:
