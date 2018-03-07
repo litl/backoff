@@ -194,6 +194,8 @@ def test_on_exception_success():
 
     for i in range(2):
         details = log['backoff'][i]
+        elapsed = details.pop('elapsed')
+        assert isinstance(elapsed, float)
         assert details == {'args': (1, 2, 3),
                            'kwargs': {'foo': 1, 'bar': 2},
                            'target': succeeder._target,
@@ -201,6 +203,8 @@ def test_on_exception_success():
                            'wait': 0}
 
     details = log['success'][0]
+    elapsed = details.pop('elapsed')
+    assert isinstance(elapsed, float)
     assert details == {'args': (1, 2, 3),
                        'kwargs': {'foo': 1, 'bar': 2},
                        'target': succeeder._target,
@@ -233,6 +237,8 @@ def test_on_exception_giveup():
     assert len(log['giveup']) == 1
 
     details = log['giveup'][0]
+    elapsed = details.pop('elapsed')
+    assert isinstance(elapsed, float)
     assert details == {'args': (1, 2, 3),
                        'kwargs': {'foo': 1, 'bar': 2},
                        'target': exceptor._target,
@@ -309,6 +315,8 @@ def test_on_predicate_success():
 
     for i in range(2):
         details = log['backoff'][i]
+        elapsed = details.pop('elapsed')
+        assert isinstance(elapsed, float)
         assert details == {'args': (1, 2, 3),
                            'kwargs': {'foo': 1, 'bar': 2},
                            'target': success._target,
@@ -317,6 +325,8 @@ def test_on_predicate_success():
                            'wait': 0}
 
     details = log['success'][0]
+    elapsed = details.pop('elapsed')
+    assert isinstance(elapsed, float)
     assert details == {'args': (1, 2, 3),
                        'kwargs': {'foo': 1, 'bar': 2},
                        'target': success._target,
@@ -348,6 +358,8 @@ def test_on_predicate_giveup():
     assert len(log['giveup']) == 1
 
     details = log['giveup'][0]
+    elapsed = details.pop('elapsed')
+    assert isinstance(elapsed, float)
     assert details == {'args': (1, 2, 3),
                        'kwargs': {'foo': 1, 'bar': 2},
                        'target': emptiness._target,
@@ -378,7 +390,9 @@ def test_on_predicate_iterable_handlers():
         assert len(hdlrs[i][0]['backoff']) == 2
         assert len(hdlrs[i][0]['giveup']) == 1
 
-        details = hdlrs[i][0]['giveup'][0]
+        details = dict(hdlrs[i][0]['giveup'][0])
+        elapsed = details.pop('elapsed')
+        assert isinstance(elapsed, float)
         assert details == {'args': (1, 2, 3),
                            'kwargs': {'foo': 1, 'bar': 2},
                            'target': emptiness._target,
@@ -418,6 +432,8 @@ def test_on_exception_success_0_arg_jitter(monkeypatch):
 
     for i in range(2):
         details = log['backoff'][i]
+        elapsed = details.pop('elapsed')
+        assert isinstance(elapsed, float)
         assert details == {'args': (1, 2, 3),
                            'kwargs': {'foo': 1, 'bar': 2},
                            'target': succeeder._target,
@@ -425,6 +441,8 @@ def test_on_exception_success_0_arg_jitter(monkeypatch):
                            'wait': 0}
 
     details = log['success'][0]
+    elapsed = details.pop('elapsed')
+    assert isinstance(elapsed, float)
     assert details == {'args': (1, 2, 3),
                        'kwargs': {'foo': 1, 'bar': 2},
                        'target': succeeder._target,
@@ -461,6 +479,8 @@ def test_on_predicate_success_0_arg_jitter(monkeypatch):
 
     for i in range(2):
         details = log['backoff'][i]
+        elapsed = details.pop('elapsed')
+        assert isinstance(elapsed, float)
         assert details == {'args': (1, 2, 3),
                            'kwargs': {'foo': 1, 'bar': 2},
                            'target': success._target,
@@ -469,6 +489,8 @@ def test_on_predicate_success_0_arg_jitter(monkeypatch):
                            'wait': 0}
 
     details = log['success'][0]
+    elapsed = details.pop('elapsed')
+    assert isinstance(elapsed, float)
     assert details == {'args': (1, 2, 3),
                        'kwargs': {'foo': 1, 'bar': 2},
                        'target': success._target,

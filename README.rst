@@ -7,7 +7,7 @@ backoff
     :target: https://coveralls.io/r/litl/backoff?branch=master
 .. image:: https://img.shields.io/pypi/v/backoff.svg
     :target: https://pypi.python.org/pypi/backoff
-    
+
 **Function decoration for backoff and retry**
 
 This module provides function decorators which can be used to wrap a
@@ -39,8 +39,7 @@ is raised. Here's an example using exponential backoff when any
 .. code-block:: python
 
     @backoff.on_exception(backoff.expo,
-                          requests.exceptions.RequestException,
-                          max_tries=8)
+                          requests.exceptions.RequestException)
     def get_url(url):
         return requests.get(url)
 
@@ -51,10 +50,39 @@ you want the same backoff behavior for more than one exception type:
 
     @backoff.on_exception(backoff.expo,
                           (requests.exceptions.Timeout,
-                           requests.exceptions.ConnectionError),
-                          max_tries=8)
+                           requests.exceptions.ConnectionError))
     def get_url(url):
         return requests.get(url)
+
+**Give Up Conditions**
+
+Optional keyword arguments can specify conditions under which to give
+up.
+
+The keyword argument ``max_time`` specifies the maximum amount
+of total time in seconds that can elapse before giving up.
+
+.. code-block:: python
+
+    @backoff.on_exception(backoff.expo,
+                          requests.exceptions.RequestException,
+                          max_time=60)
+    def get_url(url):
+        return requests.get(url)
+
+
+Keyword argument ``max_tries`` specifies the maximum number of calls
+to make to the target function before giving up.
+
+.. code-block:: python
+
+    @backoff.on_exception(backoff.expo,
+                          requests.exceptions.RequestException,
+                          max_tries=8,
+                          jitter=None)
+    def get_url(url):
+        return requests.get(url)
+
 
 In some cases the raised exception instance itself may need to be
 inspected in order to determine if it is a retryable condition. The
@@ -69,11 +97,14 @@ be retried:
 
     @backoff.on_exception(backoff.expo,
                           requests.exceptions.RequestException,
-                          max_tries=8,
+                          max_time=300,
                           giveup=fatal_code)
     def get_url(url):
         return requests.get(url)
 
+When a give up event occurs, the exception in question is reraised
+and so code calling an `on_exception`-decorated function may still
+need to do exception handling.
 
 @backoff.on_predicate
 ---------------------
@@ -125,6 +156,8 @@ As of version 1.2, the default jitter function ``backoff.full_jitter``
 implements the 'Full Jitter' algorithm as defined in the AWS
 Architecture Blog's `Exponential Backoff And Jitter
 <https://www.awsarchitectureblog.com/2015/03/backoff.html>`_ post.
+Note that with this algorithm, the time yielded by the wait generator
+is actually the *maximum* amount of time to wait.
 
 Previous versions of backoff defaulted to adding some random number of
 milliseconds (up to 1s) to the raw sleep value. If desired, this
@@ -141,10 +174,10 @@ backoff behavior for different cases:
     @backoff.on_predicate(backoff.fibo, max_value=13)
     @backoff.on_exception(backoff.expo,
                           requests.exceptions.HTTPError,
-                          max_tries=4)
+                          max_time=60)
     @backoff.on_exception(backoff.expo,
                           requests.exceptions.TimeoutError,
-                          max_tries=8)
+                          max_time=300)
     def poll_for_message(queue):
         return queue.get()
 
@@ -161,27 +194,14 @@ runtime to obtain the value:
 
 .. code-block:: python
 
-    def lookup_max_tries():
+    def lookup_max_time():
         # pretend we have a global reference to 'app' here
         # and that it has a dictionary-like 'config' property
-        return app.config["BACKOFF_MAX_TRIES"]
+        return app.config["BACKOFF_MAX_TIME"]
 
     @backoff.on_exception(backoff.expo,
                           ValueError,
-                          max_tries=lookup_max_tries)
-
-More cleverly, you might define a function which returns a lookup
-function for a specified variable:
-
-.. code-block:: python
-
-    def config(app, name):
-        return functools.partial(app.config.get, name)
-
-    @backoff.on_exception(backoff.expo,
-                          ValueError,
-                          max_value=config(app, "BACKOFF_MAX_VALUE")
-                          max_tries=config(app, "BACKOFF_MAX_TRIES"))
+                          max_time=lookup_max_time)
 
 Event handlers
 --------------
@@ -199,6 +219,7 @@ include:
 * *args*: positional arguments to func
 * *kwargs*: keyword arguments to func
 * *tries*: number of invocation tries so far
+* *elapsed*: elapsed time in seconds so far
 * *wait*: seconds to wait (``on_backoff`` handler only)
 * *value*: value triggering backoff (``on_predicate`` decorator only)
 
@@ -257,7 +278,7 @@ On Python 3.5 and above with ``async def`` and ``await`` syntax:
 
 .. code-block:: python
 
-    @backoff.on_exception(backoff.expo, aiohttp.ClientError, max_tries=8)
+    @backoff.on_exception(backoff.expo, aiohttp.ClientError, max_time=60)
     async def get_url(url):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
@@ -267,7 +288,7 @@ In case you use Python 3.4 you can use `@asyncio.coroutine` and `yield from`:
 
 .. code-block:: python
 
-    @backoff.on_exception(backoff.expo, aiohttp.ClientError, max_tries=8)
+    @backoff.on_exception(backoff.expo, aiohttp.ClientError, max_time=60)
     @asyncio.coroutine
     def get_url_py34(url):
         with aiohttp.ClientSession() as session:
@@ -293,10 +314,9 @@ as:
 
     logging.getLogger('backoff').addHandler(logging.StreamHandler())
 
-The default logging level is ERROR, which corresponds to logging anytime
-``max_tries`` is exceeded as well as any time a retryable exception is
-raised. If you would instead like to log any type of retry, you can
-set the logger level to INFO:
+The default logging level is ERROR, which corresponds to logging
+anytime a giveup event occurs. If you would instead like to log
+anytime a retry occurs, set the logger level to INFO.
 
 .. code-block:: python
 
