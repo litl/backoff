@@ -47,3 +47,15 @@ def constant(interval=1):
     """
     while True:
         yield interval
+
+def predefined(intervals=[1]):
+    """Generator for predefined intervals.
+    
+    Args:
+        intervals: A list with the intervals to yield.
+    """
+    while True:
+        if len(intervals):
+            last = intervals.pop(0)
+        
+        yield last
