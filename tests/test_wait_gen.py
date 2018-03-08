@@ -52,6 +52,7 @@ def test_constant():
     for i in range(9):
         assert 3 == next(gen)
 
+
 def test_predefined():
     gen = backoff.predefined(intervals=[1,5,20])
     expected = [1, 5, 20, 20, 20]
