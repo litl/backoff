@@ -48,7 +48,7 @@ def constant(interval=1):
     while True:
         yield interval
 
-        
+
 def predefined(intervals=[1]):
     """Generator for predefined intervals.
     
