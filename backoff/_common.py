@@ -31,7 +31,7 @@ def _init_wait_gen(wait_gen, wait_gen_kwargs):
     return wait_gen(**kwargs)
 
 
-def _next_wait(wait, jitter):
+def _next_wait(wait, jitter, elapsed, max_time):
     value = next(wait)
     try:
         if jitter is not None:
@@ -42,6 +42,10 @@ def _next_wait(wait, jitter):
         # support deprecated nullary jitter function signature
         # which returns a delta rather than a jittered value
         seconds = value + jitter()
+
+    # don't sleep longer than remaining alloted max_time
+    if max_time is not None:
+        seconds = min(seconds, max_time - elapsed)
 
     return seconds
 
@@ -87,3 +91,11 @@ def _log_giveup(details):
         msg = "{0} ({1})".format(msg, details['value'])
 
     logger.error(msg)
+
+
+# Python 2.6 datetime.timedelta does not have total_seconds()
+# so we do our own implementation here.
+def _total_seconds(timedelta):
+    return (
+        (timedelta.microseconds + 0.0 +
+         (timedelta.seconds + timedelta.days * 24 * 3600) * 10**6) / 10**6)

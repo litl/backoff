@@ -1,11 +1,12 @@
 # coding:utf-8
+import datetime
 import functools
 # Python 3.4 code and syntax is allowed in this module!
 import asyncio
 
 from backoff._common import (_handlers, _init_wait_gen,
                              _log_backoff, _log_giveup, _maybe_call,
-                             _next_wait)
+                             _next_wait, _total_seconds)
 
 
 def _ensure_coroutine(coro_or_func):
@@ -20,12 +21,13 @@ def _ensure_coroutines(coros_or_funcs):
 
 
 @asyncio.coroutine
-def _call_handlers(hdlrs, target, args, kwargs, tries, **extra):
+def _call_handlers(hdlrs, target, args, kwargs, tries, elapsed, **extra):
     details = {
         'target': target,
         'args': args,
         'kwargs': kwargs,
         'tries': tries,
+        'elapsed': elapsed,
     }
     details.update(extra)
     for hdlr in hdlrs:
@@ -33,7 +35,7 @@ def _call_handlers(hdlrs, target, args, kwargs, tries, **extra):
 
 
 def retry_predicate(target, wait_gen, predicate,
-                    max_tries, jitter,
+                    max_tries, max_time, jitter,
                     on_success, on_backoff, on_giveup,
                     wait_gen_kwargs):
     success_hdlrs = _ensure_coroutines(_handlers(on_success))
@@ -52,21 +54,28 @@ def retry_predicate(target, wait_gen, predicate,
 
         # change names because python 2.x doesn't have nonlocal
         max_tries_ = _maybe_call(max_tries)
+        max_time_ = _maybe_call(max_time)
 
         tries = 0
+        start = datetime.datetime.now()
         wait = _init_wait_gen(wait_gen, wait_gen_kwargs)
         while True:
             tries += 1
-            details = (target, args, kwargs, tries)
+            elapsed = _total_seconds(datetime.datetime.now() - start)
+            details = (target, args, kwargs, tries, elapsed)
 
             ret = yield from target(*args, **kwargs)
             if predicate(ret):
-                if tries == max_tries_:
+                max_tries_exceeded = (tries == max_tries_)
+                max_time_exceeded = (max_time_ is not None and
+                                     elapsed >= max_time_)
+
+                if max_tries_exceeded or max_time_exceeded:
                     yield from _call_handlers(
                         giveup_hdlrs, *details, value=ret)
                     break
 
-                seconds = _next_wait(wait, jitter)
+                seconds = _next_wait(wait, jitter, elapsed, max_time_)
 
                 yield from _call_handlers(
                     backoff_hdlrs, *details, value=ret, wait=seconds)
@@ -92,7 +101,7 @@ def retry_predicate(target, wait_gen, predicate,
 
 
 def retry_exception(target, wait_gen, exception,
-                    max_tries, jitter, giveup,
+                    max_tries, max_time, jitter, giveup,
                     on_success, on_backoff, on_giveup,
                     wait_gen_kwargs):
     success_hdlrs = _ensure_coroutines(_handlers(on_success))
@@ -109,22 +118,29 @@ def retry_exception(target, wait_gen, exception,
     def retry(*args, **kwargs):
         # change names because python 2.x doesn't have nonlocal
         max_tries_ = _maybe_call(max_tries)
+        max_time_ = _maybe_call(max_time)
 
         tries = 0
+        start = datetime.datetime.now()
         wait = _init_wait_gen(wait_gen, wait_gen_kwargs)
         while True:
             tries += 1
-            details = (target, args, kwargs, tries)
+            elapsed = _total_seconds(datetime.datetime.now() - start)
+            details = (target, args, kwargs, tries, elapsed)
 
             try:
                 ret = yield from target(*args, **kwargs)
             except exception as e:
                 giveup_result = yield from giveup(e)
-                if giveup_result or tries == max_tries_:
+                max_tries_exceeded = (tries == max_tries_)
+                max_time_exceeded = (max_time_ is not None and
+                                     elapsed >= max_time_)
+
+                if giveup_result or max_tries_exceeded or max_time_exceeded:
                     yield from _call_handlers(giveup_hdlrs, *details)
                     raise
 
-                seconds = _next_wait(wait, jitter)
+                seconds = _next_wait(wait, jitter, elapsed, max_time_)
 
                 yield from _call_handlers(
                     backoff_hdlrs, *details, wait=seconds)

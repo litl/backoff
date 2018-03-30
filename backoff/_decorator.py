@@ -11,6 +11,7 @@ from backoff import _sync
 def on_predicate(wait_gen,
                  predicate=operator.not_,
                  max_tries=None,
+                 max_time=None,
                  jitter=full_jitter,
                  on_success=None,
                  on_backoff=None,
@@ -27,8 +28,13 @@ def on_predicate(wait_gen,
             backoff on falsey return values.
         max_tries: The maximum number of attempts to make before giving
             up. In the case of failure, the result of the last attempt
-            will be returned.  The default value of None means their
-            is no limit to the number of tries.
+            will be returned. The default value of None means there
+            is no limit to the number of tries. If a callable is passed,
+            it will be evaluated at runtime and its return value used.
+        max_time: The maximum total amount of time to try for before
+            giving up. If this time expires, the result of the last
+            attempt will be returned. If a callable is passed, it will
+            be evaluated at runtime and its return value used.
         jitter: A function of the value yielded by wait_gen returning
             the actual time to wait. This distributes wait times
             stochastically in order to avoid timing collisions across
@@ -80,7 +86,7 @@ def on_predicate(wait_gen,
             retry = _sync.retry_predicate
 
         return retry(target, wait_gen, predicate,
-                     max_tries, jitter,
+                     max_tries, max_time, jitter,
                      on_success, on_backoff, on_giveup,
                      wait_gen_kwargs)
 
@@ -91,6 +97,7 @@ def on_predicate(wait_gen,
 def on_exception(wait_gen,
                  exception,
                  max_tries=None,
+                 max_time=None,
                  jitter=full_jitter,
                  giveup=lambda e: False,
                  on_success=None,
@@ -108,6 +115,10 @@ def on_exception(wait_gen,
             up. Once exhausted, the exception will be allowed to escape.
             The default value of None means their is no limit to the
             number of tries. If a callable is passed, it will be
+            evaluated at runtime and its return value used.
+        max_time: The maximum total amount of time to try for before
+            giving up. Once expired, the exception will be allowed to
+            escape. If a callable is passed, it will be
             evaluated at runtime and its return value used.
         jitter: A function of the value yielded by wait_gen returning
             the actual time to wait. This distributes wait times
@@ -162,7 +173,7 @@ def on_exception(wait_gen,
             retry = _sync.retry_exception
 
         return retry(target, wait_gen, exception,
-                     max_tries, jitter, giveup,
+                     max_tries, max_time, jitter, giveup,
                      on_success, on_backoff, on_giveup,
                      wait_gen_kwargs)
 

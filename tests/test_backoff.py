@@ -1,9 +1,10 @@
 # coding:utf-8
-
-import backoff
+import datetime
 import pytest
 import random
 import threading
+
+import backoff
 
 from tests.common import _log_hdlrs, _save_target
 
@@ -36,6 +37,39 @@ def test_on_predicate_max_tries(monkeypatch):
     ret = return_true(log, 10)
     assert ret is False
     assert 3 == len(log)
+
+
+def test_on_predicate_max_time(monkeypatch):
+    nows = [
+        datetime.datetime(2018, 1, 1, 12, 0, 10, 5),
+        datetime.datetime(2018, 1, 1, 12, 0, 9, 0),
+        datetime.datetime(2018, 1, 1, 12, 0, 1, 0),
+        datetime.datetime(2018, 1, 1, 12, 0, 0, 0),
+    ]
+
+    class Datetime:
+        @staticmethod
+        def now():
+            return nows.pop()
+
+    monkeypatch.setattr('time.sleep', lambda x: None)
+    monkeypatch.setattr('datetime.datetime', Datetime)
+
+    def giveup(details):
+        assert details['tries'] == 3
+        assert details['elapsed'] == 10.000005
+
+    @backoff.on_predicate(backoff.expo, jitter=None, max_time=10,
+                          on_giveup=giveup)
+    def return_true(log, n):
+        val = (len(log) == n)
+        log.append(val)
+        return val
+
+    log = []
+    ret = return_true(log, 10)
+    assert ret is False
+    assert len(log) == 3
 
 
 def test_on_exception(monkeypatch):
@@ -178,6 +212,8 @@ def test_on_exception_success():
 
     for i in range(2):
         details = log['backoff'][i]
+        elapsed = details.pop('elapsed')
+        assert isinstance(elapsed, float)
         assert details == {'args': (1, 2, 3),
                            'kwargs': {'foo': 1, 'bar': 2},
                            'target': succeeder._target,
@@ -185,6 +221,8 @@ def test_on_exception_success():
                            'wait': 0}
 
     details = log['success'][0]
+    elapsed = details.pop('elapsed')
+    assert isinstance(elapsed, float)
     assert details == {'args': (1, 2, 3),
                        'kwargs': {'foo': 1, 'bar': 2},
                        'target': succeeder._target,
@@ -215,6 +253,8 @@ def test_on_exception_giveup():
     assert len(log['giveup']) == 1
 
     details = log['giveup'][0]
+    elapsed = details.pop('elapsed')
+    assert isinstance(elapsed, float)
     assert details == {'args': (1, 2, 3),
                        'kwargs': {'foo': 1, 'bar': 2},
                        'target': exceptor._target,
@@ -264,6 +304,9 @@ def test_on_predicate_success():
 
     for i in range(2):
         details = log['backoff'][i]
+
+        elapsed = details.pop('elapsed')
+        assert isinstance(elapsed, float)
         assert details == {'args': (1, 2, 3),
                            'kwargs': {'foo': 1, 'bar': 2},
                            'target': success._target,
@@ -272,6 +315,8 @@ def test_on_predicate_success():
                            'wait': 0}
 
     details = log['success'][0]
+    elapsed = details.pop('elapsed')
+    assert isinstance(elapsed, float)
     assert details == {'args': (1, 2, 3),
                        'kwargs': {'foo': 1, 'bar': 2},
                        'target': success._target,
@@ -301,6 +346,8 @@ def test_on_predicate_giveup():
     assert len(log['giveup']) == 1
 
     details = log['giveup'][0]
+    elapsed = details.pop('elapsed')
+    assert isinstance(elapsed, float)
     assert details == {'args': (1, 2, 3),
                        'kwargs': {'foo': 1, 'bar': 2},
                        'target': emptiness._target,
@@ -329,7 +376,9 @@ def test_on_predicate_iterable_handlers():
         assert len(hdlrs[i][0]['backoff']) == 2
         assert len(hdlrs[i][0]['giveup']) == 1
 
-        details = hdlrs[i][0]['giveup'][0]
+        details = dict(hdlrs[i][0]['giveup'][0])
+        elapsed = details.pop('elapsed')
+        assert isinstance(elapsed, float)
         assert details == {'args': (1, 2, 3),
                            'kwargs': {'foo': 1, 'bar': 2},
                            'target': emptiness._target,
@@ -367,6 +416,8 @@ def test_on_exception_success_0_arg_jitter(monkeypatch):
 
     for i in range(2):
         details = log['backoff'][i]
+        elapsed = details.pop('elapsed')
+        assert isinstance(elapsed, float)
         assert details == {'args': (1, 2, 3),
                            'kwargs': {'foo': 1, 'bar': 2},
                            'target': succeeder._target,
@@ -374,6 +425,8 @@ def test_on_exception_success_0_arg_jitter(monkeypatch):
                            'wait': 0}
 
     details = log['success'][0]
+    elapsed = details.pop('elapsed')
+    assert isinstance(elapsed, float)
     assert details == {'args': (1, 2, 3),
                        'kwargs': {'foo': 1, 'bar': 2},
                        'target': succeeder._target,
@@ -408,6 +461,8 @@ def test_on_predicate_success_0_arg_jitter(monkeypatch):
 
     for i in range(2):
         details = log['backoff'][i]
+        elapsed = details.pop('elapsed')
+        assert isinstance(elapsed, float)
         assert details == {'args': (1, 2, 3),
                            'kwargs': {'foo': 1, 'bar': 2},
                            'target': success._target,
@@ -416,6 +471,8 @@ def test_on_predicate_success_0_arg_jitter(monkeypatch):
                            'wait': 0}
 
     details = log['success'][0]
+    elapsed = details.pop('elapsed')
+    assert isinstance(elapsed, float)
     assert details == {'args': (1, 2, 3),
                        'kwargs': {'foo': 1, 'bar': 2},
                        'target': success._target,
