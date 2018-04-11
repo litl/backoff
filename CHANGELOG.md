@@ -92,3 +92,8 @@
 ### Changed
 
 - Add license to source distribution
+
+## [v1.5.0] - 2018-04-11
+### Changed
+
+- Add max_time keyword argument
