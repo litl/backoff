@@ -16,7 +16,7 @@ if sys.version_info < (2, 7, 0):  # pragma: no cover
 else:
     logger.addHandler(logging.NullHandler())  # pragma: no cover
 
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.INFO)
 
 
 # Evaluate arg that can be either a fixed value or a callable.
