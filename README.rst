@@ -314,10 +314,10 @@ as:
 
     logging.getLogger('backoff').addHandler(logging.StreamHandler())
 
-The default logging level is ERROR, which corresponds to logging
-anytime a giveup event occurs. If you would instead like to log
-anytime a retry occurs, set the logger level to INFO.
+The default logging level is INFO, which corresponds to logging
+anytime a retry event occurs. If you would instead like to log
+only when a giveup event occurs, set the logger level to ERROR.
 
 .. code-block:: python
 
-    logging.getLogger('backoff').setLevel(logging.INFO)
+    logging.getLogger('backoff').setLevel(logging.ERROR)
