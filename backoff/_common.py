@@ -16,7 +16,7 @@ if sys.version_info < (2, 7, 0):  # pragma: no cover
 else:
     logger.addHandler(logging.NullHandler())  # pragma: no cover
 
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.INFO)
 
 
 # Evaluate arg that can be either a fixed value or a callable.
@@ -72,10 +72,9 @@ def _log_backoff(details):
     if exc is not None:
         exc_fmt = traceback.format_exception_only(exc_typ, exc)[-1]
         msg = "{0} ({1})".format(msg, exc_fmt.rstrip("\n"))
-        logger.error(msg)
     else:
         msg = "{0} ({1})".format(msg, details['value'])
-        logger.info(msg)
+    logger.info(msg)
 
 
 # Default giveup handler
