@@ -97,3 +97,9 @@
 ### Changed
 
 - Add max_time keyword argument
+
+## [v1.6.0] - 2018-07-14
+### Changed
+
+- Change default log level from ERROR to INFO
+- Log retries on exception as INFO
