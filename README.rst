@@ -284,22 +284,7 @@ On Python 3.5 and above with ``async def`` and ``await`` syntax:
             async with session.get(url) as response:
                 return await response.text()
 
-In case you use Python 3.4 you can use `@asyncio.coroutine` and `yield from`:
-
-.. code-block:: python
-
-    @backoff.on_exception(backoff.expo, aiohttp.ClientError, max_time=60)
-    @asyncio.coroutine
-    def get_url_py34(url):
-        with aiohttp.ClientSession() as session:
-            response = yield from session.get(url)
-            try:
-                return (yield from response.text())
-            except Exception:
-                response.close()
-                raise
-            finally:
-                yield from response.release()
+Python 3.4 is not supported.
 
 Logging configuration
 ---------------------

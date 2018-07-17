@@ -1,7 +1,7 @@
 PY_VERSION := $(wordlist 2,4,$(subst ., ,$(shell python --version 2>&1)))
 PY_MAJOR := $(word 1,${PY_VERSION})
 PY_MINOR := $(word 2,${PY_VERSION})
-PY_GTE_34 = $(shell echo $(PY_MAJOR).$(PY_MINOR)\>=3.4 | bc)
+PY_GTE_35 = $(shell echo $(PY_MAJOR).$(PY_MINOR)\>=3.5 | bc)
 PY_GTE_27 = $(shell echo $(PY_MAJOR).$(PY_MINOR)\>=2.7 | bc)
 
 
@@ -18,10 +18,10 @@ pep8:
 	@pep8 backoff tests
 
 flake8:
-ifeq ($(PY_GTE_34),1)
+ifeq ($(PY_GTE_35),1)
 	@flake8 backoff tests
 else ifeq ($(PY_GTE_27),1)
-	@flake8 --exclude tests/python34,backoff/_async.py backoff tests
+	@flake8 --exclude tests/python35,backoff/_async.py backoff tests
 else
 	@echo 'Not running flake8 for Python < 2.7'
 endif
@@ -32,8 +32,8 @@ clean:
 	@rm -rf build dist .coverage MANIFEST
 
 test: clean
-ifeq ($(PY_GTE_34),1)
-	@PYTHONPATH=. py.test --cov-config .coveragerc-py34 --cov backoff tests
+ifeq ($(PY_GTE_35),1)
+	@PYTHONPATH=. py.test --cov-config .coveragerc-py35 --cov backoff tests
 else
 	@PYTHONPATH=. py.test --cov-config .coveragerc-py2 --cov backoff tests/test_*.py
 endif

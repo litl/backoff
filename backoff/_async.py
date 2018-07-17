@@ -20,8 +20,7 @@ def _ensure_coroutines(coros_or_funcs):
     return [_ensure_coroutine(f) for f in coros_or_funcs]
 
 
-@asyncio.coroutine
-def _call_handlers(hdlrs, target, args, kwargs, tries, elapsed, **extra):
+async def _call_handlers(hdlrs, target, args, kwargs, tries, elapsed, **extra):
     details = {
         'target': target,
         'args': args,
@@ -31,7 +30,7 @@ def _call_handlers(hdlrs, target, args, kwargs, tries, elapsed, **extra):
     }
     details.update(extra)
     for hdlr in hdlrs:
-        yield from hdlr(details)
+        await hdlr(details)
 
 
 def retry_predicate(target, wait_gen, predicate,
@@ -49,8 +48,7 @@ def retry_predicate(target, wait_gen, predicate,
     assert asyncio.iscoroutinefunction(target)
 
     @functools.wraps(target)
-    @asyncio.coroutine
-    def retry(*args, **kwargs):
+    async def retry(*args, **kwargs):
 
         # change names because python 2.x doesn't have nonlocal
         max_tries_ = _maybe_call(max_tries)
@@ -64,20 +62,20 @@ def retry_predicate(target, wait_gen, predicate,
             elapsed = _total_seconds(datetime.datetime.now() - start)
             details = (target, args, kwargs, tries, elapsed)
 
-            ret = yield from target(*args, **kwargs)
+            ret = await target(*args, **kwargs)
             if predicate(ret):
                 max_tries_exceeded = (tries == max_tries_)
                 max_time_exceeded = (max_time_ is not None and
                                      elapsed >= max_time_)
 
                 if max_tries_exceeded or max_time_exceeded:
-                    yield from _call_handlers(
+                    await _call_handlers(
                         giveup_hdlrs, *details, value=ret)
                     break
 
                 seconds = _next_wait(wait, jitter, elapsed, max_time_)
 
-                yield from _call_handlers(
+                await _call_handlers(
                     backoff_hdlrs, *details, value=ret, wait=seconds)
 
                 # Note: there is no convenient way to pass explicit event
@@ -89,10 +87,10 @@ def retry_predicate(target, wait_gen, predicate,
                 # See for details:
                 #   <https://groups.google.com/forum/#!topic/python-tulip/yF9C-rFpiKk>
                 #   <https://bugs.python.org/issue28613>
-                yield from asyncio.sleep(seconds)
+                await asyncio.sleep(seconds)
                 continue
             else:
-                yield from _call_handlers(success_hdlrs, *details, value=ret)
+                await _call_handlers(success_hdlrs, *details, value=ret)
                 break
 
         return ret
@@ -114,8 +112,7 @@ def retry_exception(target, wait_gen, exception,
     assert not asyncio.iscoroutinefunction(jitter)
 
     @functools.wraps(target)
-    @asyncio.coroutine
-    def retry(*args, **kwargs):
+    async def retry(*args, **kwargs):
         # change names because python 2.x doesn't have nonlocal
         max_tries_ = _maybe_call(max_tries)
         max_time_ = _maybe_call(max_time)
@@ -129,20 +126,20 @@ def retry_exception(target, wait_gen, exception,
             details = (target, args, kwargs, tries, elapsed)
 
             try:
-                ret = yield from target(*args, **kwargs)
+                ret = await target(*args, **kwargs)
             except exception as e:
-                giveup_result = yield from giveup(e)
+                giveup_result = await giveup(e)
                 max_tries_exceeded = (tries == max_tries_)
                 max_time_exceeded = (max_time_ is not None and
                                      elapsed >= max_time_)
 
                 if giveup_result or max_tries_exceeded or max_time_exceeded:
-                    yield from _call_handlers(giveup_hdlrs, *details)
+                    await _call_handlers(giveup_hdlrs, *details)
                     raise
 
                 seconds = _next_wait(wait, jitter, elapsed, max_time_)
 
-                yield from _call_handlers(
+                await _call_handlers(
                     backoff_hdlrs, *details, wait=seconds)
 
                 # Note: there is no convenient way to pass explicit event
@@ -154,9 +151,9 @@ def retry_exception(target, wait_gen, exception,
                 # See for details:
                 #   <https://groups.google.com/forum/#!topic/python-tulip/yF9C-rFpiKk>
                 #   <https://bugs.python.org/issue28613>
-                yield from asyncio.sleep(seconds)
+                await asyncio.sleep(seconds)
             else:
-                yield from _call_handlers(success_hdlrs, *details)
+                await _call_handlers(success_hdlrs, *details)
 
                 return ret
     return retry
