@@ -1,4 +1,4 @@
-flake8==3.2.1; python_version >= '2.7'
+flake8==3.2.1
 pep8==1.7.0
 pytest==3.0.5
 pytest-cov==2.4.0

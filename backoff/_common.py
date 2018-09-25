@@ -7,15 +7,7 @@ import traceback
 
 # Use module-specific logger with a default null handler.
 logger = logging.getLogger('backoff')
-
-if sys.version_info < (2, 7, 0):  # pragma: no cover
-    class NullHandler(logging.Handler):
-        def emit(self, record):
-            pass
-    logger.addHandler(NullHandler())
-else:
-    logger.addHandler(logging.NullHandler())  # pragma: no cover
-
+logger.addHandler(logging.NullHandler())  # pragma: no cover
 logger.setLevel(logging.INFO)
 
 
