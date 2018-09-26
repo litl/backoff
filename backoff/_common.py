@@ -18,8 +18,7 @@ def _maybe_call(f, *args, **kwargs):
 
 def _init_wait_gen(wait_gen, wait_gen_kwargs):
     # there are no dictionary comprehensions in python 2.6
-    kwargs = {k: _maybe_call(v)
-                  for k, v in wait_gen_kwargs.items()}
+    kwargs = {k: _maybe_call(v) for k, v in wait_gen_kwargs.items()}
     return wait_gen(**kwargs)
 
 
