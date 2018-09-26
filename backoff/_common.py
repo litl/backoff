@@ -18,8 +18,8 @@ def _maybe_call(f, *args, **kwargs):
 
 def _init_wait_gen(wait_gen, wait_gen_kwargs):
     # there are no dictionary comprehensions in python 2.6
-    kwargs = dict((k, _maybe_call(v))
-                  for k, v in wait_gen_kwargs.items())
+    kwargs = {k: _maybe_call(v)
+                  for k, v in wait_gen_kwargs.items()}
     return wait_gen(**kwargs)
 
 
@@ -63,9 +63,9 @@ def _log_backoff(details):
     exc_typ, exc, _ = sys.exc_info()
     if exc is not None:
         exc_fmt = traceback.format_exception_only(exc_typ, exc)[-1]
-        msg = "{0} ({1})".format(msg, exc_fmt.rstrip("\n"))
+        msg = "{} ({})".format(msg, exc_fmt.rstrip("\n"))
     else:
-        msg = "{0} ({1})".format(msg, details['value'])
+        msg = "{} ({})".format(msg, details['value'])
     logger.info(msg)
 
 
@@ -77,8 +77,8 @@ def _log_giveup(details):
     exc_typ, exc, _ = sys.exc_info()
     if exc is not None:
         exc_fmt = traceback.format_exception_only(exc_typ, exc)[-1]
-        msg = "{0} ({1})".format(msg, exc_fmt.rstrip("\n"))
+        msg = "{} ({})".format(msg, exc_fmt.rstrip("\n"))
     else:
-        msg = "{0} ({1})".format(msg, details['value'])
+        msg = "{} ({})".format(msg, details['value'])
 
     logger.error(msg)

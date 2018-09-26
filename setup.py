@@ -27,7 +27,7 @@ classifiers = ['Development Status :: 5 - Production/Stable',
 
 version = backoff.__version__
 url = "https://github.com/litl/backoff"
-tarball_url = "%s/tarball/v%s" % (url, version)
+tarball_url = "{}/tarball/v{}".format(url, version)
 
 
 def readme():
