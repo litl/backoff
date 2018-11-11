@@ -2,7 +2,6 @@ PY_VERSION := $(wordlist 2,4,$(subst ., ,$(shell python --version 2>&1)))
 PY_MAJOR := $(word 1,${PY_VERSION})
 PY_MINOR := $(word 2,${PY_VERSION})
 PY_GTE_34 = $(shell echo $(PY_MAJOR).$(PY_MINOR)\>=3.4 | bc)
-PY_GTE_27 = $(shell echo $(PY_MAJOR).$(PY_MINOR)\>=2.7 | bc)
 
 
 .PHONY: all pep8 flake8 clean test check
@@ -20,10 +19,8 @@ pep8:
 flake8:
 ifeq ($(PY_GTE_34),1)
 	@flake8 backoff tests
-else ifeq ($(PY_GTE_27),1)
-	@flake8 --exclude tests/python34,backoff/_async.py backoff tests
 else
-	@echo 'Not running flake8 for Python < 2.7'
+	@flake8 --exclude tests/python34,backoff/_async.py backoff tests
 endif
 
 clean:

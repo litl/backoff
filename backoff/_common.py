@@ -7,15 +7,7 @@ import traceback
 
 # Use module-specific logger with a default null handler.
 logger = logging.getLogger('backoff')
-
-if sys.version_info < (2, 7, 0):  # pragma: no cover
-    class NullHandler(logging.Handler):
-        def emit(self, record):
-            pass
-    logger.addHandler(NullHandler())
-else:
-    logger.addHandler(logging.NullHandler())  # pragma: no cover
-
+logger.addHandler(logging.NullHandler())  # pragma: no cover
 logger.setLevel(logging.INFO)
 
 
@@ -26,8 +18,7 @@ def _maybe_call(f, *args, **kwargs):
 
 def _init_wait_gen(wait_gen, wait_gen_kwargs):
     # there are no dictionary comprehensions in python 2.6
-    kwargs = dict((k, _maybe_call(v))
-                  for k, v in wait_gen_kwargs.items())
+    kwargs = {k: _maybe_call(v) for k, v in wait_gen_kwargs.items()}
     return wait_gen(**kwargs)
 
 
@@ -71,9 +62,9 @@ def _log_backoff(details):
     exc_typ, exc, _ = sys.exc_info()
     if exc is not None:
         exc_fmt = traceback.format_exception_only(exc_typ, exc)[-1]
-        msg = "{0} ({1})".format(msg, exc_fmt.rstrip("\n"))
+        msg = "{} ({})".format(msg, exc_fmt.rstrip("\n"))
     else:
-        msg = "{0} ({1})".format(msg, details['value'])
+        msg = "{} ({})".format(msg, details['value'])
     logger.info(msg)
 
 
@@ -85,16 +76,8 @@ def _log_giveup(details):
     exc_typ, exc, _ = sys.exc_info()
     if exc is not None:
         exc_fmt = traceback.format_exception_only(exc_typ, exc)[-1]
-        msg = "{0} ({1})".format(msg, exc_fmt.rstrip("\n"))
+        msg = "{} ({})".format(msg, exc_fmt.rstrip("\n"))
     else:
-        msg = "{0} ({1})".format(msg, details['value'])
+        msg = "{} ({})".format(msg, details['value'])
 
     logger.error(msg)
-
-
-# Python 2.6 datetime.timedelta does not have total_seconds()
-# so we do our own implementation here.
-def _total_seconds(timedelta):
-    return (
-        (timedelta.microseconds + 0.0 +
-         (timedelta.seconds + timedelta.days * 24 * 3600) * 10**6) / 10**6)

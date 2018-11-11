@@ -12,9 +12,13 @@ classifiers = ['Development Status :: 5 - Production/Stable',
                'Natural Language :: English',
                'Operating System :: OS Independent',
                'Programming Language :: Python',
-               'Programming Language :: Python :: 2.6',
+               'Programming Language :: Python :: 2',
                'Programming Language :: Python :: 2.7',
                'Programming Language :: Python :: 3',
+               'Programming Language :: Python :: 3.4',
+               'Programming Language :: Python :: 3.5',
+               'Programming Language :: Python :: 3.6',
+               'Programming Language :: Python :: 3.7',
                'Programming Language :: Python :: Implementation',
                'Programming Language :: Python :: Implementation :: CPython',
                'Topic :: Internet :: WWW/HTTP',
@@ -23,7 +27,7 @@ classifiers = ['Development Status :: 5 - Production/Stable',
 
 version = backoff.__version__
 url = "https://github.com/litl/backoff"
-tarball_url = "%s/tarball/v%s" % (url, version)
+tarball_url = "{}/tarball/v{}".format(url, version)
 
 
 def readme():
@@ -38,8 +42,9 @@ core.setup(name='backoff',
            packages=['backoff'],
            author="Bob Green",
            author_email="rgreen@goscoutgo.com",
-           keywords = "backoff function decorator",
+           keywords="backoff function decorator",
            url=url,
            download_url=tarball_url,
            license="MIT",
+           python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
            classifiers=classifiers)

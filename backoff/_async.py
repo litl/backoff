@@ -3,10 +3,11 @@ import datetime
 import functools
 # Python 3.4 code and syntax is allowed in this module!
 import asyncio
+from datetime import timedelta
 
 from backoff._common import (_handlers, _init_wait_gen,
                              _log_backoff, _log_giveup, _maybe_call,
-                             _next_wait, _total_seconds)
+                             _next_wait)
 
 
 def _ensure_coroutine(coro_or_func):
@@ -61,7 +62,7 @@ def retry_predicate(target, wait_gen, predicate,
         wait = _init_wait_gen(wait_gen, wait_gen_kwargs)
         while True:
             tries += 1
-            elapsed = _total_seconds(datetime.datetime.now() - start)
+            elapsed = timedelta.total_seconds(datetime.datetime.now() - start)
             details = (target, args, kwargs, tries, elapsed)
 
             ret = yield from target(*args, **kwargs)
@@ -125,7 +126,7 @@ def retry_exception(target, wait_gen, exception,
         wait = _init_wait_gen(wait_gen, wait_gen_kwargs)
         while True:
             tries += 1
-            elapsed = _total_seconds(datetime.datetime.now() - start)
+            elapsed = timedelta.total_seconds(datetime.datetime.now() - start)
             details = (target, args, kwargs, tries, elapsed)
 
             try:
