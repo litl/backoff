@@ -13,9 +13,6 @@ all:
 	@echo 'test              run the unit tests'
 	@echo 'check             make sure you are ready to commit'
 
-pep8:
-	@pep8 backoff tests
-
 flake8:
 ifeq ($(PY_GTE_34),1)
 	@flake8 backoff tests
@@ -35,5 +32,5 @@ else
 	@PYTHONPATH=. py.test --cov-config .coveragerc-py2 --cov backoff tests/test_*.py
 endif
 
-check: pep8 flake8 test
+check: flake8 test
 	@coverage report | grep 100% >/dev/null || { echo 'Unit tests coverage is incomplete.'; exit 1; }
