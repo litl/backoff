@@ -4,11 +4,14 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
+  - "3.7"
 matrix:
   include:
   - python: "3.5"
     env: PYTHONASYNCIODEBUG=x
   - python: "3.6"
+    env: PYTHONASYNCIODEBUG=x
+  - python: "3.7"
     env: PYTHONASYNCIODEBUG=x
 install:
   - pip install -r requirements.txt
