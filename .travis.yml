@@ -13,6 +13,8 @@ matrix:
     env: PYTHONASYNCIODEBUG=x
   - python: "3.7"
     env: PYTHONASYNCIODEBUG=x
+    dist: xenial
+    sudo: true
 install:
   - pip install -r requirements.txt
   - pip install coveralls
