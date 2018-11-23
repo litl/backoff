@@ -1,10 +1,12 @@
+import asyncio
+
+import aiohttp
 import backoff
-import requests
 import pytest
 
 
-@pytest.mark.smoke
-def test_client_response_errors():
+@pytest.mark.asyncio
+async def test_client_response_errors():
     statuses = [418, 500, 501]
 
     backoffs = []
@@ -13,28 +15,29 @@ def test_client_response_errors():
 
     @backoff.on_exception(
         backoff.expo,
-        requests.exceptions.RequestException,
+        aiohttp.client_exceptions.ClientResponseError,
         max_tries=3,
         on_backoff=backoffs.append,
         on_giveup=giveups.append,
         on_success=successes.append,
     )
-    def httpbin_status():
+    async def httpbin_status():
         status = statuses.pop()
         url = "http://httpbin.org/status/{}".format(status)
-        resp = requests.get(url)
-        resp.raise_for_status()
+        async with aiohttp.ClientSession(raise_for_status=True) as session:
+            async with session.get(url) as resp:
+                await resp
 
-    with pytest.raises(requests.exceptions.RequestException):
-        httpbin_status()
+    with pytest.raises(aiohttp.client_exceptions.ClientResponseError):
+        await httpbin_status()
 
     assert len(backoffs) == 2
     assert len(giveups) == 1
     assert len(successes) == 0
 
 
-@pytest.mark.smoke
-def test_get():
+@pytest.mark.asyncio
+async def test_get():
 
     backoffs = []
     giveups = []
@@ -42,18 +45,19 @@ def test_get():
 
     @backoff.on_exception(
         backoff.expo,
-        requests.exceptions.RequestException,
+        aiohttp.client_exceptions.ClientResponseError,
         max_tries=3,
         on_success=successes.append,
         on_backoff=backoffs.append,
         on_giveup=giveups.append,
     )
-    def httpbin_get():
-        resp = requests.get("http://httpbin.org/get")
-        resp.raise_for_status()
-        return resp.json()
+    async def httpbin_get():
+        async with aiohttp.ClientSession(raise_for_status=True) as session:
+            async with session.get("http://httpbin.org/get") as resp:
+                data = await resp.json()
+                return data
 
-    data = httpbin_get()
+    data = await httpbin_get()
 
     assert len(backoffs) == 0
     assert len(giveups) == 0
