@@ -4,13 +4,15 @@ PY_MINOR := $(word 2,${PY_VERSION})
 PY_GTE_35 = $(shell echo $(PY_MAJOR).$(PY_MINOR)\>=3.5 | bc)
 
 
-.PHONY: all flake8 clean test check
+.PHONY: all flake8 clean test smoke check supercheck
 
 all:
 	@echo 'flake8            check flake8 compliance'
-	@echo 'clean             cleanup the source tree'
+	@echo 'clean             clean up the source tree'
 	@echo 'test              run the unit tests'
-	@echo 'check             make sure you are ready to commit'
+	@echo 'smoke             run integration tests'
+	@echo 'check             run flake8 and unit tests'
+	@echo 'supercheck        run flake8, unit, and smoke tests'
 
 flake8:
 ifeq ($(PY_GTE_35),1)
@@ -31,5 +33,14 @@ else
 	@PYTHONPATH=. py.test --cov-config .coveragerc-py2 --cov backoff tests/test_*.py
 endif
 
+smoke: clean
+ifeq ($(PY_GTE_35),1)
+	@PYTHONPATH=. py.test smoke
+else
+	@PYTHONPATH=. py.test smoke/test_*.py
+endif
+
 check: flake8 test
 	@coverage report | grep 100% >/dev/null || { echo 'Unit tests coverage is incomplete.'; exit 1; }
+
+supercheck: check smoke
