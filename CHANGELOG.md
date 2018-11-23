@@ -103,3 +103,12 @@
 
 - Change default log level from ERROR to INFO
 - Log retries on exception as INFO
+
+## [v1.7.0] - 2018-11-23
+### Changed
+
+- Support Python 3.7
+- Drop support for async in Python 3.4
+- Drop support for Python 2.6
+- Update development dependencies
+- Use poetry for dependencies and packaging

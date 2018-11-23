@@ -7,3 +7,4 @@ build/
 dist/
 .cache/
 *.egg-info
+poetry.lock

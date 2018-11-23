@@ -1,0 +1,44 @@
+[tool.poetry]
+name = "backoff"
+version = "1.7.0"
+description = "Function decoration for backoff and retry"
+authors = ["Bob Green <rgreen@goscoutgo.com>"]
+readme = "README.rst"
+repository = "https://github.com/litl/backoff"
+license = "MIT"
+keywords = "python retry backoff asyncio asychnronous synchronous exceptions retrying decorators exponential"
+classifiers = ['Development Status :: 5 - Production/Stable',
+               'Intended Audience :: Developers',
+               'Programming Language :: Python',
+               'License :: OSI Approved :: MIT License',
+               'Natural Language :: English',
+               'Operating System :: OS Independent',
+               'Programming Language :: Python',
+               'Programming Language :: Python :: 2',
+               'Programming Language :: Python :: 2.7',
+               'Programming Language :: Python :: 3',
+               'Programming Language :: Python :: 3.4',
+               'Programming Language :: Python :: 3.5',
+               'Programming Language :: Python :: 3.6',
+               'Programming Language :: Python :: 3.7',
+               'Topic :: Internet :: WWW/HTTP',
+               'Topic :: Software Development :: Libraries :: Python Modules',
+               'Topic :: Utilities']
+packages = [
+    { include = "backoff" },
+    { include = "README.rst" },
+    { include = "LICENSE" },
+]
+
+[tool.poetry.dependencies]
+python = "^2.7 || ^3.4"
+
+[tool.poetry.dev-dependencies]
+flake8 = "^3.6"
+pytest = "^4.0"
+pytest-cov = "^2.6"
+pytest-asyncio = {version = "^0.9.0",python = "^3.5"}
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
