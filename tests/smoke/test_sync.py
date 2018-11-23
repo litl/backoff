@@ -1,12 +1,10 @@
-import asyncio
-
-import aiohttp
 import backoff
+import requests
 import pytest
 
 
-@pytest.mark.asyncio
-async def test_client_response_errors():
+@pytest.mark.smoke
+def test_client_response_errors():
     statuses = [418, 500, 501]
 
     backoffs = []
@@ -15,29 +13,28 @@ async def test_client_response_errors():
 
     @backoff.on_exception(
         backoff.expo,
-        aiohttp.client_exceptions.ClientResponseError,
+        requests.exceptions.RequestException,
         max_tries=3,
         on_backoff=backoffs.append,
         on_giveup=giveups.append,
         on_success=successes.append,
     )
-    async def httpbin_status():
+    def httpbin_status():
         status = statuses.pop()
         url = "http://httpbin.org/status/{}".format(status)
-        async with aiohttp.ClientSession(raise_for_status=True) as session:
-            async with session.get(url) as resp:
-                await resp
+        resp = requests.get(url)
+        resp.raise_for_status()
 
-    with pytest.raises(aiohttp.client_exceptions.ClientResponseError):
-        await httpbin_status()
+    with pytest.raises(requests.exceptions.RequestException):
+        httpbin_status()
 
     assert len(backoffs) == 2
     assert len(giveups) == 1
     assert len(successes) == 0
 
 
-@pytest.mark.asyncio
-async def test_get():
+@pytest.mark.smoke
+def test_get():
 
     backoffs = []
     giveups = []
@@ -45,19 +42,18 @@ async def test_get():
 
     @backoff.on_exception(
         backoff.expo,
-        aiohttp.client_exceptions.ClientResponseError,
+        requests.exceptions.RequestException,
         max_tries=3,
         on_success=successes.append,
         on_backoff=backoffs.append,
         on_giveup=giveups.append,
     )
-    async def httpbin_get():
-        async with aiohttp.ClientSession(raise_for_status=True) as session:
-            async with session.get("http://httpbin.org/get") as resp:
-                data = await resp.json()
-                return data
+    def httpbin_get():
+        resp = requests.get("http://httpbin.org/get")
+        resp.raise_for_status()
+        return resp.json()
 
-    data = await httpbin_get()
+    data = httpbin_get()
 
     assert len(backoffs) == 0
     assert len(giveups) == 0
