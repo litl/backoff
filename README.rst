@@ -264,6 +264,8 @@ handler functions via the python standard library, specifically
 Asynchronous code
 -----------------
 
+Backoff supports asynchronous execution in Python 3.5 and above.
+
 To use backoff in asynchronous code based on
 `asyncio <https://docs.python.org/3/library/asyncio.html>`_
 you simply need to apply ``backoff.on_exception`` or ``backoff.on_predicate``
@@ -274,8 +276,6 @@ You can also use coroutines for the ``on_success``, ``on_backoff``, and
 The following examples use `aiohttp <https://aiohttp.readthedocs.io/>`_
 asynchronous HTTP client/server library.
 
-On Python 3.5 and above with ``async def`` and ``await`` syntax:
-
 .. code-block:: python
 
     @backoff.on_exception(backoff.expo, aiohttp.ClientError, max_time=60)
@@ -283,23 +283,6 @@ On Python 3.5 and above with ``async def`` and ``await`` syntax:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 return await response.text()
-
-In case you use Python 3.4 you can use `@asyncio.coroutine` and `yield from`:
-
-.. code-block:: python
-
-    @backoff.on_exception(backoff.expo, aiohttp.ClientError, max_time=60)
-    @asyncio.coroutine
-    def get_url_py34(url):
-        with aiohttp.ClientSession() as session:
-            response = yield from session.get(url)
-            try:
-                return (yield from response.text())
-            except Exception:
-                response.close()
-                raise
-            finally:
-                yield from response.release()
 
 Logging configuration
 ---------------------

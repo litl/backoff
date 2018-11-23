@@ -5,4 +5,4 @@ show_missing = True
 exclude_lines =
     # Have to re-enable the standard pragma
     pragma: no cover
-    pragma: python=3\.4
+    pragma: python=3\.5
