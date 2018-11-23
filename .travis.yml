@@ -12,10 +12,11 @@ matrix:
     env: PYTHONASYNCIODEBUG=x
     dist: xenial
     sudo: true
+before_install:
+  - pip install poetry
 install:
-  - pip install -r requirements.txt
-  - pip install coveralls
-script: make check
+  - poetry install
+script: poetry run make check
 after_success: coveralls
 notifications:
   email: false

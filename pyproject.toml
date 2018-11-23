@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "backoff"
+version = "1.7.0"
+description = "Python library providing function decorators for configurable backoff and retry"
+authors = ["Bob Green <rgreen@goscoutgo.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^2.7 || ^3.5"
+
+[tool.poetry.dev-dependencies]
+flake8 = "^3.6"
+pytest = "^4.0"
+pytest-cov = "^2.6"
+pytest-asyncio = {version = "^0.9.0",python = "^3.5"}
+aiohttp = {version ="^3.4.4",python = "^3.5.3"}
+requests = "^2.20"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
