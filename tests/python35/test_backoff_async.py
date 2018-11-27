@@ -99,6 +99,33 @@ async def test_on_exception_max_tries(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_on_exception_constant_iterable(monkeypatch):
+    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
+
+    backoffs = []
+    giveups = []
+    successes = []
+
+    @backoff.on_exception(
+        backoff.constant,
+        KeyError,
+        interval=(1, 2, 3),
+        on_backoff=backoffs.append,
+        on_giveup=giveups.append,
+        on_success=successes.append,
+    )
+    async def endless_exceptions():
+        raise KeyError('foo')
+
+    with pytest.raises(KeyError):
+        await endless_exceptions()
+
+    assert len(backoffs) == 3
+    assert len(giveups) == 1
+    assert len(successes) == 0
+
+
+@pytest.mark.asyncio
 async def test_on_exception_success_random_jitter(monkeypatch):
     monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
 
@@ -383,6 +410,36 @@ async def test_on_predicate_iterable_handlers():
                            'target': emptiness._target,
                            'tries': 3,
                            'value': None}
+
+
+@pytest.mark.asyncio
+async def test_on_predicate_constant_iterable(monkeypatch):
+    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
+
+    waits = [1, 2, 3, 6, 9]
+    backoffs = []
+    giveups = []
+    successes = []
+
+    @backoff.on_predicate(
+        backoff.constant,
+        interval=waits,
+        on_backoff=backoffs.append,
+        on_giveup=giveups.append,
+        on_success=successes.append,
+        jitter=None,
+    )
+    async def falsey():
+        return False
+
+    assert not await falsey()
+
+    assert len(backoffs) == len(waits)
+    for i, wait in enumerate(waits):
+        assert backoffs[i]['wait'] == wait
+
+    assert len(giveups) == 1
+    assert len(successes) == 0
 
 
 # To maintain backward compatibility,

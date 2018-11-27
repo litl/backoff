@@ -1,5 +1,7 @@
 # coding:utf-8
 
+import itertools
+
 
 def expo(base=2, factor=1, max_value=None):
     """Generator for exponential decay.
@@ -43,7 +45,12 @@ def constant(interval=1):
     """Generator for constant intervals.
 
     Args:
-        interval: The constant value in seconds to yield.
+        interval: A constant value to yield or an iterable of such values.
     """
-    while True:
-        yield interval
+    try:
+        itr = iter(interval)
+    except TypeError:
+        itr = itertools.repeat(interval)
+
+    for val in itr:
+        yield val
