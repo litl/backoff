@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "backoff"
-version = "1.7.0"
+version = "1.7.1"
 description = "Function decoration for backoff and retry"
 authors = ["Bob Green <rgreen@goscoutgo.com>"]
 readme = "README.rst"
 repository = "https://github.com/litl/backoff"
 license = "MIT"
-keywords = "python retry backoff asyncio asychnronous synchronous exceptions retrying decorators exponential"
+keywords = ["retry", "backoff", "decorators"]
 classifiers = ['Development Status :: 5 - Production/Stable',
                'Intended Audience :: Developers',
                'Programming Language :: Python',
