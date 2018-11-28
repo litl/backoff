@@ -44,7 +44,7 @@ is raised. Here's an example using exponential backoff when any
         return requests.get(url)
 
 The decorator will also accept a tuple of exceptions for cases where
-you want the same backoff behavior for more than one exception type:
+the same backoff behavior is desired for more than one exception type:
 
 .. code-block:: python
 
@@ -287,7 +287,7 @@ asynchronous HTTP client/server library.
 Logging configuration
 ---------------------
 
-Errors and backoff and retry attempts are logged to the 'backoff'
+By default, backoff and retry attempts are logged to the 'backoff'
 logger. By default, this logger is configured with a NullHandler, so
 there will be nothing output unless you configure a handler.
 Programmatically, this might be accomplished with something as simple
@@ -304,3 +304,33 @@ only when a giveup event occurs, set the logger level to ERROR.
 .. code-block:: python
 
     logging.getLogger('backoff').setLevel(logging.ERROR)
+
+It is also possible to specify an alternate logger with the ``logger``
+keyword argument.  If a string value is specified the logger will be
+looked up by name.
+
+.. code-block:: python
+
+   @backoff.on_exception(backoff.expo,
+                         requests.exception.RequestException,
+			 logger='my_logger')
+   # ...
+
+It is also supported to specify a Logger (or LoggerAdapter) object
+directly.
+
+.. code-block:: python
+
+    my_logger = logging.getLogger('my_logger')
+    my_handler = logging.StreamHandler()
+    my_logger.add_handler(my_handler)
+    my_logger.setLevel(logging.ERROR)
+
+    @backoff.on_exception(backoff.expo,
+                         requests.exception.RequestException,
+			 logger=my_logger)
+    # ...
+
+Default logging can be disabled all together by specifying
+``logger=None``. In this case, if desired alternative logging behavior
+could be defined by using custom event handlers.
