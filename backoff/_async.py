@@ -5,9 +5,7 @@ import functools
 import asyncio
 from datetime import timedelta
 
-from backoff._common import (_handlers, _init_wait_gen,
-                             _log_backoff, _log_giveup, _maybe_call,
-                             _next_wait)
+from backoff._common import (_init_wait_gen, _maybe_call, _next_wait)
 
 
 def _ensure_coroutine(coro_or_func):
@@ -38,9 +36,9 @@ def retry_predicate(target, wait_gen, predicate,
                     max_tries, max_time, jitter,
                     on_success, on_backoff, on_giveup,
                     wait_gen_kwargs):
-    success_hdlrs = _ensure_coroutines(_handlers(on_success))
-    backoff_hdlrs = _ensure_coroutines(_handlers(on_backoff, _log_backoff))
-    giveup_hdlrs = _ensure_coroutines(_handlers(on_giveup, _log_giveup))
+    on_success = _ensure_coroutines(on_success)
+    on_backoff = _ensure_coroutines(on_backoff)
+    on_giveup = _ensure_coroutines(on_giveup)
 
     # Easy to implement, please report if you need this.
     assert not asyncio.iscoroutinefunction(max_tries)
@@ -70,18 +68,17 @@ def retry_predicate(target, wait_gen, predicate,
                                      elapsed >= max_time_)
 
                 if max_tries_exceeded or max_time_exceeded:
-                    await _call_handlers(
-                        giveup_hdlrs, *details, value=ret)
+                    await _call_handlers(on_giveup, *details, value=ret)
                     break
 
                 try:
                     seconds = _next_wait(wait, jitter, elapsed, max_time_)
                 except StopIteration:
-                    await _call_handlers(giveup_hdlrs, *details, value=ret)
+                    await _call_handlers(on_giveup, *details, value=ret)
                     break
 
-                await _call_handlers(
-                    backoff_hdlrs, *details, value=ret, wait=seconds)
+                await _call_handlers(on_backoff, *details, value=ret,
+                                     wait=seconds)
 
                 # Note: there is no convenient way to pass explicit event
                 # loop to decorator, so here we assume that either default
@@ -95,7 +92,7 @@ def retry_predicate(target, wait_gen, predicate,
                 await asyncio.sleep(seconds)
                 continue
             else:
-                await _call_handlers(success_hdlrs, *details, value=ret)
+                await _call_handlers(on_success, *details, value=ret)
                 break
 
         return ret
@@ -107,9 +104,9 @@ def retry_exception(target, wait_gen, exception,
                     max_tries, max_time, jitter, giveup,
                     on_success, on_backoff, on_giveup,
                     wait_gen_kwargs):
-    success_hdlrs = _ensure_coroutines(_handlers(on_success))
-    backoff_hdlrs = _ensure_coroutines(_handlers(on_backoff, _log_backoff))
-    giveup_hdlrs = _ensure_coroutines(_handlers(on_giveup, _log_giveup))
+    on_success = _ensure_coroutines(on_success)
+    on_backoff = _ensure_coroutines(on_backoff)
+    on_giveup = _ensure_coroutines(on_giveup)
     giveup = _ensure_coroutine(giveup)
 
     # Easy to implement, please report if you need this.
@@ -139,16 +136,16 @@ def retry_exception(target, wait_gen, exception,
                                      elapsed >= max_time_)
 
                 if giveup_result or max_tries_exceeded or max_time_exceeded:
-                    await _call_handlers(giveup_hdlrs, *details)
+                    await _call_handlers(on_giveup, *details)
                     raise
 
                 try:
                     seconds = _next_wait(wait, jitter, elapsed, max_time_)
                 except StopIteration:
-                    await _call_handlers(giveup_hdlrs, *details)
+                    await _call_handlers(on_giveup, *details)
                     raise e
 
-                await _call_handlers(backoff_hdlrs, *details, wait=seconds)
+                await _call_handlers(on_backoff, *details, wait=seconds)
 
                 # Note: there is no convenient way to pass explicit event
                 # loop to decorator, so here we assume that either default
@@ -161,7 +158,7 @@ def retry_exception(target, wait_gen, exception,
                 #   <https://bugs.python.org/issue28613>
                 await asyncio.sleep(seconds)
             else:
-                await _call_handlers(success_hdlrs, *details)
+                await _call_handlers(on_success, *details)
 
                 return ret
     return retry
