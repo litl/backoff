@@ -10,6 +10,13 @@ from backoff._jitter import full_jitter
 from backoff import _sync
 
 
+# python 2.7 -> 3.x compatibility for str and unicode
+try:
+    basestring
+except NameError:  # pragma: python=3.5
+    basestring = str
+
+
 def on_predicate(wait_gen,
                  predicate=operator.not_,
                  max_tries=None,
@@ -64,7 +71,7 @@ def on_predicate(wait_gen,
     def decorate(target):
         # change names because python 2.x doesn't have nonlocal
         logger_ = logger
-        if isinstance(logger_, str):
+        if isinstance(logger_, basestring):
             logger_ = logging.getLogger(logger_)
         on_success_ = _config_handlers(on_success)
         on_backoff_ = _config_handlers(on_backoff, _log_backoff, logger_)
@@ -154,7 +161,7 @@ def on_exception(wait_gen,
     def decorate(target):
         # change names because python 2.x doesn't have nonlocal
         logger_ = logger
-        if isinstance(logger_, str):
+        if isinstance(logger_, basestring):
             logger_ = logging.getLogger(logger_)
         on_success_ = _config_handlers(on_success)
         on_backoff_ = _config_handlers(on_backoff, _log_backoff, logger_)
