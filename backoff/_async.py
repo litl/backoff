@@ -74,7 +74,11 @@ def retry_predicate(target, wait_gen, predicate,
                         giveup_hdlrs, *details, value=ret)
                     break
 
-                seconds = _next_wait(wait, jitter, elapsed, max_time_)
+                try:
+                    seconds = _next_wait(wait, jitter, elapsed, max_time_)
+                except StopIteration:
+                    await _call_handlers(giveup_hdlrs, *details, value=ret)
+                    break
 
                 await _call_handlers(
                     backoff_hdlrs, *details, value=ret, wait=seconds)
@@ -138,10 +142,13 @@ def retry_exception(target, wait_gen, exception,
                     await _call_handlers(giveup_hdlrs, *details)
                     raise
 
-                seconds = _next_wait(wait, jitter, elapsed, max_time_)
+                try:
+                    seconds = _next_wait(wait, jitter, elapsed, max_time_)
+                except StopIteration:
+                    await _call_handlers(giveup_hdlrs, *details)
+                    raise e
 
-                await _call_handlers(
-                    backoff_hdlrs, *details, wait=seconds)
+                await _call_handlers(backoff_hdlrs, *details, wait=seconds)
 
                 # Note: there is no convenient way to pass explicit event
                 # loop to decorator, so here we assume that either default
