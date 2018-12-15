@@ -8,7 +8,7 @@ import threading
 import pytest
 
 import backoff
-from tests.common import _log_hdlrs, _save_target
+from tests.common import _save_target
 
 
 def test_on_predicate(monkeypatch):
@@ -158,88 +158,88 @@ def test_on_exception_constant_iterable(monkeypatch):
 def test_on_exception_success_random_jitter(monkeypatch):
     monkeypatch.setattr('time.sleep', lambda x: None)
 
-    log, log_success, log_backoff, log_giveup = _log_hdlrs()
+    backoffs, giveups, successes = [], [], []
 
     @backoff.on_exception(backoff.expo,
                           Exception,
-                          on_success=log_success,
-                          on_backoff=log_backoff,
-                          on_giveup=log_giveup,
+                          on_success=successes.append,
+                          on_backoff=backoffs.append,
+                          on_giveup=giveups.append,
                           jitter=backoff.random_jitter,
                           factor=0.5)
     @_save_target
     def succeeder(*args, **kwargs):
         # succeed after we've backed off twice
-        if len(log['backoff']) < 2:
+        if len(backoffs) < 2:
             raise ValueError("catch me")
 
     succeeder(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice before succeeding
-    assert len(log['success']) == 1
-    assert len(log['backoff']) == 2
-    assert len(log['giveup']) == 0
+    assert len(successes) == 1
+    assert len(backoffs) == 2
+    assert len(giveups) == 0
 
     for i in range(2):
-        details = log['backoff'][i]
+        details = backoffs[i]
         assert details['wait'] >= 0.5 * 2 ** i
 
 
 def test_on_exception_success_full_jitter(monkeypatch):
     monkeypatch.setattr('time.sleep', lambda x: None)
 
-    log, log_success, log_backoff, log_giveup = _log_hdlrs()
+    backoffs, giveups, successes = [], [], []
 
     @backoff.on_exception(backoff.expo,
                           Exception,
-                          on_success=log_success,
-                          on_backoff=log_backoff,
-                          on_giveup=log_giveup,
+                          on_success=successes.append,
+                          on_backoff=backoffs.append,
+                          on_giveup=giveups.append,
                           jitter=backoff.full_jitter,
                           factor=0.5)
     @_save_target
     def succeeder(*args, **kwargs):
         # succeed after we've backed off twice
-        if len(log['backoff']) < 2:
+        if len(backoffs) < 2:
             raise ValueError("catch me")
 
     succeeder(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice before succeeding
-    assert len(log['success']) == 1
-    assert len(log['backoff']) == 2
-    assert len(log['giveup']) == 0
+    assert len(successes) == 1
+    assert len(backoffs) == 2
+    assert len(giveups) == 0
 
     for i in range(2):
-        details = log['backoff'][i]
+        details = backoffs[i]
         assert details['wait'] <= 0.5 * 2 ** i
 
 
 def test_on_exception_success():
-    log, log_success, log_backoff, log_giveup = _log_hdlrs()
+    backoffs, giveups, successes = [], [], []
 
     @backoff.on_exception(backoff.constant,
                           Exception,
-                          on_success=log_success,
-                          on_backoff=log_backoff,
-                          on_giveup=log_giveup,
-                          jitter=lambda: 0,
+                          on_success=successes.append,
+                          on_backoff=backoffs.append,
+                          on_giveup=giveups.append,
+                          jitter=None,
                           interval=0)
     @_save_target
     def succeeder(*args, **kwargs):
         # succeed after we've backed off twice
-        if len(log['backoff']) < 2:
+        if len(backoffs) < 2:
             raise ValueError("catch me")
 
     succeeder(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice before succeeding
-    assert len(log['success']) == 1
-    assert len(log['backoff']) == 2
-    assert len(log['giveup']) == 0
+    assert len(successes) == 1
+    assert len(backoffs) == 2
+    assert len(giveups) == 0
 
     for i in range(2):
-        details = log['backoff'][i]
+        details = backoffs[i]
         elapsed = details.pop('elapsed')
         assert isinstance(elapsed, float)
         assert details == {'args': (1, 2, 3),
@@ -248,7 +248,7 @@ def test_on_exception_success():
                            'tries': i + 1,
                            'wait': 0}
 
-    details = log['success'][0]
+    details = successes[0]
     elapsed = details.pop('elapsed')
     assert isinstance(elapsed, float)
     assert details == {'args': (1, 2, 3),
@@ -258,15 +258,15 @@ def test_on_exception_success():
 
 
 def test_on_exception_giveup():
-    log, log_success, log_backoff, log_giveup = _log_hdlrs()
+    backoffs, giveups, successes = [], [], []
 
     @backoff.on_exception(backoff.constant,
                           ValueError,
-                          on_success=log_success,
-                          on_backoff=log_backoff,
-                          on_giveup=log_giveup,
+                          on_success=successes.append,
+                          on_backoff=backoffs.append,
+                          on_giveup=giveups.append,
                           max_tries=3,
-                          jitter=lambda: 0,
+                          jitter=None,
                           interval=0)
     @_save_target
     def exceptor(*args, **kwargs):
@@ -276,11 +276,11 @@ def test_on_exception_giveup():
         exceptor(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice and giving up once
-    assert len(log['success']) == 0
-    assert len(log['backoff']) == 2
-    assert len(log['giveup']) == 1
+    assert len(successes) == 0
+    assert len(backoffs) == 2
+    assert len(giveups) == 1
 
-    details = log['giveup'][0]
+    details = giveups[0]
     elapsed = details.pop('elapsed')
     assert isinstance(elapsed, float)
     assert details == {'args': (1, 2, 3),
@@ -310,28 +310,28 @@ def test_on_exception_giveup_predicate(monkeypatch):
 
 
 def test_on_predicate_success():
-    log, log_success, log_backoff, log_giveup = _log_hdlrs()
+    backoffs, giveups, successes = [], [], []
 
     @backoff.on_predicate(backoff.constant,
-                          on_success=log_success,
-                          on_backoff=log_backoff,
-                          on_giveup=log_giveup,
-                          jitter=lambda: 0,
+                          on_success=successes.append,
+                          on_backoff=backoffs.append,
+                          on_giveup=giveups.append,
+                          jitter=None,
                           interval=0)
     @_save_target
     def success(*args, **kwargs):
         # succeed after we've backed off twice
-        return len(log['backoff']) == 2
+        return len(backoffs) == 2
 
     success(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice before succeeding
-    assert len(log['success']) == 1
-    assert len(log['backoff']) == 2
-    assert len(log['giveup']) == 0
+    assert len(successes) == 1
+    assert len(backoffs) == 2
+    assert len(giveups) == 0
 
     for i in range(2):
-        details = log['backoff'][i]
+        details = backoffs[i]
 
         elapsed = details.pop('elapsed')
         assert isinstance(elapsed, float)
@@ -342,7 +342,7 @@ def test_on_predicate_success():
                            'value': False,
                            'wait': 0}
 
-    details = log['success'][0]
+    details = successes[0]
     elapsed = details.pop('elapsed')
     assert isinstance(elapsed, float)
     assert details == {'args': (1, 2, 3),
@@ -353,14 +353,14 @@ def test_on_predicate_success():
 
 
 def test_on_predicate_giveup():
-    log, log_success, log_backoff, log_giveup = _log_hdlrs()
+    backoffs, giveups, successes = [], [], []
 
     @backoff.on_predicate(backoff.constant,
-                          on_success=log_success,
-                          on_backoff=log_backoff,
-                          on_giveup=log_giveup,
+                          on_success=successes.append,
+                          on_backoff=backoffs.append,
+                          on_giveup=giveups.append,
                           max_tries=3,
-                          jitter=lambda: 0,
+                          jitter=None,
                           interval=0)
     @_save_target
     def emptiness(*args, **kwargs):
@@ -369,11 +369,11 @@ def test_on_predicate_giveup():
     emptiness(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice and giving up once
-    assert len(log['success']) == 0
-    assert len(log['backoff']) == 2
-    assert len(log['giveup']) == 1
+    assert len(successes) == 0
+    assert len(backoffs) == 2
+    assert len(giveups) == 1
 
-    details = log['giveup'][0]
+    details = giveups[0]
     elapsed = details.pop('elapsed')
     assert isinstance(elapsed, float)
     assert details == {'args': (1, 2, 3),
@@ -384,14 +384,20 @@ def test_on_predicate_giveup():
 
 
 def test_on_predicate_iterable_handlers():
-    hdlrs = [_log_hdlrs() for _ in range(3)]
+    class Logger:
+        def __init__(self):
+            self.backoffs = []
+            self.giveups = []
+            self.successes = []
+
+    loggers = [Logger() for _ in range(3)]
 
     @backoff.on_predicate(backoff.constant,
-                          on_success=(h[1] for h in hdlrs),
-                          on_backoff=(h[2] for h in hdlrs),
-                          on_giveup=(h[3] for h in hdlrs),
+                          on_backoff=(l.backoffs.append for l in loggers),
+                          on_giveup=(l.giveups.append for l in loggers),
+                          on_success=(l.successes.append for l in loggers),
                           max_tries=3,
-                          jitter=lambda: 0,
+                          jitter=None,
                           interval=0)
     @_save_target
     def emptiness(*args, **kwargs):
@@ -399,12 +405,14 @@ def test_on_predicate_iterable_handlers():
 
     emptiness(1, 2, 3, foo=1, bar=2)
 
-    for i in range(3):
-        assert len(hdlrs[i][0]['success']) == 0
-        assert len(hdlrs[i][0]['backoff']) == 2
-        assert len(hdlrs[i][0]['giveup']) == 1
+    for logger in loggers:
 
-        details = dict(hdlrs[i][0]['giveup'][0])
+        assert len(logger.successes) == 0
+        assert len(logger.backoffs) == 2
+        assert len(logger.giveups) == 1
+
+        details = dict(logger.giveups[0])
+        print(details)
         elapsed = details.pop('elapsed')
         assert isinstance(elapsed, float)
         assert details == {'args': (1, 2, 3),
@@ -420,30 +428,31 @@ def test_on_exception_success_0_arg_jitter(monkeypatch):
     monkeypatch.setattr('time.sleep', lambda x: None)
     monkeypatch.setattr('random.random', lambda: 0)
 
-    log, log_success, log_backoff, log_giveup = _log_hdlrs()
+    backoffs, giveups, successes = [], [], []
 
     @backoff.on_exception(backoff.constant,
                           Exception,
-                          on_success=log_success,
-                          on_backoff=log_backoff,
-                          on_giveup=log_giveup,
+                          on_success=successes.append,
+                          on_backoff=backoffs.append,
+                          on_giveup=giveups.append,
                           jitter=random.random,
                           interval=0)
     @_save_target
     def succeeder(*args, **kwargs):
         # succeed after we've backed off twice
-        if len(log['backoff']) < 2:
+        if len(backoffs) < 2:
             raise ValueError("catch me")
 
-    succeeder(1, 2, 3, foo=1, bar=2)
+    with pytest.deprecated_call():
+        succeeder(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice before succeeding
-    assert len(log['success']) == 1
-    assert len(log['backoff']) == 2
-    assert len(log['giveup']) == 0
+    assert len(successes) == 1
+    assert len(backoffs) == 2
+    assert len(giveups) == 0
 
     for i in range(2):
-        details = log['backoff'][i]
+        details = backoffs[i]
         elapsed = details.pop('elapsed')
         assert isinstance(elapsed, float)
         assert details == {'args': (1, 2, 3),
@@ -452,7 +461,7 @@ def test_on_exception_success_0_arg_jitter(monkeypatch):
                            'tries': i + 1,
                            'wait': 0}
 
-    details = log['success'][0]
+    details = successes[0]
     elapsed = details.pop('elapsed')
     assert isinstance(elapsed, float)
     assert details == {'args': (1, 2, 3),
@@ -467,28 +476,30 @@ def test_on_predicate_success_0_arg_jitter(monkeypatch):
     monkeypatch.setattr('time.sleep', lambda x: None)
     monkeypatch.setattr('random.random', lambda: 0)
 
-    log, log_success, log_backoff, log_giveup = _log_hdlrs()
+    backoffs, giveups, successes = [], [], []
 
     @backoff.on_predicate(backoff.constant,
-                          on_success=log_success,
-                          on_backoff=log_backoff,
-                          on_giveup=log_giveup,
+                          on_success=successes.append,
+                          on_backoff=backoffs.append,
+                          on_giveup=giveups.append,
                           jitter=random.random,
                           interval=0)
     @_save_target
     def success(*args, **kwargs):
         # succeed after we've backed off twice
-        return len(log['backoff']) == 2
+        return len(backoffs) == 2
 
-    success(1, 2, 3, foo=1, bar=2)
+    with pytest.deprecated_call():
+        success(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice before succeeding
-    assert len(log['success']) == 1
-    assert len(log['backoff']) == 2
-    assert len(log['giveup']) == 0
+    assert len(successes) == 1
+    assert len(backoffs) == 2
+    assert len(giveups) == 0
 
     for i in range(2):
-        details = log['backoff'][i]
+        details = backoffs[i]
+        print(details)
         elapsed = details.pop('elapsed')
         assert isinstance(elapsed, float)
         assert details == {'args': (1, 2, 3),
@@ -498,7 +509,7 @@ def test_on_predicate_success_0_arg_jitter(monkeypatch):
                            'value': False,
                            'wait': 0}
 
-    details = log['success'][0]
+    details = successes[0]
     elapsed = details.pop('elapsed')
     assert isinstance(elapsed, float)
     assert details == {'args': (1, 2, 3),
