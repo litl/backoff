@@ -3,6 +3,7 @@
 import logging
 import sys
 import traceback
+import warnings
 
 
 # Use module-specific logger with a default null handler.
@@ -30,8 +31,14 @@ def _next_wait(wait, jitter, elapsed, max_time):
         else:
             seconds = value
     except TypeError:
-        # support deprecated nullary jitter function signature
-        # which returns a delta rather than a jittered value
+        warnings.warn(
+            "Nullary jitter function signature is deprecated. Use "
+            "unary signature accepting a wait value in seconds and "
+            "returning a jittered version of it.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
         seconds = value + jitter()
 
     # don't sleep longer than remaining alloted max_time

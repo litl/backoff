@@ -196,7 +196,7 @@ async def test_on_exception_success():
                           on_success=log_success,
                           on_backoff=log_backoff,
                           on_giveup=log_giveup,
-                          jitter=lambda: 0,
+                          jitter=None,
                           interval=0)
     @_save_target
     async def succeeder(*args, **kwargs):
@@ -240,7 +240,7 @@ async def test_on_exception_giveup():
                           on_backoff=log_backoff,
                           on_giveup=log_giveup,
                           max_tries=3,
-                          jitter=lambda: 0,
+                          jitter=None,
                           interval=0)
     @_save_target
     async def exceptor(*args, **kwargs):
@@ -313,7 +313,7 @@ async def test_on_predicate_success():
                           on_success=log_success,
                           on_backoff=log_backoff,
                           on_giveup=log_giveup,
-                          jitter=lambda: 0,
+                          jitter=None,
                           interval=0)
     @_save_target
     async def success(*args, **kwargs):
@@ -357,7 +357,7 @@ async def test_on_predicate_giveup():
                           on_backoff=log_backoff,
                           on_giveup=log_giveup,
                           max_tries=3,
-                          jitter=lambda: 0,
+                          jitter=None,
                           interval=0)
     @_save_target
     async def emptiness(*args, **kwargs):
@@ -389,7 +389,7 @@ async def test_on_predicate_iterable_handlers():
                           on_backoff=(h[2] for h in hdlrs),
                           on_giveup=(h[3] for h in hdlrs),
                           max_tries=3,
-                          jitter=lambda: 0,
+                          jitter=None,
                           interval=0)
     @_save_target
     async def emptiness(*args, **kwargs):
@@ -464,7 +464,8 @@ async def test_on_exception_success_0_arg_jitter(monkeypatch):
         if len(log['backoff']) < 2:
             raise ValueError("catch me")
 
-    await succeeder(1, 2, 3, foo=1, bar=2)
+    with pytest.deprecated_call():
+        await succeeder(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice before succeeding
     assert len(log['success']) == 1
@@ -510,7 +511,8 @@ async def test_on_predicate_success_0_arg_jitter(monkeypatch):
         # succeed after we've backed off twice
         return len(log['backoff']) == 2
 
-    await success(1, 2, 3, foo=1, bar=2)
+    with pytest.deprecated_call():
+        await success(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice before succeeding
     assert len(log['success']) == 1
