@@ -1,5 +1,6 @@
 # coding:utf-8
 
+import functools
 import logging
 import sys
 import traceback
@@ -7,9 +8,9 @@ import warnings
 
 
 # Use module-specific logger with a default null handler.
-logger = logging.getLogger('backoff')
-logger.addHandler(logging.NullHandler())  # pragma: no cover
-logger.setLevel(logging.INFO)
+_logger = logging.getLogger('backoff')
+_logger.addHandler(logging.NullHandler())  # pragma: no cover
+_logger.setLevel(logging.INFO)
 
 
 # Evaluate arg that can be either a fixed value or a callable.
@@ -48,21 +49,32 @@ def _next_wait(wait, jitter, elapsed, max_time):
     return seconds
 
 
-# Create default handler list from keyword argument
-def _handlers(hdlr, default=None):
-    defaults = [default] if default is not None else []
+# Configure handler list with user specified handler and optionally
+# with a default handler bound to the specified logger.
+def _config_handlers(user_handlers, default_handler=None, logger=None):
+    handlers = []
+    if logger is not None:
+        # bind the specified logger to the default log handler
+        log_handler = functools.partial(default_handler, logger=logger)
+        handlers.append(log_handler)
 
-    if hdlr is None:
-        return defaults
+    if user_handlers is None:
+        return handlers
 
-    if hasattr(hdlr, '__iter__'):
-        return defaults + list(hdlr)
+    # user specified handlers can either be an iterable of handlers
+    # or a single handler. either way append them to the list.
+    if hasattr(user_handlers, '__iter__'):
+        # add all handlers in the iterable
+        handlers += list(user_handlers)
+    else:
+        # append a single handler
+        handlers.append(user_handlers)
 
-    return defaults + [hdlr]
+    return handlers
 
 
 # Default backoff handler
-def _log_backoff(details):
+def _log_backoff(details, logger):
     fmt = "Backing off {0}(...) for {1:.1f}s"
     msg = fmt.format(details['target'].__name__, details['wait'])
 
@@ -76,7 +88,7 @@ def _log_backoff(details):
 
 
 # Default giveup handler
-def _log_giveup(details):
+def _log_giveup(details, logger):
     fmt = "Giving up {0}(...) after {1} tries"
     msg = fmt.format(details['target'].__name__, details['tries'])
 

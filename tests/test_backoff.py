@@ -1,6 +1,8 @@
 # coding:utf-8
 import datetime
+import logging
 import random
+import sys
 import threading
 
 import pytest
@@ -652,3 +654,82 @@ def test_on_exception_in_thread(monkeypatch):
 
     assert len(result) == 1
     assert result[0] == 'success'
+
+
+def test_on_exception_logger_default(monkeypatch, caplog):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
+    logger = logging.getLogger('backoff')
+    handler = logging.StreamHandler(sys.stdout)
+    logger.addHandler(handler)
+
+    @backoff.on_exception(backoff.expo, KeyError, max_tries=3)
+    def key_error():
+        raise KeyError()
+
+    with caplog.at_level(logging.INFO):
+        with pytest.raises(KeyError):
+            key_error()
+
+    assert len(caplog.records) == 3  # 2 backoffs and 1 giveup
+    for record in caplog.records:
+        assert record.name == 'backoff'
+
+
+def test_on_exception_logger_none(monkeypatch, caplog):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
+    logger = logging.getLogger('backoff')
+    handler = logging.StreamHandler(sys.stdout)
+    logger.addHandler(handler)
+
+    @backoff.on_exception(backoff.expo, KeyError, max_tries=3, logger=None)
+    def key_error():
+        raise KeyError()
+
+    with caplog.at_level(logging.INFO):
+        with pytest.raises(KeyError):
+            key_error()
+
+    assert not caplog.records
+
+
+def test_on_exception_logger_user(monkeypatch, caplog):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
+    logger = logging.getLogger('my-logger')
+    handler = logging.StreamHandler(sys.stdout)
+    logger.addHandler(handler)
+
+    @backoff.on_exception(backoff.expo, KeyError, max_tries=3, logger=logger)
+    def key_error():
+        raise KeyError()
+
+    with caplog.at_level(logging.INFO):
+        with pytest.raises(KeyError):
+            key_error()
+
+    assert len(caplog.records) == 3  # 2 backoffs and 1 giveup
+    for record in caplog.records:
+        assert record.name == 'my-logger'
+
+
+def test_on_exception_logger_user_str(monkeypatch, caplog):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
+    logger = logging.getLogger('my-logger')
+    handler = logging.StreamHandler(sys.stdout)
+    logger.addHandler(handler)
+
+    @backoff.on_exception(backoff.expo, KeyError, max_tries=3,
+                          logger='my-logger')
+    def key_error():
+        raise KeyError()
+
+    with caplog.at_level(logging.INFO):
+        with pytest.raises(KeyError):
+            key_error()
+
+    assert len(caplog.records) == 3  # 2 backoffs and 1 giveup
+    for record in caplog.records:
+        assert record.name == 'my-logger'

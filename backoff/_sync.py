@@ -4,8 +4,7 @@ import functools
 import time
 from datetime import timedelta
 
-from backoff._common import (_handlers, _init_wait_gen, _log_backoff,
-                             _log_giveup, _maybe_call, _next_wait)
+from backoff._common import (_init_wait_gen, _maybe_call, _next_wait)
 
 
 def _call_handlers(hdlrs, target, args, kwargs, tries, elapsed, **extra):
@@ -25,10 +24,6 @@ def retry_predicate(target, wait_gen, predicate,
                     max_tries, max_time, jitter,
                     on_success, on_backoff, on_giveup,
                     wait_gen_kwargs):
-
-    success_hdlrs = _handlers(on_success)
-    backoff_hdlrs = _handlers(on_backoff, _log_backoff)
-    giveup_hdlrs = _handlers(on_giveup, _log_giveup)
 
     @functools.wraps(target)
     def retry(*args, **kwargs):
@@ -52,22 +47,22 @@ def retry_predicate(target, wait_gen, predicate,
                                      elapsed >= max_time_)
 
                 if max_tries_exceeded or max_time_exceeded:
-                    _call_handlers(giveup_hdlrs, *details, value=ret)
+                    _call_handlers(on_giveup, *details, value=ret)
                     break
 
                 try:
                     seconds = _next_wait(wait, jitter, elapsed, max_time_)
                 except StopIteration:
-                    _call_handlers(giveup_hdlrs, *details)
+                    _call_handlers(on_giveup, *details)
                     break
 
-                _call_handlers(backoff_hdlrs, *details,
+                _call_handlers(on_backoff, *details,
                                value=ret, wait=seconds)
 
                 time.sleep(seconds)
                 continue
             else:
-                _call_handlers(success_hdlrs, *details, value=ret)
+                _call_handlers(on_success, *details, value=ret)
                 break
 
         return ret
@@ -79,10 +74,6 @@ def retry_exception(target, wait_gen, exception,
                     max_tries, max_time, jitter, giveup,
                     on_success, on_backoff, on_giveup,
                     wait_gen_kwargs):
-
-    success_hdlrs = _handlers(on_success)
-    backoff_hdlrs = _handlers(on_backoff, _log_backoff)
-    giveup_hdlrs = _handlers(on_giveup, _log_giveup)
 
     @functools.wraps(target)
     def retry(*args, **kwargs):
@@ -107,20 +98,20 @@ def retry_exception(target, wait_gen, exception,
                                      elapsed >= max_time_)
 
                 if giveup(e) or max_tries_exceeded or max_time_exceeded:
-                    _call_handlers(giveup_hdlrs, *details)
+                    _call_handlers(on_giveup, *details)
                     raise
 
                 try:
                     seconds = _next_wait(wait, jitter, elapsed, max_time_)
                 except StopIteration:
-                    _call_handlers(giveup_hdlrs, *details)
+                    _call_handlers(on_giveup, *details)
                     raise e
 
-                _call_handlers(backoff_hdlrs, *details, wait=seconds)
+                _call_handlers(on_backoff, *details, wait=seconds)
 
                 time.sleep(seconds)
             else:
-                _call_handlers(success_hdlrs, *details)
+                _call_handlers(on_success, *details)
 
                 return ret
     return retry
