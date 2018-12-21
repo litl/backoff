@@ -112,3 +112,11 @@
 - Drop support for Python 2.6
 - Update development dependencies
 - Use poetry for dependencies and packaging
+
+## [v1.8.0] - 2018-12-20
+### Changed
+
+- Give up on StopIteration raised in wait generators
+- Iterable intervals for constant wait_gen for predefined wait sequences
+- Nullary jitter signature deprecation warning
+- Custom loggers
