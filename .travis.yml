@@ -13,7 +13,7 @@ matrix:
     dist: xenial
     sudo: true
 before_install:
-  - pip install poetry
+  - pip install poetry more-itertools
 install:
   - poetry install
 script: poetry run make check
