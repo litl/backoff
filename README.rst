@@ -176,7 +176,7 @@ backoff behavior for different cases:
                           requests.exceptions.HTTPError,
                           max_time=60)
     @backoff.on_exception(backoff.expo,
-                          requests.exceptions.TimeoutError,
+                          requests.exceptions.Timeout,
                           max_time=300)
     def poll_for_message(queue):
         return queue.get()
