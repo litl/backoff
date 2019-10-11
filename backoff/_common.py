@@ -74,28 +74,28 @@ def _config_handlers(user_handlers, default_handler=None, logger=None):
 
 # Default backoff handler
 def _log_backoff(details, logger):
-    fmt = "Backing off {0}(...) for {1:.1f}s"
-    msg = fmt.format(details['target'].__name__, details['wait'])
+    msg = "Backing off %s(...) for %.1fs (%s)"
+    log_args = [details['target'].__name__, details['wait']]
 
     exc_typ, exc, _ = sys.exc_info()
     if exc is not None:
         exc_fmt = traceback.format_exception_only(exc_typ, exc)[-1]
-        msg = "{} ({})".format(msg, exc_fmt.rstrip("\n"))
+        log_args.append(exc_fmt.rstrip("\n"))
     else:
-        msg = "{} ({})".format(msg, details['value'])
-    logger.info(msg)
+        log_args.append(details['value'])
+    logger.info(msg, *log_args)
 
 
 # Default giveup handler
 def _log_giveup(details, logger):
-    fmt = "Giving up {0}(...) after {1} tries"
-    msg = fmt.format(details['target'].__name__, details['tries'])
+    msg = "Giving up %s(...) after %d tries (%s)"
+    log_args = [details['target'].__name__, details['tries']]
 
     exc_typ, exc, _ = sys.exc_info()
     if exc is not None:
         exc_fmt = traceback.format_exception_only(exc_typ, exc)[-1]
-        msg = "{} ({})".format(msg, exc_fmt.rstrip("\n"))
+        log_args.append(exc_fmt.rstrip("\n"))
     else:
-        msg = "{} ({})".format(msg, details['value'])
+        log_args.append(details['value'])
 
-    logger.error(msg)
+    logger.error(msg, *log_args)
