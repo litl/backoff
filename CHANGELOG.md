@@ -120,3 +120,9 @@
 - Iterable intervals for constant wait_gen for predefined wait sequences
 - Nullary jitter signature deprecation warning
 - Custom loggers
+
+## [v1.8.1] - 2019-10-11
+### Changed
+
+- Use arguments in log messages rather than fully formatting log
+  https://github.com/litl/backoff/pull/82 from @lbernick
