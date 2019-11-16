@@ -126,3 +126,8 @@
 
 - Use arguments in log messages rather than fully formatting log
   https://github.com/litl/backoff/pull/82 from @lbernick
+
+## [v1.9.0] 2019-11-16
+### Changed
+
+- Support python 3.8
