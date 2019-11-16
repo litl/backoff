@@ -1,8 +1,7 @@
 # coding:utf-8
 import datetime
 import functools
-# Python 3.4 code and syntax is allowed in this module!
-import asyncio
+import asyncio  # Python 3.5 code and syntax is allowed in this file
 from datetime import timedelta
 
 from backoff._common import (_init_wait_gen, _maybe_call, _next_wait)
@@ -12,7 +11,10 @@ def _ensure_coroutine(coro_or_func):
     if asyncio.iscoroutinefunction(coro_or_func):
         return coro_or_func
     else:
-        return asyncio.coroutine(coro_or_func)
+        @functools.wraps(coro_or_func)
+        async def f(*args, **kwargs):
+            return coro_or_func(*args, **kwargs)
+        return f
 
 
 def _ensure_coroutines(coros_or_funcs):

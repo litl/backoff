@@ -1,6 +1,6 @@
 # coding:utf-8
 
-import asyncio
+import asyncio  # Python 3.5 code and syntax is allowed in this file
 import backoff
 import pytest
 import random
@@ -8,9 +8,13 @@ import random
 from tests.common import _log_hdlrs, _save_target
 
 
+async def _await_none(x):
+    return None
+
+
 @pytest.mark.asyncio
 async def test_on_predicate(monkeypatch):
-    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
+    monkeypatch.setattr('asyncio.sleep', _await_none)
 
     @backoff.on_predicate(backoff.expo)
     async def return_true(log, n):
@@ -26,7 +30,7 @@ async def test_on_predicate(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_on_predicate_max_tries(monkeypatch):
-    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
+    monkeypatch.setattr('asyncio.sleep', _await_none)
 
     @backoff.on_predicate(backoff.expo, jitter=None, max_tries=3)
     async def return_true(log, n):
@@ -42,7 +46,7 @@ async def test_on_predicate_max_tries(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_on_exception(monkeypatch):
-    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
+    monkeypatch.setattr('asyncio.sleep', _await_none)
 
     @backoff.on_exception(backoff.expo, KeyError)
     async def keyerror_then_true(log, n):
@@ -59,7 +63,7 @@ async def test_on_exception(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_on_exception_tuple(monkeypatch):
-    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
+    monkeypatch.setattr('asyncio.sleep', _await_none)
 
     @backoff.on_exception(backoff.expo, (KeyError, ValueError))
     async def keyerror_valueerror_then_true(log):
@@ -81,7 +85,7 @@ async def test_on_exception_tuple(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_on_exception_max_tries(monkeypatch):
-    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
+    monkeypatch.setattr('asyncio.sleep', _await_none)
 
     @backoff.on_exception(backoff.expo, KeyError, jitter=None, max_tries=3)
     async def keyerror_then_true(log, n, foo=None):
@@ -100,7 +104,7 @@ async def test_on_exception_max_tries(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_on_exception_constant_iterable(monkeypatch):
-    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
+    monkeypatch.setattr('asyncio.sleep', _await_none)
 
     backoffs = []
     giveups = []
@@ -127,7 +131,7 @@ async def test_on_exception_constant_iterable(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_on_exception_success_random_jitter(monkeypatch):
-    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
+    monkeypatch.setattr('asyncio.sleep', _await_none)
 
     log, log_success, log_backoff, log_giveup = _log_hdlrs()
 
@@ -158,7 +162,7 @@ async def test_on_exception_success_random_jitter(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_on_exception_success_full_jitter(monkeypatch):
-    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
+    monkeypatch.setattr('asyncio.sleep', _await_none)
 
     log, log_success, log_backoff, log_giveup = _log_hdlrs()
 
@@ -265,7 +269,7 @@ async def test_on_exception_giveup():
 
 @pytest.mark.asyncio
 async def test_on_exception_giveup_predicate(monkeypatch):
-    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
+    monkeypatch.setattr('asyncio.sleep', _await_none)
 
     def on_baz(e):
         return str(e) == "baz"
@@ -286,7 +290,7 @@ async def test_on_exception_giveup_predicate(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_on_exception_giveup_coro(monkeypatch):
-    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
+    monkeypatch.setattr('asyncio.sleep', _await_none)
 
     async def on_baz(e):
         return str(e) == "baz"
@@ -414,7 +418,7 @@ async def test_on_predicate_iterable_handlers():
 
 @pytest.mark.asyncio
 async def test_on_predicate_constant_iterable(monkeypatch):
-    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
+    monkeypatch.setattr('asyncio.sleep', _await_none)
 
     waits = [1, 2, 3, 6, 9]
     backoffs = []
@@ -446,7 +450,7 @@ async def test_on_predicate_constant_iterable(monkeypatch):
 # on_predicate should support 0-argument jitter function.
 @pytest.mark.asyncio
 async def test_on_exception_success_0_arg_jitter(monkeypatch):
-    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
+    monkeypatch.setattr('asyncio.sleep', _await_none)
     monkeypatch.setattr('random.random', lambda: 0)
 
     log, log_success, log_backoff, log_giveup = _log_hdlrs()
@@ -495,7 +499,7 @@ async def test_on_exception_success_0_arg_jitter(monkeypatch):
 # on_predicate should support 0-argument jitter function.
 @pytest.mark.asyncio
 async def test_on_predicate_success_0_arg_jitter(monkeypatch):
-    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
+    monkeypatch.setattr('asyncio.sleep', _await_none)
     monkeypatch.setattr('random.random', lambda: 0)
 
     log, log_success, log_backoff, log_giveup = _log_hdlrs()
@@ -542,7 +546,7 @@ async def test_on_predicate_success_0_arg_jitter(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_on_exception_callable_max_tries(monkeypatch):
-    monkeypatch.setattr('asyncio.sleep', asyncio.coroutine(lambda x: None))
+    monkeypatch.setattr('asyncio.sleep', _await_none)
 
     def lookup_max_tries():
         return 3
