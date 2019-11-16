@@ -4,6 +4,7 @@ python:
   - "3.5"
   - "3.6"
   - "3.7"
+  - "3.8"
 matrix:
   include:
   - python: "3.5"
@@ -12,8 +13,9 @@ matrix:
     env: PYTHONASYNCIODEBUG=x
   - python: "3.7"
     env: PYTHONASYNCIODEBUG=x
-    dist: xenial
-    sudo: true
+  - python: "3.8"
+    env: PYTHONASYNCIODEBUG=x
+
 before_install:
   - pip install poetry more-itertools
 install:
