@@ -131,3 +131,8 @@
 ### Changed
 
 - Support python 3.8
+
+## [v1.9.1] 2019-11-18
+### Changed
+
+- Include tests and changelog in distribution
