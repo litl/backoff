@@ -26,8 +26,10 @@ classifiers = ['Development Status :: 5 - Production/Stable',
                'Topic :: Utilities']
 packages = [
     { include = "backoff" },
+    { include = "tests" },
     { include = "README.rst" },
     { include = "LICENSE" },
+    { include = "CHANGELOG.md" },
 ]
 
 [tool.poetry.dependencies]
