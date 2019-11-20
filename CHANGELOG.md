@@ -136,3 +136,8 @@
 ### Changed
 
 - Include tests and changelog in distribution
+
+## [v1.9.2] 2019-11-19
+### Changed
+
+- Don't include tests and changelog in distribution
