@@ -615,31 +615,6 @@ async def test_on_exception_coro_cancelling(event_loop):
     assert (await task)
 
 
-@pytest.mark.asyncio
-async def test_on_exception_on_regular_function():
-    # Force this function to be a running coroutine.
-    await asyncio.sleep(0)
-
-    with pytest.raises(TypeError) as excinfo:
-        @backoff.on_exception(backoff.expo, ValueError)
-        def regular_func():
-            pass
-    assert "applied to a regular function" in str(excinfo.value)
-
-
-@pytest.mark.asyncio
-async def test_on_predicate_on_regular_function():
-    # Force this function to be a running coroutine.
-    await asyncio.sleep(0)
-
-    with pytest.raises(TypeError) as excinfo:
-        @backoff.on_predicate(backoff.expo)
-        def regular_func():
-            pass
-
-    assert "applied to a regular function" in str(excinfo.value)
-
-
 def test_on_predicate_on_regular_function_without_event_loop(monkeypatch):
     monkeypatch.setattr('time.sleep', lambda x: None)
 

@@ -85,15 +85,6 @@ def on_predicate(wait_gen,
                 import backoff._async
                 retry = backoff._async.retry_predicate
 
-            elif _is_event_loop() and _is_current_task():
-                # Verify that sync version is not being run from coroutine
-                # (that would lead to event loop hiccups).
-                raise TypeError(
-                    "backoff.on_predicate applied to a regular function "
-                    "inside coroutine, this will lead to event loop "
-                    "hiccups. Use backoff.on_predicate on coroutines in "
-                    "asynchronous code.")
-
         if retry is None:
             retry = _sync.retry_predicate
 
@@ -174,14 +165,6 @@ def on_exception(wait_gen,
             if asyncio.iscoroutinefunction(target):
                 import backoff._async
                 retry = backoff._async.retry_exception
-            elif _is_event_loop() and _is_current_task():
-                # Verify that sync version is not being run from coroutine
-                # (that would lead to event loop hiccups).
-                raise TypeError(
-                    "backoff.on_exception applied to a regular function "
-                    "inside coroutine, this will lead to event loop "
-                    "hiccups. Use backoff.on_exception on coroutines in "
-                    "asynchronous code.")
 
         if retry is None:
             retry = _sync.retry_exception
@@ -193,25 +176,3 @@ def on_exception(wait_gen,
 
     # Return a function which decorates a target with a retry loop.
     return decorate
-
-
-def _is_event_loop():  # pragma: no cover
-    import asyncio
-
-    try:
-        if sys.version_info >= (3, 7):
-            asyncio.get_running_loop()
-
-        asyncio.get_event_loop()
-    except RuntimeError:
-        return False
-    else:
-        return True
-
-
-def _is_current_task():  # pragma: no cover
-    import asyncio
-    if sys.version_info >= (3, 7):
-        return asyncio.current_task() is not None
-
-    return asyncio.Task.current_task() is not None
