@@ -141,3 +141,8 @@
 ### Changed
 
 - Don't include tests and changelog in distribution
+
+## [v1.10.0] 2019-12-7
+### Changed
+
+- Allow sync decorator call from async function

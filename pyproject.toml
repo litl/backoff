@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "backoff"
-version = "1.9.2"
+version = "1.10.0"
 description = "Function decoration for backoff and retry"
 authors = ["Bob Green <rgreen@goscoutgo.com>"]
 readme = "README.rst"
