@@ -3,18 +3,25 @@ import collections
 import functools
 
 
-# create event handler which log their invocations to a dict
-def _log_hdlrs():
+def _logging_handlers():
+    """
+    Setup up some handlers which log events for testing.
+
+    Returns:
+       log - a log mapping events to details
+       kwargs - handler kwargs suitable to passing to the decorators
+    """
     log = collections.defaultdict(list)
 
-    def log_hdlr(event, details):
+    def handler(event, details):
         log[event].append(details)
 
-    log_success = functools.partial(log_hdlr, 'success')
-    log_backoff = functools.partial(log_hdlr, 'backoff')
-    log_giveup = functools.partial(log_hdlr, 'giveup')
+    handlers = {
+        "on_" + event: functools.partial(handler, event)
+        for event in ["try", "backoff", "giveup", "success"]
+    }
 
-    return log, log_success, log_backoff, log_giveup
+    return log, handlers
 
 
 # decorator that that saves the target as

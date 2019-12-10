@@ -1,11 +1,12 @@
 # coding:utf-8
 
 import asyncio  # Python 3.5 code and syntax is allowed in this file
-import backoff
 import pytest
 import random
 
-from tests.common import _log_hdlrs, _save_target
+import backoff
+
+from tests.common import _logging_handlers, _save_target
 
 
 async def _await_none(x):
@@ -133,15 +134,13 @@ async def test_on_exception_constant_iterable(monkeypatch):
 async def test_on_exception_success_random_jitter(monkeypatch):
     monkeypatch.setattr('asyncio.sleep', _await_none)
 
-    log, log_success, log_backoff, log_giveup = _log_hdlrs()
+    log, handlers = _logging_handlers()
 
     @backoff.on_exception(backoff.expo,
                           Exception,
-                          on_success=log_success,
-                          on_backoff=log_backoff,
-                          on_giveup=log_giveup,
                           jitter=backoff.random_jitter,
-                          factor=0.5)
+                          factor=0.5,
+                          **handlers)
     @_save_target
     async def succeeder(*args, **kwargs):
         # succeed after we've backed off twice
@@ -151,9 +150,10 @@ async def test_on_exception_success_random_jitter(monkeypatch):
     await succeeder(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice before succeeding
-    assert len(log['success']) == 1
+    assert len(log["try"]) == 3
     assert len(log['backoff']) == 2
     assert len(log['giveup']) == 0
+    assert len(log['success']) == 1
 
     for i in range(2):
         details = log['backoff'][i]
@@ -164,15 +164,13 @@ async def test_on_exception_success_random_jitter(monkeypatch):
 async def test_on_exception_success_full_jitter(monkeypatch):
     monkeypatch.setattr('asyncio.sleep', _await_none)
 
-    log, log_success, log_backoff, log_giveup = _log_hdlrs()
+    log, handlers = _logging_handlers()
 
     @backoff.on_exception(backoff.expo,
                           Exception,
-                          on_success=log_success,
-                          on_backoff=log_backoff,
-                          on_giveup=log_giveup,
                           jitter=backoff.full_jitter,
-                          factor=0.5)
+                          factor=0.5,
+                          **handlers)
     @_save_target
     async def succeeder(*args, **kwargs):
         # succeed after we've backed off twice
@@ -182,9 +180,10 @@ async def test_on_exception_success_full_jitter(monkeypatch):
     await succeeder(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice before succeeding
-    assert len(log['success']) == 1
+    assert len(log["try"]) == 3
     assert len(log['backoff']) == 2
     assert len(log['giveup']) == 0
+    assert len(log['success']) == 1
 
     for i in range(2):
         details = log['backoff'][i]
@@ -193,15 +192,13 @@ async def test_on_exception_success_full_jitter(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_on_exception_success():
-    log, log_success, log_backoff, log_giveup = _log_hdlrs()
+    log, handlers = _logging_handlers()
 
     @backoff.on_exception(backoff.constant,
                           Exception,
-                          on_success=log_success,
-                          on_backoff=log_backoff,
-                          on_giveup=log_giveup,
                           jitter=None,
-                          interval=0)
+                          interval=0,
+                          **handlers)
     @_save_target
     async def succeeder(*args, **kwargs):
         # succeed after we've backed off twice
@@ -236,16 +233,14 @@ async def test_on_exception_success():
 
 @pytest.mark.asyncio
 async def test_on_exception_giveup():
-    log, log_success, log_backoff, log_giveup = _log_hdlrs()
+    log, handlers = _logging_handlers()
 
     @backoff.on_exception(backoff.constant,
                           ValueError,
-                          on_success=log_success,
-                          on_backoff=log_backoff,
-                          on_giveup=log_giveup,
                           max_tries=3,
                           jitter=None,
-                          interval=0)
+                          interval=0,
+                          **handlers)
     @_save_target
     async def exceptor(*args, **kwargs):
         raise ValueError("catch me")
@@ -254,6 +249,7 @@ async def test_on_exception_giveup():
         await exceptor(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice and giving up once
+    assert len(log['try']) == 3
     assert len(log['success']) == 0
     assert len(log['backoff']) == 2
     assert len(log['giveup']) == 1
@@ -311,14 +307,12 @@ async def test_on_exception_giveup_coro(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_on_predicate_success():
-    log, log_success, log_backoff, log_giveup = _log_hdlrs()
+    log, handlers = _logging_handlers()
 
     @backoff.on_predicate(backoff.constant,
-                          on_success=log_success,
-                          on_backoff=log_backoff,
-                          on_giveup=log_giveup,
                           jitter=None,
-                          interval=0)
+                          interval=0,
+                          **handlers)
     @_save_target
     async def success(*args, **kwargs):
         # succeed after we've backed off twice
@@ -327,6 +321,7 @@ async def test_on_predicate_success():
     await success(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice before succeeding
+    assert len(log['try']) == 3
     assert len(log['success']) == 1
     assert len(log['backoff']) == 2
     assert len(log['giveup']) == 0
@@ -354,15 +349,13 @@ async def test_on_predicate_success():
 
 @pytest.mark.asyncio
 async def test_on_predicate_giveup():
-    log, log_success, log_backoff, log_giveup = _log_hdlrs()
+    log, handlers = _logging_handlers()
 
     @backoff.on_predicate(backoff.constant,
-                          on_success=log_success,
-                          on_backoff=log_backoff,
-                          on_giveup=log_giveup,
                           max_tries=3,
                           jitter=None,
-                          interval=0)
+                          interval=0,
+                          **handlers)
     @_save_target
     async def emptiness(*args, **kwargs):
         pass
@@ -386,34 +379,70 @@ async def test_on_predicate_giveup():
 
 @pytest.mark.asyncio
 async def test_on_predicate_iterable_handlers():
-    hdlrs = [_log_hdlrs() for _ in range(3)]
+    attempts1 = []
+    attempts2 = []
+    backoffs1 = []
+    backoffs2 = []
+    giveups1 = []
+    giveups2 = []
+    successes1 = []
+    successes2 = []
+
+    def on_try1(details):
+        attempts1.append(details)
+
+    def on_try2(details):
+        attempts2.append(details)
+
+    def on_backoff1(details):
+        backoffs1.append(details)
+
+    def on_backoff2(details):
+        backoffs2.append(details)
+
+    def on_giveup1(details):
+        giveups1.append(details)
+
+    def on_giveup2(details):
+        giveups2.append(details)
+
+    def on_success1(details):
+        successes1.append(details)
+
+    def on_success2(details):
+        successes2.append(details)
 
     @backoff.on_predicate(backoff.constant,
-                          on_success=(h[1] for h in hdlrs),
-                          on_backoff=(h[2] for h in hdlrs),
-                          on_giveup=(h[3] for h in hdlrs),
                           max_tries=3,
                           jitter=None,
-                          interval=0)
+                          interval=0,
+                          on_try=[on_try1, on_try2],
+                          on_backoff=[on_backoff1, on_backoff2],
+                          on_giveup=[on_giveup1, on_giveup2],
+                          on_success=[on_success1, on_success2])
     @_save_target
     async def emptiness(*args, **kwargs):
         pass
 
     await emptiness(1, 2, 3, foo=1, bar=2)
 
-    for i in range(3):
-        assert len(hdlrs[i][0]['success']) == 0
-        assert len(hdlrs[i][0]['backoff']) == 2
-        assert len(hdlrs[i][0]['giveup']) == 1
+    assert len(attempts1) == 3
+    assert len(attempts2) == 3
+    assert len(backoffs1) == 2
+    assert len(backoffs2) == 2
+    assert len(giveups1) == 1
+    assert len(giveups2) == 1
+    assert len(successes1) == 0
+    assert len(successes2) == 0
 
-        details = dict(hdlrs[i][0]['giveup'][0])
-        elapsed = details.pop('elapsed')
-        assert isinstance(elapsed, float)
-        assert details == {'args': (1, 2, 3),
-                           'kwargs': {'foo': 1, 'bar': 2},
-                           'target': emptiness._target,
-                           'tries': 3,
-                           'value': None}
+    details = dict(giveups1[0])
+    elapsed = details.pop('elapsed')
+    assert isinstance(elapsed, float)
+    assert details == {'args': (1, 2, 3),
+                       'kwargs': {'foo': 1, 'bar': 2},
+                       'target': emptiness._target,
+                       'tries': 3,
+                       'value': None}
 
 
 @pytest.mark.asyncio
@@ -453,15 +482,13 @@ async def test_on_exception_success_0_arg_jitter(monkeypatch):
     monkeypatch.setattr('asyncio.sleep', _await_none)
     monkeypatch.setattr('random.random', lambda: 0)
 
-    log, log_success, log_backoff, log_giveup = _log_hdlrs()
+    log, handlers = _logging_handlers()
 
     @backoff.on_exception(backoff.constant,
                           Exception,
-                          on_success=log_success,
-                          on_backoff=log_backoff,
-                          on_giveup=log_giveup,
                           jitter=random.random,
-                          interval=0)
+                          interval=0,
+                          **handlers)
     @_save_target
     async def succeeder(*args, **kwargs):
         # succeed after we've backed off twice
@@ -472,9 +499,10 @@ async def test_on_exception_success_0_arg_jitter(monkeypatch):
         await succeeder(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice before succeeding
-    assert len(log['success']) == 1
+    assert len(log["try"]) == 3
     assert len(log['backoff']) == 2
     assert len(log['giveup']) == 0
+    assert len(log['success']) == 1
 
     for i in range(2):
         details = log['backoff'][i]
@@ -502,14 +530,13 @@ async def test_on_predicate_success_0_arg_jitter(monkeypatch):
     monkeypatch.setattr('asyncio.sleep', _await_none)
     monkeypatch.setattr('random.random', lambda: 0)
 
-    log, log_success, log_backoff, log_giveup = _log_hdlrs()
+    log, handlers = _logging_handlers()
 
     @backoff.on_predicate(backoff.constant,
-                          on_success=log_success,
-                          on_backoff=log_backoff,
-                          on_giveup=log_giveup,
                           jitter=random.random,
-                          interval=0)
+                          interval=0,
+                          **handlers
+                          )
     @_save_target
     async def success(*args, **kwargs):
         # succeed after we've backed off twice
@@ -519,9 +546,10 @@ async def test_on_predicate_success_0_arg_jitter(monkeypatch):
         await success(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice before succeeding
-    assert len(log['success']) == 1
+    assert len(log["try"]) == 3
     assert len(log['backoff']) == 2
     assert len(log['giveup']) == 0
+    assert len(log['success']) == 1
 
     for i in range(2):
         details = log['backoff'][i]
