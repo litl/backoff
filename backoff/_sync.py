@@ -29,8 +29,8 @@ def retry_predicate(target, wait_gen, predicate,
     def retry(*args, **kwargs):
 
         # change names because python 2.x doesn't have nonlocal
-        max_tries_ = _maybe_call(max_tries)
-        max_time_ = _maybe_call(max_time)
+        max_tries_ = kwargs.get("max_tries", _maybe_call(max_tries)) 
+        max_time_ = kwargs.get("max_time", _maybe_call(max_time))
 
         tries = 0
         start = datetime.datetime.now()
