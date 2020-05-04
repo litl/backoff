@@ -4,23 +4,15 @@ from __future__ import unicode_literals
 import logging
 import operator
 import sys
-from functools import partial
 
 from backoff._common import (
-    _prepare_logging,
+    _prepare_logger,
     _config_handlers,
     _log_backoff,
     _log_giveup
 )
 from backoff._jitter import full_jitter
 from backoff import _sync
-
-
-# python 2.7 -> 3.x compatibility for str and unicode
-try:
-    basestring
-except NameError:  # pragma: python=3.5
-    basestring = str
 
 
 def on_predicate(wait_gen,
@@ -80,16 +72,14 @@ def on_predicate(wait_gen,
     """
     def decorate(target):
         # change names because python 2.x doesn't have nonlocal
-        logger_, backoff_logging_cb, giveup_logging_cb = _prepare_logging(
-            logger, backoff_log_level, giveup_log_level
-        )
+        logger_ = _prepare_logger(logger)
 
         on_success_ = _config_handlers(on_success)
         on_backoff_ = _config_handlers(
-            on_backoff, _log_backoff, backoff_logging_cb
+            on_backoff, _log_backoff, logger_, backoff_log_level
         )
         on_giveup_ = _config_handlers(
-            on_giveup, _log_giveup, giveup_logging_cb
+            on_giveup, _log_giveup, logger_, giveup_log_level
         )
 
         retry = None
@@ -170,16 +160,14 @@ def on_exception(wait_gen,
     """
     def decorate(target):
         # change names because python 2.x doesn't have nonlocal
-        logger_, backoff_logging_cb, giveup_logging_cb = _prepare_logging(
-            logger, backoff_log_level, giveup_log_level
-        )
+        logger_ = _prepare_logger(logger)
 
         on_success_ = _config_handlers(on_success)
         on_backoff_ = _config_handlers(
-            on_backoff, _log_backoff, backoff_logging_cb
+            on_backoff, _log_backoff, logger_, backoff_log_level
         )
         on_giveup_ = _config_handlers(
-            on_giveup, _log_giveup, giveup_logging_cb
+            on_giveup, _log_giveup, logger_, giveup_log_level
         )
 
         retry = None

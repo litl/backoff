@@ -55,28 +55,24 @@ def _next_wait(wait, jitter, elapsed, max_time):
     return seconds
 
 
-def _prepare_logging(logger, backoff_log_level, giveup_log_level):
+def _prepare_logger(logger):
     if isinstance(logger, basestring):
         logger = logging.getLogger(logger)
-
-    backoff_logging_cb = logger and logger.info
-    if logger and backoff_log_level:
-        backoff_logging_cb = functools.partial(logger.log, backoff_log_level)
-
-    giveup_logging_cb = logger and logger.error
-    if logger and giveup_log_level:
-        giveup_logging_cb = functools.partial(logger.log, giveup_log_level)
-
-    return logger, backoff_logging_cb, giveup_logging_cb
+    return logger
 
 
 # Configure handler list with user specified handler and optionally
 # with a default handler bound to the specified logger.
-def _config_handlers(user_handlers, default_handler=None, logging_cb=None):
+def _config_handlers(
+    user_handlers, default_handler=None, logger=None, log_level=None
+):
     handlers = []
-    if logging_cb is not None:
+    if logger is not None:
+        assert log_level is not None, "Log level is not specified"
         # bind the specified logger to the default log handler
-        log_handler = functools.partial(default_handler, logging_cb=logging_cb)
+        log_handler = functools.partial(
+            default_handler, logger=logger, log_level=log_level
+        )
         handlers.append(log_handler)
 
     if user_handlers is None:
@@ -95,7 +91,7 @@ def _config_handlers(user_handlers, default_handler=None, logging_cb=None):
 
 
 # Default backoff handler
-def _log_backoff(details, logging_cb):
+def _log_backoff(details, logger, log_level):
     msg = "Backing off %s(...) for %.1fs (%s)"
     log_args = [details['target'].__name__, details['wait']]
 
@@ -105,11 +101,11 @@ def _log_backoff(details, logging_cb):
         log_args.append(exc_fmt.rstrip("\n"))
     else:
         log_args.append(details['value'])
-    logging_cb(msg, *log_args)
+    logger.log(log_level, msg, *log_args)
 
 
 # Default giveup handler
-def _log_giveup(details, logging_cb):
+def _log_giveup(details, logger, log_level):
     msg = "Giving up %s(...) after %d tries (%s)"
     log_args = [details['target'].__name__, details['tries']]
 
@@ -120,4 +116,4 @@ def _log_giveup(details, logging_cb):
     else:
         log_args.append(details['value'])
 
-    logging_cb(msg, *log_args)
+    logger.log(log_level, msg, *log_args)
