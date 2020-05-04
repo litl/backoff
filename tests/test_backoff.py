@@ -738,24 +738,9 @@ def test_on_exception_logger_user_str(monkeypatch, caplog):
         assert record.name == 'my-logger'
 
 
-@pytest.mark.parametrize(
-    ("backoff_log_level", "giveup_log_level"),
-    itertools.product(
-        (
-            logging.DEBUG,
-            logging.INFO,
-            logging.WARNING,
-            logging.ERROR,
-            logging.CRITICAL
-        ),
-        repeat=2,
-    ),
-)
-def test_on_exception_event_log_levels(
-    caplog, backoff_log_level, giveup_log_level
+def _on_exception_factory(
+    backoff_log_level, giveup_log_level, max_tries
 ):
-    max_tries = 3
-
     @backoff.on_exception(
         backoff.expo,
         ValueError,
@@ -766,12 +751,56 @@ def test_on_exception_event_log_levels(
     def value_error():
         raise ValueError
 
+    def func():
+        with pytest.raises(ValueError):
+            value_error()
+
+    return func
+
+
+def _on_predicate_factory(
+    backoff_log_level, giveup_log_level, max_tries
+):
+    @backoff.on_predicate(
+        backoff.expo,
+        max_tries=max_tries,
+        backoff_log_level=backoff_log_level,
+        giveup_log_level=giveup_log_level,
+    )
+    def func():
+        return False
+
+    return func
+
+
+@pytest.mark.parametrize(
+    ("func_factory", "backoff_log_level", "giveup_log_level"),
+    (
+        (factory, backoff_log_level, giveup_log_level)
+        for backoff_log_level, giveup_log_level in itertools.product(
+            (
+                logging.DEBUG,
+                logging.INFO,
+                logging.WARNING,
+                logging.ERROR,
+                logging.CRITICAL,
+            ),
+            repeat=2,
+        )
+        for factory in (_on_predicate_factory, _on_exception_factory)
+    )
+)
+def test_event_log_levels(
+    caplog, func_factory, backoff_log_level, giveup_log_level
+):
+    max_tries = 3
+    func = func_factory(backoff_log_level, giveup_log_level, max_tries)
+
     with unittest.mock.patch('time.sleep', return_value=None):
         with caplog.at_level(
             min(backoff_log_level, giveup_log_level), logger="backoff"
         ):
-            with pytest.raises(ValueError):
-                value_error()
+            func()
 
     backoff_re = re.compile("backing off", re.IGNORECASE)
     giveup_re = re.compile("giving up", re.IGNORECASE)
