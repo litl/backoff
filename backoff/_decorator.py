@@ -32,13 +32,14 @@ else:
     Callback = Callable[[Dict[str, Any]], Any]
     GiveupCallback = Callable[[BaseException], bool]
     Exceptions = Union[Type[BaseException], Tuple[Type[BaseException], ...]]
+    JitterGen = Callable[[float], float]
 
 
 def on_predicate(wait_gen,  # type: Callable[..., Iterator[float]]
                  predicate=operator.not_,  # type: Callable[..., bool]
                  max_tries=None,  # type: Optional[int]
                  max_time=None,  # type: Optional[float]
-                 jitter=full_jitter,  # type: Callable[[float], float]
+                 jitter=full_jitter,  # type: Optional[JitterGen]
                  on_success=None,  # type: Optional[Callback]
                  on_backoff=None,  # type: Optional[Callback]
                  on_giveup=None,  # type: Optional[Callback]
@@ -120,7 +121,7 @@ def on_exception(wait_gen,  # type: Callable[..., Iterator[float]]
                  exception,  # type: Exceptions
                  max_tries=None,  # type: Optional[int]
                  max_time=None,  # type: Optional[float]
-                 jitter=full_jitter,  # type: Callable[[float], float]
+                 jitter=full_jitter,  # type: Optional[JitterGen]
                  giveup=lambda e: False,  # type: GiveupCallback
                  on_success=None,  # type: Optional[Callback]
                  on_backoff=None,  # type: Optional[Callback]
