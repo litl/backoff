@@ -4,6 +4,7 @@ import random
 
 
 def random_jitter(value):
+    # type: (float) -> float
     """Jitter the value a random number of milliseconds.
 
     This adds up to 1 second of additional time to the original value.
@@ -16,6 +17,7 @@ def random_jitter(value):
 
 
 def full_jitter(value):
+    # type: (float) -> float
     """Jitter the value across the full range (0 to value).
 
     This corresponds to the "Full Jitter" algorithm specified in the

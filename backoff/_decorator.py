@@ -16,17 +16,36 @@ try:
 except NameError:  # pragma: python=3.5
     basestring = str
 
+try:
+    # This import is not used at runtime and may fail since the typing module
+    # is optional on Python v2.7. This is fine as it is only required for
+    # external static type checkers.
+    from typing import (Any, Callable, Dict, Iterator, Optional, Tuple, Type,
+                        TypeVar, Union)
+except ImportError:
+    pass
+else:
+    F = TypeVar('F', bound=Callable[..., Any])
+    # The following are short-hands for long type annotations that do not fit
+    # inside the Python 2.7-compatible type comments without ridiculous line
+    # lengths.
+    Callback = Callable[[Dict[str, Any]], Any]
+    GiveupCallback = Callable[[BaseException], bool]
+    Exceptions = Union[Type[BaseException], Tuple[Type[BaseException], ...]]
 
-def on_predicate(wait_gen,
-                 predicate=operator.not_,
-                 max_tries=None,
-                 max_time=None,
-                 jitter=full_jitter,
-                 on_success=None,
-                 on_backoff=None,
-                 on_giveup=None,
-                 logger='backoff',
-                 **wait_gen_kwargs):
+
+def on_predicate(wait_gen,  # type: Callable[..., Iterator[float]]
+                 predicate=operator.not_,  # type: Callable[..., bool]
+                 max_tries=None,  # type: Optional[int]
+                 max_time=None,  # type: Optional[float]
+                 jitter=full_jitter,  # type: Callable[[float], float]
+                 on_success=None,  # type: Optional[Callback]
+                 on_backoff=None,  # type: Optional[Callback]
+                 on_giveup=None,  # type: Optional[Callback]
+                 logger='backoff',  # type: Optional[str]
+                 **wait_gen_kwargs  # type: Dict[str, Any]
+                 ):
+    # type: (...) -> Callable[[F], F]
     """Returns decorator for backoff and retry triggered by predicate.
 
     Args:
@@ -97,17 +116,19 @@ def on_predicate(wait_gen,
     return decorate
 
 
-def on_exception(wait_gen,
-                 exception,
-                 max_tries=None,
-                 max_time=None,
-                 jitter=full_jitter,
-                 giveup=lambda e: False,
-                 on_success=None,
-                 on_backoff=None,
-                 on_giveup=None,
-                 logger='backoff',
-                 **wait_gen_kwargs):
+def on_exception(wait_gen,  # type: Callable[..., Iterator[float]]
+                 exception,  # type: Exceptions
+                 max_tries=None,  # type: Optional[int]
+                 max_time=None,  # type: Optional[float]
+                 jitter=full_jitter,  # type: Callable[[float], float]
+                 giveup=lambda e: False,  # type: GiveupCallback
+                 on_success=None,  # type: Optional[Callback]
+                 on_backoff=None,  # type: Optional[Callback]
+                 on_giveup=None,  # type: Optional[Callback]
+                 logger='backoff',  # type: Optional[str]
+                 **wait_gen_kwargs  # type: Dict[str, Any]
+                 ):
+    # type: (...) -> Callable[[F], F]
     """Returns decorator for backoff and retry triggered by exception.
 
     Args:

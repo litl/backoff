@@ -2,8 +2,17 @@
 
 import itertools
 
+try:
+    from typing import Iterable, Iterator, Optional, Union
+except ImportError:
+    # This import is not used at runtime and may fail since the typing module
+    # is optional on Python v2.7. This is fine as it is only required for
+    # external static type checkers.
+    pass
+
 
 def expo(base=2, factor=1, max_value=None):
+    # type: (int, float, Optional[float]) -> Iterator[float]
     """Generator for exponential decay.
 
     Args:
@@ -24,6 +33,7 @@ def expo(base=2, factor=1, max_value=None):
 
 
 def fibo(max_value=None):
+    # type: (Optional[int]) -> Iterator[int]
     """Generator for fibonaccial decay.
 
     Args:
@@ -42,6 +52,7 @@ def fibo(max_value=None):
 
 
 def constant(interval=1):
+    # type: (Union[float, Iterable[float]]) -> Iterator[float]
     """Generator for constant intervals.
 
     Args:
