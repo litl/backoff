@@ -41,7 +41,7 @@ def _next_wait(wait, jitter, elapsed, max_time):
 
         seconds = value + jitter()
 
-    # don't sleep longer than remaining alloted max_time
+    # don't sleep longer than remaining allotted max_time
     if max_time is not None:
         seconds = min(seconds, max_time - elapsed)
 
