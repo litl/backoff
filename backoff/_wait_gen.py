@@ -8,7 +8,7 @@ def expo(base=2, factor=1, max_value=None):
 
     Args:
         base: The mathematical base of the exponentiation operation
-        factor: Factor to multiply the exponentation by.
+        factor: Factor to multiply the exponentiation by.
         max_value: The maximum value to yield. Once the value in the
              true exponential sequence exceeds this, the value
              of max_value will forever after be yielded.
