@@ -21,26 +21,30 @@ def _ensure_coroutines(coros_or_funcs):
     return [_ensure_coroutine(f) for f in coros_or_funcs]
 
 
-async def _call_handlers(hdlrs, target, args, kwargs, tries, elapsed, **extra):
-    details = {
-        'target': target,
-        'args': args,
-        'kwargs': kwargs,
-        'tries': tries,
-        'elapsed': elapsed,
-    }
+async def _call_handlers(hdlrs, details, **extra):
+    details = dict(details)
     details.update(extra)
     for hdlr in hdlrs:
         await hdlr(details)
 
 
-def retry_predicate(target, wait_gen, predicate,
-                    max_tries, max_time, jitter,
-                    on_success, on_backoff, on_giveup,
-                    wait_gen_kwargs):
-    on_success = _ensure_coroutines(on_success)
+def retry_predicate(
+    target,
+    wait_gen,
+    predicate,
+    max_tries,
+    max_time,
+    jitter,
+    on_try,
+    on_backoff,
+    on_giveup,
+    on_success,
+    wait_gen_kwargs,
+):
+    on_try = _ensure_coroutines(on_try)
     on_backoff = _ensure_coroutines(on_backoff)
     on_giveup = _ensure_coroutines(on_giveup)
+    on_success = _ensure_coroutines(on_success)
 
     # Easy to implement, please report if you need this.
     assert not asyncio.iscoroutinefunction(max_tries)
@@ -55,31 +59,43 @@ def retry_predicate(target, wait_gen, predicate,
         max_tries_ = _maybe_call(max_tries)
         max_time_ = _maybe_call(max_time)
 
-        tries = 0
+        details = {
+            "target": target,
+            "args": args,
+            "kwargs": kwargs,
+            "tries": 0
+        }
+
         start = datetime.datetime.now()
         wait = _init_wait_gen(wait_gen, wait_gen_kwargs)
         while True:
-            tries += 1
-            elapsed = timedelta.total_seconds(datetime.datetime.now() - start)
-            details = (target, args, kwargs, tries, elapsed)
+            now = datetime.datetime.now()
+            details["elapsed"] = timedelta.total_seconds(now - start)
 
+            await _call_handlers(on_try, details)
             ret = await target(*args, **kwargs)
+            details["tries"] += 1
             if predicate(ret):
-                max_tries_exceeded = (tries == max_tries_)
+                max_tries_exceeded = (details["tries"] == max_tries_)
                 max_time_exceeded = (max_time_ is not None and
-                                     elapsed >= max_time_)
+                                     details["elapsed"] >= max_time_)
 
                 if max_tries_exceeded or max_time_exceeded:
-                    await _call_handlers(on_giveup, *details, value=ret)
+                    await _call_handlers(on_giveup, details, value=ret)
                     break
 
                 try:
-                    seconds = _next_wait(wait, jitter, elapsed, max_time_)
+                    seconds = _next_wait(
+                        wait,
+                        jitter,
+                        details["elapsed"],
+                        max_time_
+                    )
                 except StopIteration:
-                    await _call_handlers(on_giveup, *details, value=ret)
+                    await _call_handlers(on_giveup, details, value=ret)
                     break
 
-                await _call_handlers(on_backoff, *details, value=ret,
+                await _call_handlers(on_backoff, details, value=ret,
                                      wait=seconds)
 
                 # Note: there is no convenient way to pass explicit event
@@ -94,7 +110,7 @@ def retry_predicate(target, wait_gen, predicate,
                 await asyncio.sleep(seconds)
                 continue
             else:
-                await _call_handlers(on_success, *details, value=ret)
+                await _call_handlers(on_success, details, value=ret)
                 break
 
         return ret
@@ -102,13 +118,24 @@ def retry_predicate(target, wait_gen, predicate,
     return retry
 
 
-def retry_exception(target, wait_gen, exception,
-                    max_tries, max_time, jitter, giveup,
-                    on_success, on_backoff, on_giveup,
-                    wait_gen_kwargs):
-    on_success = _ensure_coroutines(on_success)
+def retry_exception(
+    target,
+    wait_gen,
+    exception,
+    max_tries,
+    max_time,
+    jitter,
+    giveup,
+    on_try,
+    on_backoff,
+    on_giveup,
+    on_success,
+    wait_gen_kwargs,
+):
+    on_try = _ensure_coroutines(on_try)
     on_backoff = _ensure_coroutines(on_backoff)
     on_giveup = _ensure_coroutines(on_giveup)
+    on_success = _ensure_coroutines(on_success)
     giveup = _ensure_coroutine(giveup)
 
     # Easy to implement, please report if you need this.
@@ -121,33 +148,44 @@ def retry_exception(target, wait_gen, exception,
         max_tries_ = _maybe_call(max_tries)
         max_time_ = _maybe_call(max_time)
 
-        tries = 0
+        details = {
+            "target": target,
+            "args": args,
+            "kwargs": kwargs,
+            "tries": 0
+        }
         start = datetime.datetime.now()
         wait = _init_wait_gen(wait_gen, wait_gen_kwargs)
         while True:
-            tries += 1
-            elapsed = timedelta.total_seconds(datetime.datetime.now() - start)
-            details = (target, args, kwargs, tries, elapsed)
+            now = datetime.datetime.now()
+            details["elapsed"] = timedelta.total_seconds(now - start)
 
+            await _call_handlers(on_try, details)
             try:
                 ret = await target(*args, **kwargs)
             except exception as e:
+                details["tries"] += 1
                 giveup_result = await giveup(e)
-                max_tries_exceeded = (tries == max_tries_)
+                max_tries_exceeded = (details["tries"] == max_tries_)
                 max_time_exceeded = (max_time_ is not None and
-                                     elapsed >= max_time_)
+                                     details["elapsed"] >= max_time_)
 
                 if giveup_result or max_tries_exceeded or max_time_exceeded:
-                    await _call_handlers(on_giveup, *details)
+                    await _call_handlers(on_giveup, details)
                     raise
 
                 try:
-                    seconds = _next_wait(wait, jitter, elapsed, max_time_)
+                    seconds = _next_wait(
+                        wait,
+                        jitter,
+                        details["elapsed"],
+                        max_time_
+                    )
                 except StopIteration:
-                    await _call_handlers(on_giveup, *details)
+                    await _call_handlers(on_giveup, details)
                     raise e
 
-                await _call_handlers(on_backoff, *details, wait=seconds)
+                await _call_handlers(on_backoff, details, wait=seconds)
 
                 # Note: there is no convenient way to pass explicit event
                 # loop to decorator, so here we assume that either default
@@ -160,7 +198,8 @@ def retry_exception(target, wait_gen, exception,
                 #   <https://bugs.python.org/issue28613>
                 await asyncio.sleep(seconds)
             else:
-                await _call_handlers(on_success, *details)
+                details["tries"] += 1
+                await _call_handlers(on_success, details)
 
                 return ret
     return retry

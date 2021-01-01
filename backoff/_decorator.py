@@ -17,16 +17,19 @@ except NameError:  # pragma: python=3.5
     basestring = str
 
 
-def on_predicate(wait_gen,
-                 predicate=operator.not_,
-                 max_tries=None,
-                 max_time=None,
-                 jitter=full_jitter,
-                 on_success=None,
-                 on_backoff=None,
-                 on_giveup=None,
-                 logger='backoff',
-                 **wait_gen_kwargs):
+def on_predicate(
+    wait_gen,
+    predicate=operator.not_,
+    max_tries=None,
+    max_time=None,
+    jitter=full_jitter,
+    on_try=None,
+    on_backoff=None,
+    on_giveup=None,
+    on_success=None,
+    logger='backoff',
+    **wait_gen_kwargs
+):
     """Returns decorator for backoff and retry triggered by predicate.
 
     Args:
@@ -51,9 +54,9 @@ def on_predicate(wait_gen,
             concurrent clients. Wait times are jittered by default
             using the full_jitter function. Jittering may be disabled
             altogether by passing jitter=None.
-        on_success: Callable (or iterable of callables) with a unary
-            signature to be called in the event of success. The
-            parameter is a dict containing details about the invocation.
+        on_try: Callable (or iterable of callables) with a unary
+            signature to be called before each attempt. The parameter
+            is a dict containing details about the invocation.
         on_backoff: Callable (or iterable of callables) with a unary
             signature to be called in the event of a backoff. The
             parameter is a dict containing details about the invocation.
@@ -61,6 +64,9 @@ def on_predicate(wait_gen,
             signature to be called in the event that max_tries
             is exceeded.  The parameter is a dict containing details
             about the invocation.
+        on_success: Callable (or iterable of callables) with a unary
+            signature to be called in the event of success. The
+            parameter is a dict containing details about the invocation.
         logger: Name of logger or Logger object to log to. Defaults to
             'backoff'.
         **wait_gen_kwargs: Any additional keyword args specified will be
@@ -68,14 +74,16 @@ def on_predicate(wait_gen,
             args will first be evaluated and their return values passed.
             This is useful for runtime configuration.
     """
+
     def decorate(target):
         # change names because python 2.x doesn't have nonlocal
         logger_ = logger
         if isinstance(logger_, basestring):
             logger_ = logging.getLogger(logger_)
-        on_success_ = _config_handlers(on_success)
+        on_try_ = _config_handlers(on_try)
         on_backoff_ = _config_handlers(on_backoff, _log_backoff, logger_)
         on_giveup_ = _config_handlers(on_giveup, _log_giveup, logger_)
+        on_success_ = _config_handlers(on_success)
 
         retry = None
         if sys.version_info >= (3, 5):  # pragma: python=3.5
@@ -83,31 +91,44 @@ def on_predicate(wait_gen,
 
             if asyncio.iscoroutinefunction(target):
                 import backoff._async
+
                 retry = backoff._async.retry_predicate
 
         if retry is None:
             retry = _sync.retry_predicate
 
-        return retry(target, wait_gen, predicate,
-                     max_tries, max_time, jitter,
-                     on_success_, on_backoff_, on_giveup_,
-                     wait_gen_kwargs)
+        return retry(
+            target,
+            wait_gen,
+            predicate,
+            max_tries,
+            max_time,
+            jitter,
+            on_try_,
+            on_backoff_,
+            on_giveup_,
+            on_success_,
+            wait_gen_kwargs,
+        )
 
     # Return a function which decorates a target with a retry loop.
     return decorate
 
 
-def on_exception(wait_gen,
-                 exception,
-                 max_tries=None,
-                 max_time=None,
-                 jitter=full_jitter,
-                 giveup=lambda e: False,
-                 on_success=None,
-                 on_backoff=None,
-                 on_giveup=None,
-                 logger='backoff',
-                 **wait_gen_kwargs):
+def on_exception(
+    wait_gen,
+    exception,
+    max_tries=None,
+    max_time=None,
+    jitter=full_jitter,
+    giveup=lambda e: False,
+    on_try=None,
+    on_backoff=None,
+    on_giveup=None,
+    on_success=None,
+    logger='backoff',
+    **wait_gen_kwargs
+):
     """Returns decorator for backoff and retry triggered by exception.
 
     Args:
@@ -133,9 +154,9 @@ def on_exception(wait_gen,
         giveup: Function accepting an exception instance and
             returning whether or not to give up. Optional. The default
             is to always continue.
-        on_success: Callable (or iterable of callables) with a unary
-            signature to be called in the event of success. The
-            parameter is a dict containing details about the invocation.
+        on_try: Callable (or iterable of callables) with a unary
+            signature to be called before each attempt. The parameter
+            is a dict containing details about the invocation.
         on_backoff: Callable (or iterable of callables) with a unary
             signature to be called in the event of a backoff. The
             parameter is a dict containing details about the invocation.
@@ -143,36 +164,52 @@ def on_exception(wait_gen,
             signature to be called in the event that max_tries
             is exceeded.  The parameter is a dict containing details
             about the invocation.
+        on_success: Callable (or iterable of callables) with a unary
+            signature to be called in the event of success. The
+            parameter is a dict containing details about the invocation.
         logger: Name or Logger object to log to. Defaults to 'backoff'.
         **wait_gen_kwargs: Any additional keyword args specified will be
             passed to wait_gen when it is initialized.  Any callable
             args will first be evaluated and their return values passed.
             This is useful for runtime configuration.
     """
+
     def decorate(target):
         # change names because python 2.x doesn't have nonlocal
         logger_ = logger
         if isinstance(logger_, basestring):
             logger_ = logging.getLogger(logger_)
-        on_success_ = _config_handlers(on_success)
+        on_try_ = _config_handlers(on_try)
         on_backoff_ = _config_handlers(on_backoff, _log_backoff, logger_)
         on_giveup_ = _config_handlers(on_giveup, _log_giveup, logger_)
+        on_success_ = _config_handlers(on_success)
 
         retry = None
-        if sys.version_info[:2] >= (3, 5):   # pragma: python=3.5
+        if sys.version_info[:2] >= (3, 5):  # pragma: python=3.5
             import asyncio
 
             if asyncio.iscoroutinefunction(target):
                 import backoff._async
+
                 retry = backoff._async.retry_exception
 
         if retry is None:
             retry = _sync.retry_exception
 
-        return retry(target, wait_gen, exception,
-                     max_tries, max_time, jitter, giveup,
-                     on_success_, on_backoff_, on_giveup_,
-                     wait_gen_kwargs)
+        return retry(
+            target,
+            wait_gen,
+            exception,
+            max_tries,
+            max_time,
+            jitter,
+            giveup,
+            on_try_,
+            on_backoff_,
+            on_giveup_,
+            on_success_,
+            wait_gen_kwargs,
+        )
 
     # Return a function which decorates a target with a retry loop.
     return decorate
