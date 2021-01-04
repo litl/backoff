@@ -7,6 +7,13 @@ import traceback
 import warnings
 
 
+# python 2.7 -> 3.x compatibility for str and unicode
+try:
+    basestring
+except NameError:  # pragma: python=3.5
+    basestring = str
+
+
 # Use module-specific logger with a default null handler.
 _logger = logging.getLogger('backoff')
 _logger.addHandler(logging.NullHandler())  # pragma: no cover
@@ -48,13 +55,24 @@ def _next_wait(wait, jitter, elapsed, max_time):
     return seconds
 
 
+def _prepare_logger(logger):
+    if isinstance(logger, basestring):
+        logger = logging.getLogger(logger)
+    return logger
+
+
 # Configure handler list with user specified handler and optionally
 # with a default handler bound to the specified logger.
-def _config_handlers(user_handlers, default_handler=None, logger=None):
+def _config_handlers(
+    user_handlers, default_handler=None, logger=None, log_level=None
+):
     handlers = []
     if logger is not None:
+        assert log_level is not None, "Log level is not specified"
         # bind the specified logger to the default log handler
-        log_handler = functools.partial(default_handler, logger=logger)
+        log_handler = functools.partial(
+            default_handler, logger=logger, log_level=log_level
+        )
         handlers.append(log_handler)
 
     if user_handlers is None:
@@ -73,7 +91,7 @@ def _config_handlers(user_handlers, default_handler=None, logger=None):
 
 
 # Default backoff handler
-def _log_backoff(details, logger):
+def _log_backoff(details, logger, log_level):
     msg = "Backing off %s(...) for %.1fs (%s)"
     log_args = [details['target'].__name__, details['wait']]
 
@@ -83,11 +101,11 @@ def _log_backoff(details, logger):
         log_args.append(exc_fmt.rstrip("\n"))
     else:
         log_args.append(details['value'])
-    logger.info(msg, *log_args)
+    logger.log(log_level, msg, *log_args)
 
 
 # Default giveup handler
-def _log_giveup(details, logger):
+def _log_giveup(details, logger, log_level):
     msg = "Giving up %s(...) after %d tries (%s)"
     log_args = [details['target'].__name__, details['tries']]
 
@@ -98,4 +116,4 @@ def _log_giveup(details, logger):
     else:
         log_args.append(details['value'])
 
-    logger.error(msg, *log_args)
+    logger.log(log_level, msg, *log_args)

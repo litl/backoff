@@ -5,16 +5,14 @@ import logging
 import operator
 import sys
 
-from backoff._common import (_config_handlers, _log_backoff, _log_giveup)
+from backoff._common import (
+    _prepare_logger,
+    _config_handlers,
+    _log_backoff,
+    _log_giveup
+)
 from backoff._jitter import full_jitter
 from backoff import _sync
-
-
-# python 2.7 -> 3.x compatibility for str and unicode
-try:
-    basestring
-except NameError:  # pragma: python=3.5
-    basestring = str
 
 
 def on_predicate(wait_gen,
@@ -26,6 +24,8 @@ def on_predicate(wait_gen,
                  on_backoff=None,
                  on_giveup=None,
                  logger='backoff',
+                 backoff_log_level=logging.INFO,
+                 giveup_log_level=logging.ERROR,
                  **wait_gen_kwargs):
     """Returns decorator for backoff and retry triggered by predicate.
 
@@ -63,6 +63,8 @@ def on_predicate(wait_gen,
             about the invocation.
         logger: Name of logger or Logger object to log to. Defaults to
             'backoff'.
+        backoff_log_level: log level for the backoff event. Defaults to "INFO"
+        giveup_log_level: log level for the give up event. Defaults to "ERROR"
         **wait_gen_kwargs: Any additional keyword args specified will be
             passed to wait_gen when it is initialized.  Any callable
             args will first be evaluated and their return values passed.
@@ -70,12 +72,15 @@ def on_predicate(wait_gen,
     """
     def decorate(target):
         # change names because python 2.x doesn't have nonlocal
-        logger_ = logger
-        if isinstance(logger_, basestring):
-            logger_ = logging.getLogger(logger_)
+        logger_ = _prepare_logger(logger)
+
         on_success_ = _config_handlers(on_success)
-        on_backoff_ = _config_handlers(on_backoff, _log_backoff, logger_)
-        on_giveup_ = _config_handlers(on_giveup, _log_giveup, logger_)
+        on_backoff_ = _config_handlers(
+            on_backoff, _log_backoff, logger_, backoff_log_level
+        )
+        on_giveup_ = _config_handlers(
+            on_giveup, _log_giveup, logger_, giveup_log_level
+        )
 
         retry = None
         if sys.version_info >= (3, 5):  # pragma: python=3.5
@@ -107,6 +112,8 @@ def on_exception(wait_gen,
                  on_backoff=None,
                  on_giveup=None,
                  logger='backoff',
+                 backoff_log_level=logging.INFO,
+                 giveup_log_level=logging.ERROR,
                  **wait_gen_kwargs):
     """Returns decorator for backoff and retry triggered by exception.
 
@@ -144,6 +151,8 @@ def on_exception(wait_gen,
             is exceeded.  The parameter is a dict containing details
             about the invocation.
         logger: Name or Logger object to log to. Defaults to 'backoff'.
+        backoff_log_level: log level for the backoff event. Defaults to "INFO"
+        giveup_log_level: log level for the give up event. Defaults to "ERROR"
         **wait_gen_kwargs: Any additional keyword args specified will be
             passed to wait_gen when it is initialized.  Any callable
             args will first be evaluated and their return values passed.
@@ -151,12 +160,15 @@ def on_exception(wait_gen,
     """
     def decorate(target):
         # change names because python 2.x doesn't have nonlocal
-        logger_ = logger
-        if isinstance(logger_, basestring):
-            logger_ = logging.getLogger(logger_)
+        logger_ = _prepare_logger(logger)
+
         on_success_ = _config_handlers(on_success)
-        on_backoff_ = _config_handlers(on_backoff, _log_backoff, logger_)
-        on_giveup_ = _config_handlers(on_giveup, _log_giveup, logger_)
+        on_backoff_ = _config_handlers(
+            on_backoff, _log_backoff, logger_, backoff_log_level
+        )
+        on_giveup_ = _config_handlers(
+            on_giveup, _log_giveup, logger_, giveup_log_level
+        )
 
         retry = None
         if sys.version_info[:2] >= (3, 5):   # pragma: python=3.5

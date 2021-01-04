@@ -1,9 +1,12 @@
 # coding:utf-8
 import datetime
+import itertools
 import logging
 import random
+import re
 import sys
 import threading
+import unittest.mock
 
 import pytest
 
@@ -733,3 +736,82 @@ def test_on_exception_logger_user_str(monkeypatch, caplog):
     assert len(caplog.records) == 3  # 2 backoffs and 1 giveup
     for record in caplog.records:
         assert record.name == 'my-logger'
+
+
+def _on_exception_factory(
+    backoff_log_level, giveup_log_level, max_tries
+):
+    @backoff.on_exception(
+        backoff.expo,
+        ValueError,
+        max_tries=max_tries,
+        backoff_log_level=backoff_log_level,
+        giveup_log_level=giveup_log_level,
+    )
+    def value_error():
+        raise ValueError
+
+    def func():
+        with pytest.raises(ValueError):
+            value_error()
+
+    return func
+
+
+def _on_predicate_factory(
+    backoff_log_level, giveup_log_level, max_tries
+):
+    @backoff.on_predicate(
+        backoff.expo,
+        max_tries=max_tries,
+        backoff_log_level=backoff_log_level,
+        giveup_log_level=giveup_log_level,
+    )
+    def func():
+        return False
+
+    return func
+
+
+@pytest.mark.parametrize(
+    ("func_factory", "backoff_log_level", "giveup_log_level"),
+    (
+        (factory, backoff_log_level, giveup_log_level)
+        for backoff_log_level, giveup_log_level in itertools.product(
+            (
+                logging.DEBUG,
+                logging.INFO,
+                logging.WARNING,
+                logging.ERROR,
+                logging.CRITICAL,
+            ),
+            repeat=2,
+        )
+        for factory in (_on_predicate_factory, _on_exception_factory)
+    )
+)
+def test_event_log_levels(
+    caplog, func_factory, backoff_log_level, giveup_log_level
+):
+    max_tries = 3
+    func = func_factory(backoff_log_level, giveup_log_level, max_tries)
+
+    with unittest.mock.patch('time.sleep', return_value=None):
+        with caplog.at_level(
+            min(backoff_log_level, giveup_log_level), logger="backoff"
+        ):
+            func()
+
+    backoff_re = re.compile("backing off", re.IGNORECASE)
+    giveup_re = re.compile("giving up", re.IGNORECASE)
+
+    backoff_log_count = 0
+    giveup_log_count = 0
+    for logger_name, level, message in caplog.record_tuples:
+        if level == backoff_log_level and backoff_re.match(message):
+            backoff_log_count += 1
+        elif level == giveup_log_level and giveup_re.match(message):
+            giveup_log_count += 1
+
+    assert backoff_log_count == max_tries - 1
+    assert giveup_log_count == 1
