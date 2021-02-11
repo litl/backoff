@@ -323,7 +323,7 @@ directly.
 
     my_logger = logging.getLogger('my_logger')
     my_handler = logging.StreamHandler()
-    my_logger.add_handler(my_handler)
+    my_logger.addHandler(my_handler)
     my_logger.setLevel(logging.ERROR)
 
     @backoff.on_exception(backoff.expo,
