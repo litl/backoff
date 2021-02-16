@@ -280,7 +280,7 @@ asynchronous HTTP client/server library.
 
     @backoff.on_exception(backoff.expo, aiohttp.ClientError, max_time=60)
     async def get_url(url):
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(raise_for_status=True) as session:
             async with session.get(url) as response:
                 return await response.text()
 
