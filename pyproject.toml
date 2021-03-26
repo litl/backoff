@@ -14,10 +14,7 @@ classifiers = ['Development Status :: 5 - Production/Stable',
                'Natural Language :: English',
                'Operating System :: OS Independent',
                'Programming Language :: Python',
-               'Programming Language :: Python :: 2',
-               'Programming Language :: Python :: 2.7',
                'Programming Language :: Python :: 3',
-               'Programming Language :: Python :: 3.5',
                'Programming Language :: Python :: 3.6',
                'Programming Language :: Python :: 3.7',
                'Programming Language :: Python :: 3.8',
@@ -30,15 +27,14 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^2.7 || ^3.5"
+python = "^3.6"
 
 [tool.poetry.dev-dependencies]
-flake8 = "^3.6"
-pytest = "^4.0"
-pytest-cov = "^2.6"
-pytest-asyncio = {version = "^0.10.0",python = "^3.5"}
-autopep8 = "^1.5.7"
+flake8 = "^3.9.0"
+pytest = "^6.2.2"
+pytest-cov = "^2.11.1"
+pytest-asyncio = "^0.14.0"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
