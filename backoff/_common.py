@@ -7,13 +7,6 @@ import traceback
 import warnings
 
 
-# python 2.7 -> 3.x compatibility for str and unicode
-try:
-    basestring
-except NameError:  # pragma: python=3.5
-    basestring = str
-
-
 # Use module-specific logger with a default null handler.
 _logger = logging.getLogger('backoff')
 _logger.addHandler(logging.NullHandler())  # pragma: no cover
@@ -56,7 +49,7 @@ def _next_wait(wait, jitter, elapsed, max_time):
 
 
 def _prepare_logger(logger):
-    if isinstance(logger, basestring):
+    if isinstance(logger, str):
         logger = logging.getLogger(logger)
     return logger
 

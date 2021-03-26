@@ -29,12 +29,4 @@ __all__ = [
     'random_jitter',
 ]
 
-__version__ = '1.11.0'
-
-
-if sys.version_info[0] < 3:
-    warnings.warn(
-        "Python 2.7 support is deprecated and will be dropped "
-        "in the next release",
-        DeprecationWarning,
-    )  # pragma: no cover
+__version__ = '2.0.0'

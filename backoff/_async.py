@@ -1,7 +1,7 @@
 # coding:utf-8
 import datetime
 import functools
-import asyncio  # Python 3.5 code and syntax is allowed in this file
+import asyncio
 from datetime import timedelta
 
 from backoff._common import (_init_wait_gen, _maybe_call, _next_wait)
