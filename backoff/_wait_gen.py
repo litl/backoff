@@ -1,9 +1,15 @@
 # coding:utf-8
 
 import itertools
+from typing import Generator, Iterable, Optional, Union
 
 
-def expo(base=2, factor=1, max_value=None):
+def expo(
+    base: int = 2,
+    factor: int = 1,
+    max_value: Optional[int] = None
+) -> Generator[int, None, None]:
+
     """Generator for exponential decay.
 
     Args:
@@ -23,7 +29,7 @@ def expo(base=2, factor=1, max_value=None):
             yield max_value
 
 
-def fibo(max_value=None):
+def fibo(max_value: Optional[int] = None) -> Generator[int, None, None]:
     """Generator for fibonaccial decay.
 
     Args:
@@ -41,16 +47,18 @@ def fibo(max_value=None):
             yield max_value
 
 
-def constant(interval=1):
+def constant(
+    interval: Union[int, Iterable[int]] = 1
+) -> Generator[int, None, None]:
     """Generator for constant intervals.
 
     Args:
         interval: A constant value to yield or an iterable of such values.
     """
     try:
-        itr = iter(interval)
+        itr = iter(interval)  # type: ignore
     except TypeError:
-        itr = itertools.repeat(interval)
+        itr = itertools.repeat(interval)  # type: ignore
 
     for val in itr:
         yield val
