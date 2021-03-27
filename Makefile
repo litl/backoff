@@ -4,7 +4,7 @@ PY_MINOR := $(word 2,${PY_VERSION})
 PY_GTE_35 = $(shell echo $(PY_MAJOR).$(PY_MINOR)\>=3.5 | bc)
 
 
-.PHONY: all flake8 clean test check
+.PHONY: all flake8 mypy clean test check
 
 all:
 	@echo 'flake8            check flake8 compliance'
