@@ -14,9 +14,9 @@ all:
 
 flake8:
 ifeq ($(PY_GTE_35),1)
-	@flake8 backoff tests
+	@flake8 --ignore=E741,W503,W504 backoff tests
 else
-	@flake8 --exclude tests/python35,backoff/_async.py backoff tests
+	@flake8 --ignore=E741,W503,W504 --exclude tests/python35,backoff/_async.py backoff tests
 endif
 
 clean:
