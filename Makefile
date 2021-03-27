@@ -4,7 +4,7 @@ PY_MINOR := $(word 2,${PY_VERSION})
 PY_GTE_35 = $(shell echo $(PY_MAJOR).$(PY_MINOR)\>=3.5 | bc)
 
 
-.PHONY: all flake8 clean test check
+.PHONY: all flake8 mypy clean test check
 
 all:
 	@echo 'flake8            check flake8 compliance'
@@ -13,11 +13,10 @@ all:
 	@echo 'check             make sure you are ready to commit'
 
 flake8:
-ifeq ($(PY_GTE_35),1)
 	@flake8 --ignore=E741,W503,W504 backoff tests
-else
-	@flake8 --ignore=E741,W503,W504 --exclude tests/python35,backoff/_async.py backoff tests
-endif
+
+mypy:
+	@mypy backoff tests
 
 clean:
 	@find . -name "*.pyc" -delete
@@ -25,11 +24,7 @@ clean:
 	@rm -rf build dist .coverage MANIFEST
 
 test: clean
-ifeq ($(PY_GTE_35),1)
-	@PYTHONPATH=. py.test --cov-config .coveragerc-py35 --cov backoff tests
-else
-	@PYTHONPATH=. py.test --cov-config .coveragerc-py2 --cov backoff tests/test_*.py
-endif
+	@PYTHONPATH=. py.test --cov-config .coveragerc --cov backoff tests
 
-check: flake8 test
+check: flake8 mypy test
 	@coverage report | grep 100% >/dev/null || { echo 'Unit tests coverage is incomplete.'; exit 1; }

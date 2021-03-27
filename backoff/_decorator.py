@@ -1,9 +1,8 @@
 # coding:utf-8
-from __future__ import unicode_literals
-
+import asyncio
 import logging
 import operator
-import sys
+from typing import Any, Callable, Type
 
 from backoff._common import (
     _prepare_logger,
@@ -12,21 +11,30 @@ from backoff._common import (
     _log_giveup
 )
 from backoff._jitter import full_jitter
-from backoff import _sync
+from backoff import _async, _sync
+from backoff._typing import (
+    _Handler,
+    _Jitterer,
+    _MaybeCallable,
+    _MaybeLogger,
+    _MaybeSequence,
+    _Predicate,
+    _WaitGenerator,
+)
 
 
-def on_predicate(wait_gen,
-                 predicate=operator.not_,
-                 max_tries=None,
-                 max_time=None,
-                 jitter=full_jitter,
-                 on_success=None,
-                 on_backoff=None,
-                 on_giveup=None,
-                 logger='backoff',
-                 backoff_log_level=logging.INFO,
-                 giveup_log_level=logging.ERROR,
-                 **wait_gen_kwargs):
+def on_predicate(wait_gen: _WaitGenerator,
+                 predicate: _Predicate[Any] = operator.not_,
+                 max_tries: _MaybeCallable[int] = None,
+                 max_time: _MaybeCallable[float] = None,
+                 jitter: _Jitterer = full_jitter,
+                 on_success: _Handler = None,
+                 on_backoff: _Handler = None,
+                 on_giveup: _Handler = None,
+                 logger: _MaybeLogger = 'backoff',
+                 backoff_log_level: int = logging.INFO,
+                 giveup_log_level: int = logging.ERROR,
+                 **wait_gen_kwargs) -> Callable:
     """Returns decorator for backoff and retry triggered by predicate.
 
     Args:
@@ -71,50 +79,44 @@ def on_predicate(wait_gen,
             This is useful for runtime configuration.
     """
     def decorate(target):
-        # change names because python 2.x doesn't have nonlocal
-        logger_ = _prepare_logger(logger)
+        nonlocal logger, on_success, on_backoff, on_giveup
 
-        on_success_ = _config_handlers(on_success)
-        on_backoff_ = _config_handlers(
-            on_backoff, _log_backoff, logger_, backoff_log_level
+        logger = _prepare_logger(logger)
+        on_success = _config_handlers(on_success)
+        on_backoff = _config_handlers(
+            on_backoff, _log_backoff, logger, backoff_log_level
         )
-        on_giveup_ = _config_handlers(
-            on_giveup, _log_giveup, logger_, giveup_log_level
+        on_giveup = _config_handlers(
+            on_giveup, _log_giveup, logger, giveup_log_level
         )
 
-        retry = None
-        if sys.version_info >= (3, 5):  # pragma: python=3.5
-            import asyncio
-
-            if asyncio.iscoroutinefunction(target):
-                import backoff._async
-                retry = backoff._async.retry_predicate
-
-        if retry is None:
+        if asyncio.iscoroutinefunction(target):
+            retry = _async.retry_predicate
+        else:
             retry = _sync.retry_predicate
 
         return retry(target, wait_gen, predicate,
                      max_tries, max_time, jitter,
-                     on_success_, on_backoff_, on_giveup_,
+                     on_success, on_backoff, on_giveup,
                      wait_gen_kwargs)
 
     # Return a function which decorates a target with a retry loop.
     return decorate
 
 
-def on_exception(wait_gen,
-                 exception,
-                 max_tries=None,
-                 max_time=None,
-                 jitter=full_jitter,
-                 giveup=lambda e: False,
-                 on_success=None,
-                 on_backoff=None,
-                 on_giveup=None,
-                 logger='backoff',
-                 backoff_log_level=logging.INFO,
-                 giveup_log_level=logging.ERROR,
-                 **wait_gen_kwargs):
+def on_exception(wait_gen: _WaitGenerator,
+                 exception: _MaybeSequence[Type[Exception]],
+                 max_tries: _MaybeCallable[int] = None,
+                 max_time: _MaybeCallable[float] = None,
+                 jitter: _Jitterer = full_jitter,
+                 giveup: _Predicate[Exception] = lambda e: False,
+                 on_success: _Handler = None,
+                 on_backoff: _Handler = None,
+                 on_giveup: _Handler = None,
+                 logger: _MaybeLogger = 'backoff',
+                 backoff_log_level: int = logging.INFO,
+                 giveup_log_level: int = logging.ERROR,
+                 **wait_gen_kwargs) -> Callable:
     """Returns decorator for backoff and retry triggered by exception.
 
     Args:
@@ -159,31 +161,25 @@ def on_exception(wait_gen,
             This is useful for runtime configuration.
     """
     def decorate(target):
-        # change names because python 2.x doesn't have nonlocal
-        logger_ = _prepare_logger(logger)
+        nonlocal logger, on_success, on_backoff, on_giveup
 
-        on_success_ = _config_handlers(on_success)
-        on_backoff_ = _config_handlers(
-            on_backoff, _log_backoff, logger_, backoff_log_level
+        logger = _prepare_logger(logger)
+        on_success = _config_handlers(on_success)
+        on_backoff = _config_handlers(
+            on_backoff, _log_backoff, logger, backoff_log_level
         )
-        on_giveup_ = _config_handlers(
-            on_giveup, _log_giveup, logger_, giveup_log_level
+        on_giveup = _config_handlers(
+            on_giveup, _log_giveup, logger, giveup_log_level
         )
 
-        retry = None
-        if sys.version_info[:2] >= (3, 5):   # pragma: python=3.5
-            import asyncio
-
-            if asyncio.iscoroutinefunction(target):
-                import backoff._async
-                retry = backoff._async.retry_exception
-
-        if retry is None:
+        if asyncio.iscoroutinefunction(target):
+            retry = _async.retry_exception
+        else:
             retry = _sync.retry_exception
 
         return retry(target, wait_gen, exception,
                      max_tries, max_time, jitter, giveup,
-                     on_success_, on_backoff_, on_giveup_,
+                     on_success, on_backoff, on_giveup,
                      wait_gen_kwargs)
 
     # Return a function which decorates a target with a retry loop.
