@@ -29,4 +29,4 @@ __all__ = [
     'random_jitter',
 ]
 
-__version__ = '2.0.0'
+__version__ = '1.10.0'
