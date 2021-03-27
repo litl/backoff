@@ -15,6 +15,9 @@ all:
 flake8:
 	@flake8 --ignore=E741,W503,W504 backoff tests
 
+mypy:
+	@mypy backoff tests
+
 clean:
 	@find . -name "*.pyc" -delete
 	@find . -name "__pycache__" -delete
@@ -23,5 +26,5 @@ clean:
 test: clean
 	@PYTHONPATH=. py.test --cov-config .coveragerc --cov backoff tests
 
-check: flake8 test
+check: flake8 mypy test
 	@coverage report | grep 100% >/dev/null || { echo 'Unit tests coverage is incomplete.'; exit 1; }
