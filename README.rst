@@ -1,10 +1,10 @@
 backoff
 =======
 
-.. image:: https://travis-ci.org/litl/backoff.svg?branch=master
-    :target: https://travis-ci.org/litl/backoff?branch=master
-.. image:: https://coveralls.io/repos/litl/backoff/badge.svg?branch=master
-    :target: https://coveralls.io/r/litl/backoff?branch=master
+.. image:: https://travis-ci.org/litl/backoff.svg?branch=python-3
+    :target: https://travis-ci.org/litl/backoff?branch=python-3
+.. image:: https://coveralls.io/repos/litl/backoff/badge.svg?branch=python-3
+    :target: https://coveralls.io/r/litl/backoff?branch=python-3
 .. image:: https://img.shields.io/pypi/v/backoff.svg
     :target: https://pypi.python.org/pypi/backoff
 
