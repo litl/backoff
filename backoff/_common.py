@@ -24,19 +24,23 @@ _logger.setLevel(logging.INFO)
 def _maybe_call(f, *args, **kwargs):
     return f(*args, **kwargs) if callable(f) else f
 
-
 def _init_wait_gen(wait_gen, wait_gen_kwargs):
-    kwargs = {k: _maybe_call(v) for k, v in wait_gen_kwargs.items()}
-    return wait_gen(**kwargs)
+    prepared_kwargs = _prepare_kwargs(wait_gen_kwargs)
+    return wait_gen(**prepared_kwargs)
 
+def _prepare_kwargs(kwargs):
+    return {k: _maybe_call(v) for k, v in kwargs.items()}
 
-def _next_wait(wait, jitter, elapsed, max_time):
-    value = next(wait)
+def _next_wait(wait_gen, jitter, elapsed, max_time):
+    wait_seconds = next(wait_gen)
+    return _get_wait_seconds(wait_seconds, jitter, elapsed, max_time)
+
+def _get_wait_seconds(wait_seconds, jitter, elapsed, max_time):
     try:
         if jitter is not None:
-            seconds = jitter(value)
+            seconds = jitter(wait_seconds)
         else:
-            seconds = value
+            seconds = wait_seconds
     except TypeError:
         warnings.warn(
             "Nullary jitter function signature is deprecated. Use "
@@ -46,7 +50,7 @@ def _next_wait(wait, jitter, elapsed, max_time):
             stacklevel=2,
         )
 
-        seconds = value + jitter()
+        seconds = wait_seconds + jitter()
 
     # don't sleep longer than remaining allotted max_time
     if max_time is not None:

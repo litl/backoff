@@ -4,7 +4,7 @@ import functools
 import asyncio  # Python 3.5 code and syntax is allowed in this file
 from datetime import timedelta
 
-from backoff._common import (_init_wait_gen, _maybe_call, _next_wait)
+from backoff._common import (_init_wait_gen, _maybe_call, _next_wait, _prepare_kwargs, _get_wait_seconds)
 
 
 def _ensure_coroutine(coro_or_func):
@@ -32,6 +32,70 @@ async def _call_handlers(hdlrs, target, args, kwargs, tries, elapsed, **extra):
     details.update(extra)
     for hdlr in hdlrs:
         await hdlr(details)
+
+
+def retry_return_value(target, wait_callable,
+                    max_tries, max_time, jitter,
+                    on_success, on_backoff, on_giveup,
+                    wait_gen_kwargs):
+    on_success = _ensure_coroutines(on_success)
+    on_backoff = _ensure_coroutines(on_backoff)
+    on_giveup = _ensure_coroutines(on_giveup)
+
+    # Easy to implement, please report if you need this.
+    assert not asyncio.iscoroutinefunction(max_tries)
+    assert not asyncio.iscoroutinefunction(jitter)
+
+    assert asyncio.iscoroutinefunction(target)
+
+    @functools.wraps(target)
+    async def retry(*args, **kwargs):
+
+        # change names because python 2.x doesn't have nonlocal
+        max_tries_ = _maybe_call(max_tries)
+        max_time_ = _maybe_call(max_time)
+
+        tries = 0
+        start = datetime.datetime.now()
+        while True:
+            tries += 1
+            elapsed = timedelta.total_seconds(datetime.datetime.now() - start)
+            details = (target, args, kwargs, tries, elapsed)
+
+            ret = await target(*args, **kwargs)
+            wait_seconds = wait_callable(ret, **_prepare_kwargs(wait_gen_kwargs))
+            if wait_seconds and wait_seconds != 0:
+                max_tries_exceeded = (tries == max_tries_)
+                max_time_exceeded = (max_time_ is not None and
+                                     elapsed >= max_time_)
+
+                if max_tries_exceeded or max_time_exceeded:
+                    await _call_handlers(on_giveup, *details, value=ret)
+                    break
+
+                seconds = _get_wait_seconds(wait_seconds, jitter, elapsed, max_time_)
+
+                await _call_handlers(on_backoff, *details, value=ret,
+                                     wait=seconds)
+
+                # Note: there is no convenient way to pass explicit event
+                # loop to decorator, so here we assume that either default
+                # thread event loop is set and correct (it mostly is
+                # by default), or Python >= 3.5.3 or Python >= 3.6 is used
+                # where loop.get_event_loop() in coroutine guaranteed to
+                # return correct value.
+                # See for details:
+                #   <https://groups.google.com/forum/#!topic/python-tulip/yF9C-rFpiKk>
+                #   <https://bugs.python.org/issue28613>
+                await asyncio.sleep(seconds)
+                continue
+            else:
+                await _call_handlers(on_success, *details, value=ret)
+                break
+
+        return ret
+
+    return retry
 
 
 def retry_predicate(target, wait_gen, predicate,

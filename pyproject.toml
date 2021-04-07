@@ -36,6 +36,7 @@ flake8 = "^3.6"
 pytest = "^4.0"
 pytest-cov = "^2.6"
 pytest-asyncio = {version = "^0.10.0",python = "^3.5"}
+"backports.functools-lru-cache" = "1.6.1" # hotfix until next poetry version is released https://github.com/python-poetry/poetry/issues/3862#issuecomment-812490791
 
 [build-system]
 requires = ["poetry-core"]

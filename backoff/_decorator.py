@@ -15,6 +15,88 @@ from backoff._jitter import full_jitter
 from backoff import _sync
 
 
+def on_return_value(
+        wait_callable,
+        max_tries=None,
+        max_time=None,
+        jitter=full_jitter,
+        on_success=None,
+        on_backoff=None,
+        on_giveup=None,
+        logger='backoff',
+        backoff_log_level=logging.INFO,
+        giveup_log_level=logging.ERROR,
+        **wait_gen_kwargs):
+    """Returns decorator for backoff and retry triggered by the return value of the decorated method.
+
+    Args:
+        wait_callable: A callable which accepts as input the return values
+         of the decorated method and returning wait times in seconds.
+        max_tries: The maximum number of attempts to make before giving
+            up. In the case of failure, the result of the last attempt
+            will be returned. The default value of None means there
+            is no limit to the number of tries. If a callable is passed,
+            it will be evaluated at runtime and its return value used.
+        max_time: The maximum total amount of time to try for before
+            giving up. If this time expires, the result of the last
+            attempt will be returned. If a callable is passed, it will
+            be evaluated at runtime and its return value used.
+        jitter: A function of the value yielded by wait_gen returning
+            the actual time to wait. This distributes wait times
+            stochastically in order to avoid timing collisions across
+            concurrent clients. Wait times are jittered by default
+            using the full_jitter function. Jittering may be disabled
+            altogether by passing jitter=None.
+        on_success: Callable (or iterable of callables) with a unary
+            signature to be called in the event of success. The
+            parameter is a dict containing details about the invocation.
+        on_backoff: Callable (or iterable of callables) with a unary
+            signature to be called in the event of a backoff. The
+            parameter is a dict containing details about the invocation.
+        on_giveup: Callable (or iterable of callables) with a unary
+            signature to be called in the event that max_tries
+            is exceeded.  The parameter is a dict containing details
+            about the invocation.
+        logger: Name of logger or Logger object to log to. Defaults to
+            'backoff'.
+        backoff_log_level: log level for the backoff event. Defaults to "INFO"
+        giveup_log_level: log level for the give up event. Defaults to "ERROR"
+        **wait_gen_kwargs: Any additional keyword args specified will be
+            passed to wait_gen when it is initialized.  Any callable
+            args will first be evaluated and their return values passed.
+            This is useful for runtime configuration.
+    """
+    def decorate(target):
+        # change names because python 2.x doesn't have nonlocal
+        logger_ = _prepare_logger(logger)
+
+        on_success_ = _config_handlers(on_success)
+        on_backoff_ = _config_handlers(
+            on_backoff, _log_backoff, logger_, backoff_log_level
+        )
+        on_giveup_ = _config_handlers(
+            on_giveup, _log_giveup, logger_, giveup_log_level
+        )
+
+        retry = None
+        if sys.version_info >= (3, 5):  # pragma: python=3.5
+            import asyncio
+
+            if asyncio.iscoroutinefunction(target):
+                import backoff._async
+                retry = backoff._async.retry_return_value
+
+        if retry is None:
+            retry = _sync.retry_return_value
+
+        return retry(target, wait_callable,
+                     max_tries, max_time, jitter,
+                     on_success_, on_backoff_, on_giveup_,
+                     wait_gen_kwargs)
+
+    # Return a function which decorates a target with a retry loop.
+    return decorate
+
 def on_predicate(wait_gen,
                  predicate=operator.not_,
                  max_tries=None,

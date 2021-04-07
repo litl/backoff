@@ -4,7 +4,7 @@ import functools
 import time
 from datetime import timedelta
 
-from backoff._common import (_init_wait_gen, _maybe_call, _next_wait)
+from backoff._common import (_init_wait_gen, _maybe_call, _next_wait, _get_wait_seconds, _prepare_kwargs)
 
 
 def _call_handlers(hdlrs, target, args, kwargs, tries, elapsed, **extra):
@@ -19,6 +19,48 @@ def _call_handlers(hdlrs, target, args, kwargs, tries, elapsed, **extra):
     for hdlr in hdlrs:
         hdlr(details)
 
+def retry_return_value(target, wait_callable, max_tries, max_time, jitter,
+                       on_success, on_backoff, on_giveup,
+                       wait_gen_kwargs):
+
+    @functools.wraps(target)
+    def retry(*args, **kwargs):
+        # change names because python 2.x doesn't have nonlocal
+        max_tries_ = _maybe_call(max_tries)
+        max_time_ = _maybe_call(max_time)
+
+        tries = 0
+        start = datetime.datetime.now()
+        while True:
+            tries += 1
+            elapsed = timedelta.total_seconds(datetime.datetime.now() - start)
+            details = (target, args, kwargs, tries, elapsed)
+
+            ret = target(*args, **kwargs)
+            wait_seconds = wait_callable(ret, **_prepare_kwargs(wait_gen_kwargs))
+            if wait_seconds and wait_seconds != 0:
+                max_tries_exceeded = (tries == max_tries_)
+                max_time_exceeded = (max_time_ is not None and
+                                     elapsed >= max_time_)
+
+                if max_tries_exceeded or max_time_exceeded:
+                    _call_handlers(on_giveup, *details, value=ret)
+                    break
+
+                seconds = _get_wait_seconds(wait_seconds, jitter, elapsed, max_time_)
+
+                _call_handlers(on_backoff, *details,
+                               value=ret, wait=seconds)
+
+                time.sleep(seconds)
+                continue
+            else:
+                _call_handlers(on_success, *details, value=ret)
+                break
+
+        return ret
+
+    return retry
 
 def retry_predicate(target, wait_gen, predicate,
                     max_tries, max_time, jitter,
