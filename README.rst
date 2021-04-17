@@ -312,7 +312,7 @@ looked up by name.
 .. code-block:: python
 
    @backoff.on_exception(backoff.expo,
-                         requests.exception.RequestException,
+                         requests.exceptions.RequestException,
 			 logger='my_logger')
    # ...
 
@@ -327,8 +327,8 @@ directly.
     my_logger.setLevel(logging.ERROR)
 
     @backoff.on_exception(backoff.expo,
-                         requests.exception.RequestException,
-			 logger=my_logger)
+                          requests.exceptions.RequestException,
+			  logger=my_logger)
     # ...
 
 Default logging can be disabled all together by specifying
