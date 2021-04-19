@@ -14,7 +14,7 @@ https://github.com/litl/backoff
 """
 from backoff._decorator import on_predicate, on_exception
 from backoff._jitter import full_jitter, random_jitter
-from backoff._wait_gen import constant, expo, fibo
+from backoff._wait_gen import constant, expo, fibo, from_value
 
 __all__ = [
     'on_predicate',
