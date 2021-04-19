@@ -4,7 +4,8 @@ import itertools
 
 
 def from_value(parser):
-    """ Generator that is based on parsing the return value or thrown exception of the decorated method
+    """ Generator that is based on parsing the return value or thrown
+        exception of the decorated method
 
     Args:
         parser: a callable which takes as input the decorated

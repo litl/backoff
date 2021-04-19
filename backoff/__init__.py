@@ -22,6 +22,7 @@ __all__ = [
     'constant',
     'expo',
     'fibo',
+    'from_value',
     'full_jitter',
     'random_jitter'
 ]
