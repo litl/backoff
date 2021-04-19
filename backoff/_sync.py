@@ -51,7 +51,7 @@ def retry_predicate(target, wait_gen, predicate,
                     break
 
                 try:
-                    seconds = _next_wait(wait, jitter, elapsed, max_time_)
+                    seconds = _next_wait(wait, ret, jitter, elapsed, max_time_)
                 except StopIteration:
                     _call_handlers(on_giveup, *details)
                     break
@@ -102,7 +102,7 @@ def retry_exception(target, wait_gen, exception,
                     raise
 
                 try:
-                    seconds = _next_wait(wait, jitter, elapsed, max_time_)
+                    seconds = _next_wait(wait, e, jitter, elapsed, max_time_)
                 except StopIteration:
                     _call_handlers(on_giveup, *details)
                     raise e

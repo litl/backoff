@@ -6,13 +6,11 @@ import sys
 import traceback
 import warnings
 
-
 # python 2.7 -> 3.x compatibility for str and unicode
 try:
     basestring
 except NameError:  # pragma: python=3.5
     basestring = str
-
 
 # Use module-specific logger with a default null handler.
 _logger = logging.getLogger('backoff')
@@ -27,11 +25,13 @@ def _maybe_call(f, *args, **kwargs):
 
 def _init_wait_gen(wait_gen, wait_gen_kwargs):
     kwargs = {k: _maybe_call(v) for k, v in wait_gen_kwargs.items()}
-    return wait_gen(**kwargs)
+    initialized = wait_gen(**kwargs)
+    initialized.send(None)  # Initialize with an empty send
+    return initialized
 
 
-def _next_wait(wait, jitter, elapsed, max_time):
-    value = next(wait)
+def _next_wait(wait, send_value, jitter, elapsed, max_time):
+    value = wait.send(send_value)
     try:
         if jitter is not None:
             seconds = jitter(value)
@@ -64,7 +64,7 @@ def _prepare_logger(logger):
 # Configure handler list with user specified handler and optionally
 # with a default handler bound to the specified logger.
 def _config_handlers(
-    user_handlers, default_handler=None, logger=None, log_level=None
+        user_handlers, default_handler=None, logger=None, log_level=None
 ):
     handlers = []
     if logger is not None:
