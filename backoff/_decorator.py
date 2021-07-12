@@ -96,10 +96,18 @@ def on_predicate(wait_gen: _WaitGenerator,
         else:
             retry = _sync.retry_predicate
 
-        return retry(target, wait_gen, predicate,
-                     max_tries, max_time, jitter,
-                     on_success, on_backoff, on_giveup,
-                     wait_gen_kwargs)
+        return retry(
+            target,
+            wait_gen,
+            predicate,
+            max_tries=max_tries,
+            max_time=max_time,
+            jitter=jitter,
+            on_success=on_success,
+            on_backoff=on_backoff,
+            on_giveup=on_giveup,
+            wait_gen_kwargs=wait_gen_kwargs
+        )
 
     # Return a function which decorates a target with a retry loop.
     return decorate
@@ -179,10 +187,19 @@ def on_exception(wait_gen: _WaitGenerator,
         else:
             retry = _sync.retry_exception
 
-        return retry(target, wait_gen, exception,
-                     max_tries, max_time, jitter, giveup,
-                     on_success, on_backoff, on_giveup,
-                     wait_gen_kwargs)
+        return retry(
+            target,
+            wait_gen,
+            exception,
+            max_tries=max_tries,
+            max_time=max_time,
+            jitter=jitter,
+            giveup=giveup,
+            on_success=on_success,
+            on_backoff=on_backoff,
+            on_giveup=on_giveup,
+            wait_gen_kwargs=wait_gen_kwargs
+        )
 
     # Return a function which decorates a target with a retry loop.
     return decorate

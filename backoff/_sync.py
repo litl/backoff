@@ -21,6 +21,7 @@ def _call_handlers(hdlrs, target, args, kwargs, tries, elapsed, **extra):
 
 
 def retry_predicate(target, wait_gen, predicate,
+                    *,
                     max_tries, max_time, jitter,
                     on_success, on_backoff, on_giveup,
                     wait_gen_kwargs):
@@ -70,6 +71,7 @@ def retry_predicate(target, wait_gen, predicate,
 
 
 def retry_exception(target, wait_gen, exception,
+                    *,
                     max_tries, max_time, jitter, giveup,
                     on_success, on_backoff, on_giveup,
                     wait_gen_kwargs):
