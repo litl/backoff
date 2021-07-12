@@ -28,6 +28,8 @@ def retry_predicate(target, wait_gen, predicate,
 
     @functools.wraps(target)
     def retry(*args, **kwargs):
+
+        # update variables from outer function args
         nonlocal max_tries, max_time
         max_tries = _maybe_call(max_tries)
         max_time = _maybe_call(max_time)
@@ -78,6 +80,8 @@ def retry_exception(target, wait_gen, exception,
 
     @functools.wraps(target)
     def retry(*args, **kwargs):
+
+        # update variables from outer function args
         nonlocal max_tries, max_time
         max_tries = _maybe_call(max_tries)
         max_time = _maybe_call(max_time)

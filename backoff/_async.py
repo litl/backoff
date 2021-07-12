@@ -52,9 +52,10 @@ def retry_predicate(target, wait_gen, predicate,
     @functools.wraps(target)
     async def retry(*args, **kwargs):
 
-        # change names because python 2.x doesn't have nonlocal
-        max_tries_ = _maybe_call(max_tries)
-        max_time_ = _maybe_call(max_time)
+        # update variables from outer function args
+        nonlocal max_tries, max_time
+        max_tries = _maybe_call(max_tries)
+        max_time = _maybe_call(max_time)
 
         tries = 0
         start = datetime.datetime.now()
@@ -66,16 +67,16 @@ def retry_predicate(target, wait_gen, predicate,
 
             ret = await target(*args, **kwargs)
             if predicate(ret):
-                max_tries_exceeded = (tries == max_tries_)
-                max_time_exceeded = (max_time_ is not None and
-                                     elapsed >= max_time_)
+                max_tries_exceeded = (tries == max_tries)
+                max_time_exceeded = (max_time is not None and
+                                     elapsed >= max_time)
 
                 if max_tries_exceeded or max_time_exceeded:
                     await _call_handlers(on_giveup, *details, value=ret)
                     break
 
                 try:
-                    seconds = _next_wait(wait, jitter, elapsed, max_time_)
+                    seconds = _next_wait(wait, jitter, elapsed, max_time)
                 except StopIteration:
                     await _call_handlers(on_giveup, *details, value=ret)
                     break
@@ -119,9 +120,11 @@ def retry_exception(target, wait_gen, exception,
 
     @functools.wraps(target)
     async def retry(*args, **kwargs):
-        # change names because python 2.x doesn't have nonlocal
-        max_tries_ = _maybe_call(max_tries)
-        max_time_ = _maybe_call(max_time)
+
+        # update variables from outer function args
+        nonlocal max_tries, max_time
+        max_tries = _maybe_call(max_tries)
+        max_time = _maybe_call(max_time)
 
         tries = 0
         start = datetime.datetime.now()
@@ -135,16 +138,16 @@ def retry_exception(target, wait_gen, exception,
                 ret = await target(*args, **kwargs)
             except exception as e:
                 giveup_result = await giveup(e)
-                max_tries_exceeded = (tries == max_tries_)
-                max_time_exceeded = (max_time_ is not None and
-                                     elapsed >= max_time_)
+                max_tries_exceeded = (tries == max_tries)
+                max_time_exceeded = (max_time is not None and
+                                     elapsed >= max_time)
 
                 if giveup_result or max_tries_exceeded or max_time_exceeded:
                     await _call_handlers(on_giveup, *details)
                     raise
 
                 try:
-                    seconds = _next_wait(wait, jitter, elapsed, max_time_)
+                    seconds = _next_wait(wait, jitter, elapsed, max_time)
                 except StopIteration:
                     await _call_handlers(on_giveup, *details)
                     raise e
