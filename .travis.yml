@@ -5,6 +5,7 @@ python:
   - "3.6"
   - "3.7"
   - "3.8"
+  - "3.9"
 matrix:
   include:
   - python: "3.5"
@@ -14,6 +15,8 @@ matrix:
   - python: "3.7"
     env: PYTHONASYNCIODEBUG=x
   - python: "3.8"
+    env: PYTHONASYNCIODEBUG=x
+  - python: "3.9"
     env: PYTHONASYNCIODEBUG=x
 
 before_install:
