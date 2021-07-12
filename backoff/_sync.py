@@ -40,7 +40,13 @@ def retry_predicate(target, wait_gen, predicate,
         while True:
             tries += 1
             elapsed = timedelta.total_seconds(datetime.datetime.now() - start)
-            details = (target, args, kwargs, tries, elapsed)
+            details = {
+                "target": target,
+                "args": args,
+                "kwargs": kwargs,
+                "tries": tries,
+                "elapsed": elapsed,
+            }
 
             ret = target(*args, **kwargs)
             if predicate(ret):
@@ -49,22 +55,22 @@ def retry_predicate(target, wait_gen, predicate,
                                      elapsed >= max_time)
 
                 if max_tries_exceeded or max_time_exceeded:
-                    _call_handlers(on_giveup, *details, value=ret)
+                    _call_handlers(on_giveup, **details, value=ret)
                     break
 
                 try:
                     seconds = _next_wait(wait, jitter, elapsed, max_time)
                 except StopIteration:
-                    _call_handlers(on_giveup, *details)
+                    _call_handlers(on_giveup, **details)
                     break
 
-                _call_handlers(on_backoff, *details,
+                _call_handlers(on_backoff, **details,
                                value=ret, wait=seconds)
 
                 time.sleep(seconds)
                 continue
             else:
-                _call_handlers(on_success, *details, value=ret)
+                _call_handlers(on_success, **details, value=ret)
                 break
 
         return ret
@@ -92,7 +98,13 @@ def retry_exception(target, wait_gen, exception,
         while True:
             tries += 1
             elapsed = timedelta.total_seconds(datetime.datetime.now() - start)
-            details = (target, args, kwargs, tries, elapsed)
+            details = {
+                "target": target,
+                "args": args,
+                "kwargs": kwargs,
+                "tries": tries,
+                "elapsed": elapsed,
+            }
 
             try:
                 ret = target(*args, **kwargs)
@@ -102,20 +114,20 @@ def retry_exception(target, wait_gen, exception,
                                      elapsed >= max_time)
 
                 if giveup(e) or max_tries_exceeded or max_time_exceeded:
-                    _call_handlers(on_giveup, *details)
+                    _call_handlers(on_giveup, **details)
                     raise
 
                 try:
                     seconds = _next_wait(wait, jitter, elapsed, max_time)
                 except StopIteration:
-                    _call_handlers(on_giveup, *details)
+                    _call_handlers(on_giveup, **details)
                     raise e
 
-                _call_handlers(on_backoff, *details, wait=seconds)
+                _call_handlers(on_backoff, **details, wait=seconds)
 
                 time.sleep(seconds)
             else:
-                _call_handlers(on_success, *details)
+                _call_handlers(on_success, **details)
 
                 return ret
     return retry
