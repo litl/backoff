@@ -12,6 +12,9 @@ polling resources for externally generated content.
 For examples and full documentation see the README at
 https://github.com/litl/backoff
 """
+import sys
+import warnings
+
 from backoff._decorator import on_predicate, on_exception
 from backoff._jitter import full_jitter, random_jitter
 from backoff._wait_gen import constant, expo, fibo
@@ -23,7 +26,15 @@ __all__ = [
     'expo',
     'fibo',
     'full_jitter',
-    'random_jitter'
+    'random_jitter',
 ]
 
-__version__ = '1.10.0'
+__version__ = '1.11.0'
+
+
+if sys.version_info[0] < 3:
+    warnings.warn(
+        "Python 2.7 support is deprecated and will be dropped "
+        "in the next release",
+        DeprecationWarning,
+    )  # pragma: no cover
