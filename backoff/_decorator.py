@@ -25,6 +25,7 @@ from backoff._typing import (
 
 def on_predicate(wait_gen: _WaitGenerator,
                  predicate: _Predicate[Any] = operator.not_,
+                 *,
                  max_tries: _MaybeCallable[int] = None,
                  max_time: _MaybeCallable[float] = None,
                  jitter: _Jitterer = full_jitter,
@@ -106,6 +107,7 @@ def on_predicate(wait_gen: _WaitGenerator,
 
 def on_exception(wait_gen: _WaitGenerator,
                  exception: _MaybeSequence[Type[Exception]],
+                 *,
                  max_tries: _MaybeCallable[int] = None,
                  max_time: _MaybeCallable[float] = None,
                  jitter: _Jitterer = full_jitter,
