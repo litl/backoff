@@ -142,7 +142,17 @@
 
 - Don't include tests and changelog in distribution
 
-## [v1.10.0] 2019-12-7
+## [v1.10.0] 2019-12-07
 ### Changed
 
 - Allow sync decorator call from async function
+
+## [v1.11.0] 2021-07-12
+### Changed
+
+- Configurable logging levels for backoff and giveup events
+- Minor documentation fixes
+
+### NOTE
+
+THIS WILL BE THE FINAL PYTHON 2.7 COMPATIBLE RELEASE.

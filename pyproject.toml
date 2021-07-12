@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "backoff"
-version = "1.10.0"
+version = "1.11.0"
 description = "Function decoration for backoff and retry"
-authors = ["Bob Green <rgreen@goscoutgo.com>"]
+authors = ["Bob Green <rgreen@aquent.com>"]
 readme = "README.rst"
 repository = "https://github.com/litl/backoff"
 license = "MIT"
@@ -21,7 +21,8 @@ classifiers = ['Development Status :: 5 - Production/Stable',
                'Programming Language :: Python :: 3.6',
                'Programming Language :: Python :: 3.7',
                'Programming Language :: Python :: 3.8',
-               'Topic :: Internet :: WWW/HTTP',
+               'Programming Language :: Python :: 3.9',
+                'Topic :: Internet :: WWW/HTTP',
                'Topic :: Software Development :: Libraries :: Python Modules',
                'Topic :: Utilities']
 packages = [
@@ -36,6 +37,7 @@ flake8 = "^3.6"
 pytest = "^4.0"
 pytest-cov = "^2.6"
 pytest-asyncio = {version = "^0.10.0",python = "^3.5"}
+autopep8 = "^1.5.7"
 
 [build-system]
 requires = ["poetry-core"]
