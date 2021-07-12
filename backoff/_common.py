@@ -57,7 +57,7 @@ def _prepare_logger(logger):
 # Configure handler list with user specified handler and optionally
 # with a default handler bound to the specified logger.
 def _config_handlers(
-    user_handlers, default_handler=None, logger=None, log_level=None
+    user_handlers, *, default_handler=None, logger=None, log_level=None
 ):
     handlers = []
     if logger is not None:

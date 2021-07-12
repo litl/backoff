@@ -85,10 +85,16 @@ def on_predicate(wait_gen: _WaitGenerator,
         logger = _prepare_logger(logger)
         on_success = _config_handlers(on_success)
         on_backoff = _config_handlers(
-            on_backoff, _log_backoff, logger, backoff_log_level
+            on_backoff,
+            default_handler=_log_backoff,
+            logger=logger,
+            log_level=backoff_log_level
         )
         on_giveup = _config_handlers(
-            on_giveup, _log_giveup, logger, giveup_log_level
+            on_giveup,
+            default_handler=_log_giveup,
+            logger=logger,
+            log_level=giveup_log_level
         )
 
         if asyncio.iscoroutinefunction(target):
@@ -176,10 +182,16 @@ def on_exception(wait_gen: _WaitGenerator,
         logger = _prepare_logger(logger)
         on_success = _config_handlers(on_success)
         on_backoff = _config_handlers(
-            on_backoff, _log_backoff, logger, backoff_log_level
+            on_backoff,
+            default_handler=_log_backoff,
+            logger=logger,
+            log_level=backoff_log_level,
         )
         on_giveup = _config_handlers(
-            on_giveup, _log_giveup, logger, giveup_log_level
+            on_giveup,
+            default_handler=_log_giveup,
+            logger=logger,
+            log_level=giveup_log_level,
         )
 
         if asyncio.iscoroutinefunction(target):
