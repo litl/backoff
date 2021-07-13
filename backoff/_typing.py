@@ -1,10 +1,11 @@
 # coding:utf-8
 import logging
-from typing import Callable, Generator, Sequence, Union, TypeVar
+from typing import Any, Callable, Generator, Sequence, Union, TypeVar
 
 
 T = TypeVar("T")
 
+_CallableT = TypeVar('_CallableT', bound=Callable[..., Any])
 _Handler = Callable[[dict], None]
 _Jitterer = Callable[[float], float]
 _MaybeCallable = Union[T, Callable[[], T]]

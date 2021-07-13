@@ -13,6 +13,7 @@ from backoff._common import (
 from backoff._jitter import full_jitter
 from backoff import _async, _sync
 from backoff._typing import (
+    _CallableT,
     _Handler,
     _Jitterer,
     _MaybeCallable,
@@ -35,7 +36,7 @@ def on_predicate(wait_gen: _WaitGenerator,
                  logger: _MaybeLogger = 'backoff',
                  backoff_log_level: int = logging.INFO,
                  giveup_log_level: int = logging.ERROR,
-                 **wait_gen_kwargs) -> Callable:
+                 **wait_gen_kwargs: Any) -> Callable[[_CallableT], _CallableT]:
     """Returns decorator for backoff and retry triggered by predicate.
 
     Args:
@@ -132,7 +133,7 @@ def on_exception(wait_gen: _WaitGenerator,
                  logger: _MaybeLogger = 'backoff',
                  backoff_log_level: int = logging.INFO,
                  giveup_log_level: int = logging.ERROR,
-                 **wait_gen_kwargs) -> Callable:
+                 **wait_gen_kwargs: Any) -> Callable[[_CallableT], _CallableT]:
     """Returns decorator for backoff and retry triggered by exception.
 
     Args:
