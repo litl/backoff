@@ -12,94 +12,96 @@ elif TYPE_CHECKING:
     try:
         from typing_extensions import TypedDict
     except ImportError:
-        pass
-try:
-    _ = TypedDict
-except NameError:
-    Details = DetailsPredicate = Dict[str, Any]  # type: ignore
-    DetailsBackoff = DetailsPredicateBackoff = Dict[str, Any]  # type: ignore
+        TypedDict = object
 else:
-    class Details(TypedDict):
-        """Invocation details for a handler.
+    TypedDict = object
 
-        The following keys are valid for the `on_exception` decorator,
-        except for the `on_backoff` handler, which uses the
-        `DetailsBackoff` type instead.
 
-        Available keys:
+class Details(TypedDict):
+    """Invocation details for a handler.
 
-            `target` : reference to the function or method being invoked
-            `args`   : positional arguments to func
-            `kwargs` : keyword arguments to func
-            `tries`  : number of invocation tries so far
-            `elapsed`: elapsed time in seconds so far
-            `wait`   : seconds to wait
-        """
+    The following keys are valid for the `on_exception` decorator,
+    except for the `on_backoff` handler, which uses the
+    `DetailsBackoff` type instead.
 
-        target: Callable[..., Any]
-        args: Tuple[Any, ...]
-        kwargs: Dict[str, Any]
-        tries: int
-        elapsed: float
+    Available keys:
 
-    class _DetailsBackoffMixin(TypedDict):
-        """Extra keys specific to `on_backoff` handlers."""
+        `target` : reference to the function or method being invoked
+        `args`   : positional arguments to func
+        `kwargs` : keyword arguments to func
+        `tries`  : number of invocation tries so far
+        `elapsed`: elapsed time in seconds so far
+        `wait`   : seconds to wait
+    """
 
-        wait: float
+    target: Callable[..., Any]
+    args: Tuple[Any, ...]
+    kwargs: Dict[str, Any]
+    tries: int
+    elapsed: float
 
-    class DetailsBackoff(Details, _DetailsBackoffMixin):
-        """Invocation details for a backoff handler.
 
-        The following keys are valid for the `on_exception` decorator,
-        and only for the `on_backoff` handler. Other handlers use the
-        `Details` type instead.
+class _DetailsBackoffMixin(TypedDict):
+    """Extra keys specific to `on_backoff` handlers."""
 
-        Available keys:
+    wait: float
 
-            `target` : reference to the function or method being invoked
-            `args`   : positional arguments to func
-            `kwargs` : keyword arguments to func
-            `tries`  : number of invocation tries so far
-            `elapsed`: elapsed time in seconds so far
-            `wait`   : seconds to wait
-        """
 
-    class DetailsPredicate(Details):
-        """Invocation details for a predicate handlers.
+class DetailsBackoff(Details, _DetailsBackoffMixin):
+    """Invocation details for a backoff handler.
 
-        The following keys are valid for the `on_predicate` decorator,
-        except for the `on_backoff` handler, which uses the
-        `DetailsPredicateBackoff` type instead.
+    The following keys are valid for the `on_exception` decorator,
+    and only for the `on_backoff` handler. Other handlers use the
+    `Details` type instead.
 
-        Available keys:
+    Available keys:
 
-            `target` : reference to the function or method being invoked
-            `args`   : positional arguments to func
-            `kwargs` : keyword arguments to func
-            `tries`  : number of invocation tries so far
-            `elapsed`: elapsed time in seconds so far
-            `value`  : value triggering backoff
-        """
+        `target` : reference to the function or method being invoked
+        `args`   : positional arguments to func
+        `kwargs` : keyword arguments to func
+        `tries`  : number of invocation tries so far
+        `elapsed`: elapsed time in seconds so far
+        `wait`   : seconds to wait
+    """
 
-        value: Any
 
-    class DetailsPredicateBackoff(DetailsPredicate, _DetailsBackoffMixin):
-        """Invocation details for a predicate backoff handlers.
+class DetailsPredicate(Details):
+    """Invocation details for a predicate handlers.
 
-        The following keys are valid for the `on_predicate` decorator,
-        and only for the `on_backoff` handler. Other handlers use the
-        `DetailsPredicate` type instead.
+    The following keys are valid for the `on_predicate` decorator,
+    except for the `on_backoff` handler, which uses the
+    `DetailsPredicateBackoff` type instead.
 
-        Available keys:
+    Available keys:
 
-            `target` : reference to the function or method being invoked
-            `args`   : positional arguments to func
-            `kwargs` : keyword arguments to func
-            `tries`  : number of invocation tries so far
-            `elapsed`: elapsed time in seconds so far
-            `wait`   : seconds to wait
-            `value`  : value triggering backoff
-        """
+        `target` : reference to the function or method being invoked
+        `args`   : positional arguments to func
+        `kwargs` : keyword arguments to func
+        `tries`  : number of invocation tries so far
+        `elapsed`: elapsed time in seconds so far
+        `value`  : value triggering backoff
+    """
+
+    value: Any
+
+
+class DetailsPredicateBackoff(DetailsPredicate, _DetailsBackoffMixin):
+    """Invocation details for a predicate backoff handlers.
+
+    The following keys are valid for the `on_predicate` decorator,
+    and only for the `on_backoff` handler. Other handlers use the
+    `DetailsPredicate` type instead.
+
+    Available keys:
+
+        `target` : reference to the function or method being invoked
+        `args`   : positional arguments to func
+        `kwargs` : keyword arguments to func
+        `tries`  : number of invocation tries so far
+        `elapsed`: elapsed time in seconds so far
+        `wait`   : seconds to wait
+        `value`  : value triggering backoff
+    """
 
 
 _HandlerT = Callable[[T], None]
