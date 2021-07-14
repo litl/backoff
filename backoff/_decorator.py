@@ -2,7 +2,7 @@
 import asyncio
 import logging
 import operator
-from typing import Any, Callable, Type
+from typing import Any, Callable, Optional, Type
 
 from backoff._common import (
     _prepare_logger,
@@ -13,6 +13,7 @@ from backoff._common import (
 from backoff._jitter import full_jitter
 from backoff import _async, _sync
 from backoff._typing import (
+    _CallableT,
     _Handler,
     _Jitterer,
     _MaybeCallable,
@@ -26,16 +27,16 @@ from backoff._typing import (
 def on_predicate(wait_gen: _WaitGenerator,
                  predicate: _Predicate[Any] = operator.not_,
                  *,
-                 max_tries: _MaybeCallable[int] = None,
-                 max_time: _MaybeCallable[float] = None,
+                 max_tries: Optional[_MaybeCallable[int]] = None,
+                 max_time: Optional[_MaybeCallable[float]] = None,
                  jitter: _Jitterer = full_jitter,
-                 on_success: _Handler = None,
-                 on_backoff: _Handler = None,
-                 on_giveup: _Handler = None,
+                 on_success: Optional[_Handler] = None,
+                 on_backoff: Optional[_Handler] = None,
+                 on_giveup: Optional[_Handler] = None,
                  logger: _MaybeLogger = 'backoff',
                  backoff_log_level: int = logging.INFO,
                  giveup_log_level: int = logging.ERROR,
-                 **wait_gen_kwargs) -> Callable:
+                 **wait_gen_kwargs: Any) -> Callable[[_CallableT], _CallableT]:
     """Returns decorator for backoff and retry triggered by predicate.
 
     Args:
@@ -122,17 +123,17 @@ def on_predicate(wait_gen: _WaitGenerator,
 def on_exception(wait_gen: _WaitGenerator,
                  exception: _MaybeSequence[Type[Exception]],
                  *,
-                 max_tries: _MaybeCallable[int] = None,
-                 max_time: _MaybeCallable[float] = None,
+                 max_tries: Optional[_MaybeCallable[int]] = None,
+                 max_time: Optional[_MaybeCallable[float]] = None,
                  jitter: _Jitterer = full_jitter,
                  giveup: _Predicate[Exception] = lambda e: False,
-                 on_success: _Handler = None,
-                 on_backoff: _Handler = None,
-                 on_giveup: _Handler = None,
+                 on_success: Optional[_Handler] = None,
+                 on_backoff: Optional[_Handler] = None,
+                 on_giveup: Optional[_Handler] = None,
                  logger: _MaybeLogger = 'backoff',
                  backoff_log_level: int = logging.INFO,
                  giveup_log_level: int = logging.ERROR,
-                 **wait_gen_kwargs) -> Callable:
+                 **wait_gen_kwargs: Any) -> Callable[[_CallableT], _CallableT]:
     """Returns decorator for backoff and retry triggered by exception.
 
     Args:
