@@ -29,7 +29,7 @@ __all__ = [
     'random_jitter',
 ]
 
-__version__ = '1.11.0'
+__version__ = '1.11.1'
 
 
 if sys.version_info[0] < 3:

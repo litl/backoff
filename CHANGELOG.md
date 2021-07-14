@@ -156,3 +156,8 @@
 ### NOTE
 
 THIS WILL BE THE FINAL PYTHON 2.7 COMPATIBLE RELEASE.
+
+## [v1.11.1] 2021-07-14
+### Changed
+
+- Update __version__ in backoff module
