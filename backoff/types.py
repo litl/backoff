@@ -1,3 +1,6 @@
 # coding:utf-8
-from ._typing import (Details, DetailsBackoff,
-                      DetailsPredicate, DetailsPredicateBackoff)
+from ._typing import Details
+
+__all__ = [
+    'Details'
+]
