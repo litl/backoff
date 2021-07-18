@@ -130,6 +130,7 @@ def on_exception(wait_gen: _WaitGenerator,
                  on_success: Optional[_Handler] = None,
                  on_backoff: Optional[_Handler] = None,
                  on_giveup: Optional[_Handler] = None,
+                 raise_on_giveup: bool = True,
                  logger: _MaybeLogger = 'backoff',
                  backoff_log_level: int = logging.INFO,
                  giveup_log_level: int = logging.ERROR,
@@ -169,6 +170,8 @@ def on_exception(wait_gen: _WaitGenerator,
             signature to be called in the event that max_tries
             is exceeded.  The parameter is a dict containing details
             about the invocation.
+        raise_on_giveup: Boolean indicating whether the registered exceptions
+            should be raised on giveup. Defaults to `True`
         logger: Name or Logger object to log to. Defaults to 'backoff'.
         backoff_log_level: log level for the backoff event. Defaults to "INFO"
         giveup_log_level: log level for the give up event. Defaults to "ERROR"
@@ -211,6 +214,7 @@ def on_exception(wait_gen: _WaitGenerator,
             on_success=on_success,
             on_backoff=on_backoff,
             on_giveup=on_giveup,
+            raise_on_giveup=raise_on_giveup,
             wait_gen_kwargs=wait_gen_kwargs
         )
 

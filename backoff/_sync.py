@@ -81,14 +81,14 @@ def retry_predicate(target, wait_gen, predicate,
 def retry_exception(target, wait_gen, exception,
                     *,
                     max_tries, max_time, jitter, giveup,
-                    on_success, on_backoff, on_giveup,
+                    on_success, on_backoff, on_giveup, raise_on_giveup,
                     wait_gen_kwargs):
 
     @functools.wraps(target)
     def retry(*args, **kwargs):
 
         # update variables from outer function args
-        nonlocal max_tries, max_time
+        nonlocal max_tries, max_time, raise_on_giveup
         max_tries = _maybe_call(max_tries)
         max_time = _maybe_call(max_time)
 
@@ -114,8 +114,11 @@ def retry_exception(target, wait_gen, exception,
                                      elapsed >= max_time)
 
                 if giveup(e) or max_tries_exceeded or max_time_exceeded:
-                    _call_handlers(on_giveup, **details)
-                    raise
+                    handler_result = _call_handlers(on_giveup, **details)
+                    if raise_on_giveup:
+                        raise
+                    else:
+                        return handler_result
 
                 try:
                     seconds = _next_wait(wait, jitter, elapsed, max_time)
