@@ -235,7 +235,8 @@ async def test_on_exception_success():
 
 
 @pytest.mark.asyncio
-async def test_on_exception_giveup():
+@pytest.mark.parametrize('raise_on_giveup', [True, False])
+async def test_on_exception_giveup(raise_on_giveup):
     log, log_success, log_backoff, log_giveup = _log_hdlrs()
 
     @backoff.on_exception(backoff.constant,
@@ -243,6 +244,7 @@ async def test_on_exception_giveup():
                           on_success=log_success,
                           on_backoff=log_backoff,
                           on_giveup=log_giveup,
+                          raise_on_giveup=raise_on_giveup,
                           max_tries=3,
                           jitter=None,
                           interval=0)
@@ -250,7 +252,10 @@ async def test_on_exception_giveup():
     async def exceptor(*args, **kwargs):
         raise ValueError("catch me")
 
-    with pytest.raises(ValueError):
+    if raise_on_giveup:
+        with pytest.raises(ValueError):
+            await exceptor(1, 2, 3, foo=1, bar=2)
+    else:
         await exceptor(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice and giving up once
