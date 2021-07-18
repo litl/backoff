@@ -260,7 +260,8 @@ def test_on_exception_success():
                        'tries': 3}
 
 
-def test_on_exception_giveup():
+@pytest.mark.parametrize('raise_on_giveup', [True, False])
+def test_on_exception_giveup(raise_on_giveup):
     backoffs, giveups, successes = [], [], []
 
     @backoff.on_exception(backoff.constant,
@@ -270,12 +271,16 @@ def test_on_exception_giveup():
                           on_giveup=giveups.append,
                           max_tries=3,
                           jitter=None,
+                          raise_on_giveup=raise_on_giveup,
                           interval=0)
     @_save_target
     def exceptor(*args, **kwargs):
         raise ValueError("catch me")
 
-    with pytest.raises(ValueError):
+    if raise_on_giveup:
+        with pytest.raises(ValueError):
+            exceptor(1, 2, 3, foo=1, bar=2)
+    else:
         exceptor(1, 2, 3, foo=1, bar=2)
 
     # we try 3 times, backing off twice and giving up once
