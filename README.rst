@@ -124,6 +124,10 @@ value of the `on_giveup` handler if one exists.
     def get_url(url):
         return requests.get(url)
 
+This is useful for non-mission critical code where you still wish to retry
+the code inside of `backoff.on_exception` but with to proceed with execution
+even if it fails.
+
 @backoff.on_predicate
 ---------------------
 
