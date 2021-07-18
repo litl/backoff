@@ -102,9 +102,27 @@ be retried:
     def get_url(url):
         return requests.get(url)
 
-When a give up event occurs, the exception in question is reraised
+By default, when a give up event occurs, the exception in question is reraised
 and so code calling an `on_exception`-decorated function may still
-need to do exception handling.
+need to do exception handling. This behavior can optionally be disabled
+using the `raise_on_giveup` keyword argument.
+
+In the code below, `requests.exceptions.RequestException` will not be raised
+when giveup occurs. Note that the decorated function will return the return
+value of the `on_giveup` handler if one exists.
+
+.. code-block:: python
+
+    def fatal_code(e):
+        return 400 <= e.response.status_code < 500
+
+    @backoff.on_exception(backoff.expo,
+                          requests.exceptions.RequestException,
+                          max_time=300,
+                          raise_on_giveup=False,
+                          giveup=fatal_code)
+    def get_url(url):
+        return requests.get(url)
 
 @backoff.on_predicate
 ---------------------
