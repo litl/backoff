@@ -2,6 +2,8 @@
 
 import asyncio  # Python 3.5 code and syntax is allowed in this file
 import backoff
+import datetime
+import itertools
 import pytest
 import random
 
@@ -564,6 +566,52 @@ async def test_on_exception_callable_max_tries(monkeypatch):
         await exceptor()
 
     assert len(log) == 3
+
+
+@pytest.mark.asyncio
+async def test_max_time(monkeypatch):
+
+    start = datetime.datetime.now()
+    elapsed = datetime.timedelta()
+
+    async def patch_sleep(n):
+        nonlocal elapsed
+        elapsed += datetime.timedelta(seconds=n)
+
+    class Datetime:
+        @staticmethod
+        def now():
+            nonlocal start
+            nonlocal elapsed
+            return start + elapsed
+
+    monkeypatch.setattr('asyncio.sleep', patch_sleep)
+    monkeypatch.setattr("datetime.datetime", Datetime)
+
+    # A good place for property-based testing
+    for function_runtime, max_time in itertools.product(range(10), repeat=2):
+        elapsed = datetime.timedelta()
+
+        @backoff.on_exception(backoff.constant, RuntimeError, max_time=max_time)
+        async def on_exception():
+            await patch_sleep(function_runtime)
+            raise
+
+        try:
+            await on_exception()
+        except:
+            pass
+
+        assert elapsed <= datetime.timedelta(seconds=max_time + function_runtime)
+
+        elapsed = datetime.timedelta()
+
+        @backoff.on_predicate(backoff.constant, lambda x: False, max_time=max_time)
+        async def on_predicate():
+            await patch_sleep(function_runtime)
+
+        await on_predicate()
+        assert elapsed <= datetime.timedelta(seconds=max_time + function_runtime)
 
 
 @pytest.mark.asyncio

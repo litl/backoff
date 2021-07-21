@@ -77,6 +77,51 @@ def test_on_predicate_max_time(monkeypatch):
     assert len(log) == 3
 
 
+def test_max_time(monkeypatch):
+
+    start = datetime.datetime.now()
+    elapsed = datetime.timedelta()
+
+    def patch_sleep(n):
+        nonlocal elapsed
+        elapsed += datetime.timedelta(seconds=n)
+
+    class Datetime:
+        @staticmethod
+        def now():
+            nonlocal start
+            nonlocal elapsed
+            return start + elapsed
+
+    monkeypatch.setattr("time.sleep", patch_sleep)
+    monkeypatch.setattr("datetime.datetime", Datetime)
+
+    # A good place for property-based testing
+    for function_runtime, max_time in itertools.product(range(10), repeat=2):
+        elapsed = datetime.timedelta()
+
+        @backoff.on_exception(backoff.constant, RuntimeError, max_time=max_time)
+        def on_exception():
+            patch_sleep(function_runtime)
+            raise
+
+        try:
+            on_exception()
+        except:
+            pass
+
+        assert elapsed <= datetime.timedelta(seconds=max_time + function_runtime)
+
+        elapsed = datetime.timedelta()
+
+        @backoff.on_predicate(backoff.constant, lambda x: False, max_time=max_time)
+        def on_predicate():
+            patch_sleep(function_runtime)
+
+        on_predicate()
+        assert elapsed <= datetime.timedelta(seconds=max_time + function_runtime)
+
+
 def test_on_exception(monkeypatch):
     monkeypatch.setattr('time.sleep', lambda x: None)
 
