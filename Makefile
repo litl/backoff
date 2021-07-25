@@ -15,7 +15,7 @@ all:
 flake8:
 	@flake8 --ignore=E741,W503,W504 backoff tests
 
-mypy:
+mypy:	
 	@mypy backoff tests
 
 clean:
@@ -24,7 +24,8 @@ clean:
 	@rm -rf build dist .coverage MANIFEST
 
 test: clean
-	@PYTHONPATH=. py.test --cov-config .coveragerc --cov backoff tests
+	@PYTHONPATH=. py.test --cov-report term-missing --cov backoff tests
 
 check: flake8 mypy test
-	@coverage report | grep 100% >/dev/null || { echo 'Unit tests coverage is incomplete.'; exit 1; }
+	@coverage report | grep ^TOTAL | grep 100% >/dev/null || \
+	{ echo 'Unit tests coverage is incomplete.'; exit 1; }
