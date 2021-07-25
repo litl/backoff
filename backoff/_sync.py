@@ -88,7 +88,7 @@ def retry_exception(target, wait_gen, exception,
     def retry(*args, **kwargs):
 
         # update variables from outer function args
-        nonlocal max_tries, max_time, raise_on_giveup
+        nonlocal max_tries, max_time
         max_tries = _maybe_call(max_tries)
         max_time = _maybe_call(max_time)
 
