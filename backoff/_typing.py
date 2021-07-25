@@ -4,15 +4,18 @@ import sys
 from typing import (Any, Callable, Dict, Generator, Sequence, Tuple, Union,
                     TypeVar)
 
-T = TypeVar("T")
 
-if sys.version_info >= (3, 8):
+details_kwargs = {"total": False}
+
+if sys.version_info >= (3, 8):  # pragma: no cover
     from typing import TypedDict
-else:
+else:  # pragma: no cover
+    # use typing_extensions if installed but don't require it
     try:
         from typing_extensions import TypedDict
     except ImportError:
-        TypedDict = object
+        TypedDict = Dict[str, Any]
+        del details_kwargs["total"]
 
 
 class _Details(TypedDict):
@@ -23,10 +26,12 @@ class _Details(TypedDict):
     elapsed: float
 
 
-class Details(_Details, total=False):
-    wait: float  # this key will be present in the on_backoff handler case for either decorator
-    value: Any  # this key will be present in the on_predicate decorator case
+class Details(_Details, **details_kwargs):
+    wait: float  # present in the on_backoff handler case for either decorator
+    value: Any  # present in the on_predicate decorator case
 
+
+T = TypeVar("T")
 
 _CallableT = TypeVar('_CallableT', bound=Callable[..., Any])
 _Handler = Callable[[Details], None]
