@@ -116,7 +116,7 @@ def retry_predicate(target, wait_gen, predicate,
 def retry_exception(target, wait_gen, exception,
                     *,
                     max_tries, max_time, jitter, giveup,
-                    on_success, on_backoff, on_giveup,
+                    on_success, on_backoff, on_giveup, raise_on_giveup,
                     wait_gen_kwargs):
     on_success = _ensure_coroutines(on_success)
     on_backoff = _ensure_coroutines(on_backoff)
@@ -159,7 +159,9 @@ def retry_exception(target, wait_gen, exception,
 
                 if giveup_result or max_tries_exceeded or max_time_exceeded:
                     await _call_handlers(on_giveup, **details)
-                    raise
+                    if raise_on_giveup:
+                        raise
+                    return None
 
                 try:
                     seconds = _next_wait(wait, jitter, elapsed, max_time)
