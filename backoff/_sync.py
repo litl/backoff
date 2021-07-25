@@ -114,10 +114,10 @@ def retry_exception(target, wait_gen, exception,
                                      elapsed >= max_time)
 
                 if giveup(e) or max_tries_exceeded or max_time_exceeded:
-                    handler_result = _call_handlers(on_giveup, **details)
+                    _call_handlers(on_giveup, **details)
                     if raise_on_giveup:
                         raise
-                    return handler_result
+                    return None
 
                 try:
                     seconds = _next_wait(wait, jitter, elapsed, max_time)
