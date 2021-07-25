@@ -108,8 +108,8 @@ need to do exception handling. This behavior can optionally be disabled
 using the `raise_on_giveup` keyword argument.
 
 In the code below, `requests.exceptions.RequestException` will not be raised
-when giveup occurs. Note that the decorated function will return the return
-value of the `on_giveup` handler if one exists.
+when giveup occurs. Note that the decorated function will return `None` in this
+case, regardless of the logic in the `on_exception` handler.
 
 .. code-block:: python
 
