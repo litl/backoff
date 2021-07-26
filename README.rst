@@ -7,6 +7,8 @@ backoff
     :target: https://coveralls.io/r/litl/backoff?branch=python-3
 .. image:: https://img.shields.io/pypi/v/backoff.svg
     :target: https://pypi.python.org/pypi/backoff
+.. image:: https://img.shields.io/github/license/litl/backoff
+    :target: https://github.com/litl/backoff/blob/master/LICENSE
 
 **Function decoration for backoff and retry**
 
