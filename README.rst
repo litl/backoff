@@ -1,9 +1,9 @@
 backoff
 =======
 
-.. image:: https://travis-ci.org/litl/backoff.svg?branch=python-3
-    :target: https://travis-ci.org/litl/backoff?branch=python-3
-.. image:: https://coveralls.io/repos/litl/backoff/badge.svg?branch=python-3
+.. image:: https://travis-ci.org/litl/backoff.svg
+    :target: https://travis-ci.org/litl/backoff
+.. image:: https://coveralls.io/repos/litl/backoff/badge.svg
     :target: https://coveralls.io/r/litl/backoff?branch=python-3
 .. image:: https://img.shields.io/pypi/v/backoff.svg
     :target: https://pypi.python.org/pypi/backoff
