@@ -5,6 +5,8 @@ backoff
     :target: https://travis-ci.org/litl/backoff
 .. image:: https://coveralls.io/repos/litl/backoff/badge.svg
     :target: https://coveralls.io/r/litl/backoff?branch=python-3
+.. image:: https://github.com/litl/backoff/workflows/CodeQL/badge.svg
+    :target: https://github.com/litl/backoff/actions/workflows/codeql-analysis.yml
 .. image:: https://img.shields.io/pypi/v/backoff.svg
     :target: https://pypi.python.org/pypi/backoff
 .. image:: https://img.shields.io/github/license/litl/backoff
