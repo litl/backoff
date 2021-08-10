@@ -37,7 +37,7 @@ _CallableT = TypeVar('_CallableT', bound=Callable[..., Any])
 _Handler = Callable[[Details], None]
 _Jitterer = Callable[[float], float]
 _MaybeCallable = Union[T, Callable[[], T]]
-_MaybeLogger = Union[str, logging.Logger]
+_MaybeLogger = Union[str, logging.Logger, None]
 _MaybeSequence = Union[T, Sequence[T]]
 _Predicate = Callable[[T], bool]
 _WaitGenerator = Callable[..., Generator[float, None, None]]
