@@ -2,7 +2,7 @@
 import asyncio
 import logging
 import operator
-from typing import Any, Callable, Optional, Type
+from typing import Any, Callable, Iterable, Optional, Type, Union
 
 from backoff._common import (
     _prepare_logger,
@@ -30,9 +30,9 @@ def on_predicate(wait_gen: _WaitGenerator,
                  max_tries: Optional[_MaybeCallable[int]] = None,
                  max_time: Optional[_MaybeCallable[float]] = None,
                  jitter: _Jitterer = full_jitter,
-                 on_success: Optional[_Handler] = None,
-                 on_backoff: Optional[_Handler] = None,
-                 on_giveup: Optional[_Handler] = None,
+                 on_success: Union[_Handler, Iterable[_Handler]] = None,
+                 on_backoff: Union[_Handler, Iterable[_Handler]] = None,
+                 on_giveup: Union[_Handler, Iterable[_Handler]] = None,
                  logger: _MaybeLogger = 'backoff',
                  backoff_log_level: int = logging.INFO,
                  giveup_log_level: int = logging.ERROR,
@@ -127,9 +127,9 @@ def on_exception(wait_gen: _WaitGenerator,
                  max_time: Optional[_MaybeCallable[float]] = None,
                  jitter: _Jitterer = full_jitter,
                  giveup: _Predicate[Exception] = lambda e: False,
-                 on_success: Optional[_Handler] = None,
-                 on_backoff: Optional[_Handler] = None,
-                 on_giveup: Optional[_Handler] = None,
+                 on_success: Union[_Handler, Iterable[_Handler]] = None,
+                 on_backoff: Union[_Handler, Iterable[_Handler]] = None,
+                 on_giveup: Union[_Handler, Iterable[_Handler]] = None,
                  raise_on_giveup: bool = True,
                  logger: _MaybeLogger = 'backoff',
                  backoff_log_level: int = logging.INFO,
