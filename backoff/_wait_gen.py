@@ -1,14 +1,14 @@
 # coding:utf-8
 
 import itertools
-from typing import Generator, Iterable, Optional, Union
+from typing import Any, Callable, Generator, Iterable, Optional, Union
 
 
 def expo(
     base: int = 2,
     factor: int = 1,
     max_value: Optional[int] = None
-) -> Generator[int, None, None]:
+) -> Generator[int, Any, None]:
 
     """Generator for exponential decay.
 
@@ -19,7 +19,8 @@ def expo(
              true exponential sequence exceeds this, the value
              of max_value will forever after be yielded.
     """
-    yield  # Advance past initial .send() call
+    # Advance past initial .send() call
+    yield  # type: ignore[misc]
     n = 0
     while True:
         a = factor * base ** n
@@ -38,7 +39,9 @@ def fibo(max_value: Optional[int] = None) -> Generator[int, None, None]:
              true fibonacci sequence exceeds this, the value
              of max_value will forever after be yielded.
     """
-    yield  # Advance past initial .send() call
+    # Advance past initial .send() call
+    yield  # type: ignore[misc]
+
     a = 1
     b = 1
     while True:
@@ -57,7 +60,9 @@ def constant(
     Args:
         interval: A constant value to yield or an iterable of such values.
     """
-    yield  # Advance past initial .send() call
+    # Advance past initial .send() call
+    yield  # type: ignore[misc]
+
     try:
         itr = iter(interval)  # type: ignore
     except TypeError:
@@ -65,3 +70,17 @@ def constant(
 
     for val in itr:
         yield val
+
+
+def runtime(*, value: Callable[[Any], int]) -> Generator[int, None, None]:
+    """Generator that is based on parsing the return value or thrown
+        exception of the decorated method
+
+    Args:
+        value: a callable which takes as input the decorated
+            function's return value or thrown exception and
+            determines how long to wait
+    """
+    ret_or_exc = yield  # type: ignore[misc]
+    while True:
+        ret_or_exc = yield value(ret_or_exc)

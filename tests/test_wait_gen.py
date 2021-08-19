@@ -61,8 +61,8 @@ def test_constant():
         assert 3 == next(gen)
 
 
-def test_from_value():
-    gen = backoff.from_value(lambda x: x)
+def test_runtime():
+    gen = backoff.runtime(value=lambda x: x)
     gen.send(None)
     for i in range(20):
         assert i == gen.send(i)
