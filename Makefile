@@ -16,7 +16,7 @@ flake8:
 	@flake8 --ignore=E741,W503,W504 backoff tests
 
 mypy:	
-	@mypy backoff tests
+	@mypy --show-error-codes backoff tests
 
 clean:
 	@find . -name "*.pyc" -delete
