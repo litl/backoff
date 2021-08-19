@@ -15,7 +15,13 @@ _logger.setLevel(logging.INFO)
 
 # Evaluate arg that can be either a fixed value or a callable.
 def _maybe_call(f, *args, **kwargs):
-    return f(*args, **kwargs) if callable(f) else f
+    if callable(f):
+        try:
+            return f(*args, **kwargs)
+        except TypeError:
+            return f
+    else:
+        return f
 
 
 def _init_wait_gen(wait_gen, wait_gen_kwargs):
