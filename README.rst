@@ -22,7 +22,7 @@ APIs. Somewhat more generally, it may also be of use for dynamically
 polling resources for externally generated content.
 
 Decorators support both regular functions for synchronous code and
-`asyncio <https://docs.python.org/3/library/asyncio.html>`_'s coroutines
+`asyncio <https://docs.python.org/3/library/asyncio.html>`__'s coroutines
 for asynchronous code.
 
 Examples
@@ -158,7 +158,7 @@ so the above can more concisely be written:
 .. code-block:: python
 
     @backoff.on_predicate(backoff.fibo, max_value=13)
-    def poll_for_message(queue)
+    def poll_for_message(queue):
         return queue.get()
 
 More simply, a function which continues polling every second until it
@@ -167,7 +167,7 @@ gets a non-falsey result could be defined like like this:
 .. code-block:: python
 
     @backoff.on_predicate(backoff.constant, interval=1)
-    def poll_for_message(queue)
+    def poll_for_message(queue):
         return queue.get()
 
 Jitter
@@ -206,6 +206,7 @@ backoff behavior for different cases:
                           max_time=300)
     def poll_for_message(queue):
         return queue.get()
+
 
 Runtime Configuration
 ---------------------
@@ -293,13 +294,13 @@ Asynchronous code
 Backoff supports asynchronous execution in Python 3.5 and above.
 
 To use backoff in asynchronous code based on
-`asyncio <https://docs.python.org/3/library/asyncio.html>`_
+`asyncio <https://docs.python.org/3/library/asyncio.html>`__
 you simply need to apply ``backoff.on_exception`` or ``backoff.on_predicate``
 to coroutines.
 You can also use coroutines for the ``on_success``, ``on_backoff``, and
 ``on_giveup`` event handlers, with the interface otherwise being identical.
 
-The following examples use `aiohttp <https://aiohttp.readthedocs.io/>`_
+The following examples use `aiohttp <https://aiohttp.readthedocs.io/>`__
 asynchronous HTTP client/server library.
 
 .. code-block:: python
