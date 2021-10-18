@@ -166,9 +166,11 @@ gets a non-falsey result could be defined like like this:
 
 .. code-block:: python
 
-    @backoff.on_predicate(backoff.constant, interval=1)
+    @backoff.on_predicate(backoff.constant, jitter=None, interval=1)
     def poll_for_message(queue):
         return queue.get()
+
+The jitter is disabled in order to keep the polling frequency fixed.  
 
 Jitter
 ------
