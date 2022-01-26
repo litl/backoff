@@ -33,6 +33,8 @@ def on_predicate(wait_gen: _WaitGenerator,
                  on_success: Union[_Handler, Iterable[_Handler]] = None,
                  on_backoff: Union[_Handler, Iterable[_Handler]] = None,
                  on_giveup: Union[_Handler, Iterable[_Handler]] = None,
+                 monotonic_time: Optional[Callable[[], float]] = None,
+                 sleep: Optional[Callable[[float], None]] = None,
                  logger: _MaybeLogger = 'backoff',
                  backoff_log_level: int = logging.INFO,
                  giveup_log_level: int = logging.ERROR,
@@ -113,6 +115,8 @@ def on_predicate(wait_gen: _WaitGenerator,
             on_success=on_success,
             on_backoff=on_backoff,
             on_giveup=on_giveup,
+            monotonic_time=monotonic_time,
+            sleep=sleep,
             wait_gen_kwargs=wait_gen_kwargs
         )
 

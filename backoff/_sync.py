@@ -23,6 +23,7 @@ def retry_predicate(target, wait_gen, predicate,
                     max_tries, max_time, jitter,
                     on_success, on_backoff, on_giveup,
                     monotonic_time=None,
+                    sleep=None,
                     wait_gen_kwargs):
 
     @functools.wraps(target)
@@ -66,7 +67,7 @@ def retry_predicate(target, wait_gen, predicate,
                 _call_handlers(on_backoff, **details,
                                value=ret, wait=seconds)
 
-                time.sleep(seconds)
+                (sleep or time.sleep)(seconds)
                 continue
             else:
                 _call_handlers(on_success, **details, value=ret)
@@ -82,6 +83,7 @@ def retry_exception(target, wait_gen, exception,
                     max_tries, max_time, jitter, giveup,
                     on_success, on_backoff, on_giveup, raise_on_giveup,
                     monotonic_time=None,
+                    sleep=None,
                     wait_gen_kwargs):
 
     @functools.wraps(target)
@@ -127,7 +129,7 @@ def retry_exception(target, wait_gen, exception,
 
                 _call_handlers(on_backoff, **details, wait=seconds)
 
-                time.sleep(seconds)
+                (sleep or time.sleep)(seconds)
             else:
                 _call_handlers(on_success, **details)
 
