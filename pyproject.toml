@@ -15,11 +15,11 @@ classifiers = ['Development Status :: 5 - Production/Stable',
                'Operating System :: OS Independent',
                'Programming Language :: Python',
                'Programming Language :: Python :: 3',
-               'Programming Language :: Python :: 3.6',
                'Programming Language :: Python :: 3.7',
                'Programming Language :: Python :: 3.8',
                'Programming Language :: Python :: 3.9',
-                'Topic :: Internet :: WWW/HTTP',
+               'Programming Language :: Python :: 3.10',
+               'Topic :: Internet :: WWW/HTTP',
                'Topic :: Software Development :: Libraries :: Python Modules',
                'Topic :: Utilities']
 packages = [
@@ -27,16 +27,17 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.7"
 
 [tool.poetry.dev-dependencies]
-flake8 = "^3.9.0"
-pytest = "^6.2.2"
-pytest-cov = "^2.11.1"
-pytest-asyncio = "^0.14.0"
-mypy = "^0.812"
+flake8 = "^4.0.1"
+mypy = "^0.942"
+pytest = "^7.1.2"
+pytest-asyncio = "^0.18.3"
+pytest-cov = "^3.0.0"
 requests = "^2.26.0"
-responses = "^0.13.4"
+responses = "^0.20.0"
+types-requests = "^2.27.20"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
