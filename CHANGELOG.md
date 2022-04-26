@@ -1,5 +1,17 @@
 # Changelog
 
+## [v2.0.0] - 2022-04-26
+### Added
+- Add raise_on_giveup keyword arg for decorators
+- Add backoff.runtime wait generator for dynamically setting wait times based
+  on target function return value or exception details
+### Changed
+- Improve type hints for on_success, on_backoff, on_giveup handlers
+- Use decorator-specific detail and handler type hints
+- Optionally use typing_extensions for python 3.7 type hinting
+- Drop python 3.6 support
+- Add python 3.10 support
+
 ## [v1.11.1] - 2021-07-14
 ### Fixed
 - Update __version__ in backoff module
