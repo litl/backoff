@@ -9,3 +9,4 @@ dist/
 *.egg-info
 poetry.lock
 .vscode
+.python-version
