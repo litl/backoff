@@ -1,5 +1,10 @@
 # Changelog
 
+## [v2.0.1] - 2022-04-27
+### Changed
+- Allow None for jitter keyword arg (typing)
+
+
 ## [v2.0.0] - 2022-04-26
 ### Added
 - Add raise_on_giveup keyword arg for decorators
