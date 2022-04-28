@@ -1,8 +1,7 @@
 # coding:utf-8
-import datetime
+import time
 import functools
 import asyncio
-from datetime import timedelta
 
 from backoff._common import (_init_wait_gen, _maybe_call, _next_wait)
 
@@ -41,6 +40,8 @@ def retry_predicate(target, wait_gen, predicate,
                     *,
                     max_tries, max_time, jitter,
                     on_success, on_backoff, on_giveup,
+                    monotonic_time=None,
+                    sleep=None,
                     wait_gen_kwargs):
     on_success = _ensure_coroutines(on_success)
     on_backoff = _ensure_coroutines(on_backoff)
@@ -61,11 +62,11 @@ def retry_predicate(target, wait_gen, predicate,
         max_time = _maybe_call(max_time)
 
         tries = 0
-        start = datetime.datetime.now()
+        start = (monotonic_time or time.monotonic)()
         wait = _init_wait_gen(wait_gen, wait_gen_kwargs)
         while True:
             tries += 1
-            elapsed = timedelta.total_seconds(datetime.datetime.now() - start)
+            elapsed = (monotonic_time or time.monotonic)() - start
             details = {
                 "target": target,
                 "args": args,
@@ -102,7 +103,7 @@ def retry_predicate(target, wait_gen, predicate,
                 # See for details:
                 #   <https://groups.google.com/forum/#!topic/python-tulip/yF9C-rFpiKk>
                 #   <https://bugs.python.org/issue28613>
-                await asyncio.sleep(seconds)
+                await (sleep or asyncio.sleep)(seconds)
                 continue
             else:
                 await _call_handlers(on_success, **details, value=ret)
@@ -117,6 +118,8 @@ def retry_exception(target, wait_gen, exception,
                     *,
                     max_tries, max_time, jitter, giveup,
                     on_success, on_backoff, on_giveup, raise_on_giveup,
+                    sleep=None,
+                    monotonic_time=None,
                     wait_gen_kwargs):
     on_success = _ensure_coroutines(on_success)
     on_backoff = _ensure_coroutines(on_backoff)
@@ -136,11 +139,11 @@ def retry_exception(target, wait_gen, exception,
         max_time = _maybe_call(max_time)
 
         tries = 0
-        start = datetime.datetime.now()
+        start = (monotonic_time or time.monotonic)()
         wait = _init_wait_gen(wait_gen, wait_gen_kwargs)
         while True:
             tries += 1
-            elapsed = timedelta.total_seconds(datetime.datetime.now() - start)
+            elapsed = (monotonic_time or time.monotonic)() - start
             details = {
                 "target": target,
                 "args": args,
@@ -180,7 +183,7 @@ def retry_exception(target, wait_gen, exception,
                 # See for details:
                 #   <https://groups.google.com/forum/#!topic/python-tulip/yF9C-rFpiKk>
                 #   <https://bugs.python.org/issue28613>
-                await asyncio.sleep(seconds)
+                await (sleep or asyncio.sleep)(seconds)
             else:
                 await _call_handlers(on_success, **details)
 

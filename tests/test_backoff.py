@@ -1,5 +1,4 @@
 # coding:utf-8
-import datetime
 import itertools
 import logging
 import random
@@ -14,8 +13,26 @@ import backoff
 from tests.common import _save_target
 
 
-def test_on_predicate(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+@pytest.fixture
+def patch_time(monkeypatch):
+    now = 0.0
+    log = []
+
+    def sleep(x):
+        nonlocal now
+        now += float(x)
+        log.append(x)
+
+    def monotonic():
+        return now
+
+    monkeypatch.setattr('time.sleep', sleep)
+    monkeypatch.setattr('time.monotonic', monotonic)
+
+    return log
+
+
+def test_on_predicate(patch_time):
 
     @backoff.on_predicate(backoff.expo)
     def return_true(log, n):
@@ -29,8 +46,7 @@ def test_on_predicate(monkeypatch):
     assert 3 == len(log)
 
 
-def test_on_predicate_max_tries(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+def test_on_predicate_max_tries(patch_time):
 
     @backoff.on_predicate(backoff.expo, jitter=None, max_tries=3)
     def return_true(log, n):
@@ -44,25 +60,13 @@ def test_on_predicate_max_tries(monkeypatch):
     assert 3 == len(log)
 
 
-def test_on_predicate_max_time(monkeypatch):
-    nows = [
-        datetime.datetime(2018, 1, 1, 12, 0, 10, 5),
-        datetime.datetime(2018, 1, 1, 12, 0, 9, 0),
-        datetime.datetime(2018, 1, 1, 12, 0, 1, 0),
-        datetime.datetime(2018, 1, 1, 12, 0, 0, 0),
-    ]
-
-    class Datetime:
-        @staticmethod
-        def now():
-            return nows.pop()
-
-    monkeypatch.setattr('time.sleep', lambda x: None)
-    monkeypatch.setattr('datetime.datetime', Datetime)
+def test_on_predicate_max_time(patch_time):
 
     def giveup(details):
-        assert details['tries'] == 3
-        assert details['elapsed'] == 10.000005
+        # Should be sleeps of 1, 2, 4 then 3 seconds, last one cut short.
+        # That's four sleeps in between five tries.
+        assert details['tries'] == 5
+        assert details['elapsed'] == 10
 
     @backoff.on_predicate(backoff.expo, jitter=None, max_time=10,
                           on_giveup=giveup)
@@ -74,11 +78,10 @@ def test_on_predicate_max_time(monkeypatch):
     log = []
     ret = return_true(log, 10)
     assert ret is False
-    assert len(log) == 3
+    assert len(log) == 5
 
 
-def test_on_exception(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+def test_on_exception(patch_time):
 
     @backoff.on_exception(backoff.expo, KeyError)
     def keyerror_then_true(log, n):
@@ -93,8 +96,7 @@ def test_on_exception(monkeypatch):
     assert 3 == len(log)
 
 
-def test_on_exception_tuple(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+def test_on_exception_tuple(patch_time):
 
     @backoff.on_exception(backoff.expo, (KeyError, ValueError))
     def keyerror_valueerror_then_true(log):
@@ -114,8 +116,7 @@ def test_on_exception_tuple(monkeypatch):
     assert isinstance(log[1], ValueError)
 
 
-def test_on_exception_max_tries(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+def test_on_exception_max_tries(patch_time):
 
     @backoff.on_exception(backoff.expo, KeyError, jitter=None, max_tries=3)
     def keyerror_then_true(log, n, foo=None):
@@ -132,8 +133,7 @@ def test_on_exception_max_tries(monkeypatch):
     assert 3 == len(log)
 
 
-def test_on_exception_constant_iterable(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+def test_on_exception_constant_iterable(patch_time):
 
     backoffs = []
     giveups = []
@@ -158,8 +158,7 @@ def test_on_exception_constant_iterable(monkeypatch):
     assert len(successes) == 0
 
 
-def test_on_exception_success_random_jitter(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+def test_on_exception_success_random_jitter(patch_time):
 
     backoffs, giveups, successes = [], [], []
 
@@ -188,8 +187,7 @@ def test_on_exception_success_random_jitter(monkeypatch):
         assert details['wait'] >= 0.5 * 2 ** i
 
 
-def test_on_exception_success_full_jitter(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+def test_on_exception_success_full_jitter(patch_time):
 
     backoffs, giveups, successes = [], [], []
 
@@ -297,8 +295,7 @@ def test_on_exception_giveup(raise_on_giveup):
                        'tries': 3}
 
 
-def test_on_exception_giveup_predicate(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+def test_on_exception_giveup_predicate(patch_time):
 
     def on_baz(e):
         return str(e) == "baz"
@@ -432,8 +429,7 @@ def test_on_predicate_iterable_handlers():
 
 # To maintain backward compatibility,
 # on_predicate should support 0-argument jitter function.
-def test_on_exception_success_0_arg_jitter(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+def test_on_exception_success_0_arg_jitter(patch_time, monkeypatch):
     monkeypatch.setattr('random.random', lambda: 0)
 
     backoffs, giveups, successes = [], [], []
@@ -480,8 +476,7 @@ def test_on_exception_success_0_arg_jitter(monkeypatch):
 
 # To maintain backward compatibility,
 # on_predicate should support 0-argument jitter function.
-def test_on_predicate_success_0_arg_jitter(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+def test_on_predicate_success_0_arg_jitter(patch_time, monkeypatch):
     monkeypatch.setattr('random.random', lambda: 0)
 
     backoffs, giveups, successes = [], [], []
@@ -527,8 +522,7 @@ def test_on_predicate_success_0_arg_jitter(monkeypatch):
                        'value': True}
 
 
-def test_on_exception_callable_max_tries(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+def test_on_exception_callable_max_tries(patch_time, monkeypatch):
 
     def lookup_max_tries():
         return 3
@@ -572,8 +566,7 @@ def test_on_exception_callable_gen_kwargs():
         exceptor()
 
 
-def test_on_predicate_in_thread(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+def test_on_predicate_in_thread(patch_time):
 
     result = []
 
@@ -603,8 +596,7 @@ def test_on_predicate_in_thread(monkeypatch):
     assert result[0] == 'success'
 
 
-def test_on_predicate_constant_iterable(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+def test_on_predicate_constant_iterable(patch_time):
 
     waits = [1, 2, 3, 6, 9]
     backoffs = []
@@ -632,8 +624,7 @@ def test_on_predicate_constant_iterable(monkeypatch):
     assert len(successes) == 0
 
 
-def test_on_exception_in_thread(monkeypatch):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+def test_on_exception_in_thread(patch_time):
 
     result = []
 
@@ -664,8 +655,7 @@ def test_on_exception_in_thread(monkeypatch):
     assert result[0] == 'success'
 
 
-def test_on_exception_logger_default(monkeypatch, caplog):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+def test_on_exception_logger_default(patch_time, caplog):
 
     logger = logging.getLogger('backoff')
     handler = logging.StreamHandler(sys.stdout)
@@ -684,8 +674,7 @@ def test_on_exception_logger_default(monkeypatch, caplog):
         assert record.name == 'backoff'
 
 
-def test_on_exception_logger_none(monkeypatch, caplog):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+def test_on_exception_logger_none(patch_time, caplog):
 
     logger = logging.getLogger('backoff')
     handler = logging.StreamHandler(sys.stdout)
@@ -702,8 +691,7 @@ def test_on_exception_logger_none(monkeypatch, caplog):
     assert not caplog.records
 
 
-def test_on_exception_logger_user(monkeypatch, caplog):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+def test_on_exception_logger_user(patch_time, caplog):
 
     logger = logging.getLogger('my-logger')
     handler = logging.StreamHandler(sys.stdout)
@@ -722,8 +710,7 @@ def test_on_exception_logger_user(monkeypatch, caplog):
         assert record.name == 'my-logger'
 
 
-def test_on_exception_logger_user_str(monkeypatch, caplog):
-    monkeypatch.setattr('time.sleep', lambda x: None)
+def test_on_exception_logger_user_str(patch_time, caplog):
 
     logger = logging.getLogger('my-logger')
     handler = logging.StreamHandler(sys.stdout)
