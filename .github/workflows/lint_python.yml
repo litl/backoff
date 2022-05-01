@@ -27,7 +27,6 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
       - run: curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
-      - run: |
-          pip install poetry more-itertools
-          poetry install
-          poetry run make check
+      - run: pip install poetry more-itertools
+      - run: poetry install
+      - run: poetry run make check
