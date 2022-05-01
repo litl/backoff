@@ -1,5 +1,3 @@
-# coding:utf-8
-
 import itertools
 from typing import Any, Callable, Generator, Iterable, Optional, Union
 
@@ -68,8 +66,7 @@ def constant(
     except TypeError:
         itr = itertools.repeat(interval)  # type: ignore
 
-    for val in itr:
-        yield val
+    yield from itr
 
 
 def runtime(*, value: Callable[[Any], int]) -> Generator[int, None, None]:

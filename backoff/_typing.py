@@ -1,4 +1,3 @@
-# coding:utf-8
 import logging
 import sys
 from typing import (Any, Callable, Dict, Generator, Sequence, Tuple, Union,
