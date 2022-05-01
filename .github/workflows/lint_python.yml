@@ -17,7 +17,6 @@ jobs:
                     --show-source --statistics .
       - run: isort --check-only --profile black . || true
       - run: pip install --editable . || pip install .
-      - run: mkdir --parents --verbose .mypy_cache
       - run: mypy --ignore-missing-imports --install-types --non-interactive .
       - run: shopt -s globstar && pyupgrade --py37-plus **/*.py || true
       - run: safety check
