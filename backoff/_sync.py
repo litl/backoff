@@ -39,6 +39,9 @@ def retry_predicate(target, wait_gen, predicate,
         wait = _init_wait_gen(wait_gen, wait_gen_kwargs)
         while True:
             tries += 1
+
+            ret = target(*args, **kwargs)
+
             elapsed = timedelta.total_seconds(datetime.datetime.now() - start)
             details = {
                 "target": target,
@@ -47,8 +50,6 @@ def retry_predicate(target, wait_gen, predicate,
                 "tries": tries,
                 "elapsed": elapsed,
             }
-
-            ret = target(*args, **kwargs)
             if predicate(ret):
                 max_tries_exceeded = (tries == max_tries)
                 max_time_exceeded = (max_time is not None and
@@ -97,18 +98,19 @@ def retry_exception(target, wait_gen, exception,
         wait = _init_wait_gen(wait_gen, wait_gen_kwargs)
         while True:
             tries += 1
-            elapsed = timedelta.total_seconds(datetime.datetime.now() - start)
             details = {
                 "target": target,
                 "args": args,
                 "kwargs": kwargs,
                 "tries": tries,
-                "elapsed": elapsed,
             }
 
             try:
                 ret = target(*args, **kwargs)
             except exception as e:
+                elapsed = timedelta.total_seconds(datetime.datetime.now() - start)
+                details["elapsed"] = elapsed
+
                 max_tries_exceeded = (tries == max_tries)
                 max_time_exceeded = (max_time is not None and
                                      elapsed >= max_time)
@@ -129,6 +131,9 @@ def retry_exception(target, wait_gen, exception,
 
                 time.sleep(seconds)
             else:
+                details["elapsed"] = timedelta.total_seconds(
+                    datetime.datetime.now() - start
+                )
                 _call_handlers(on_success, **details)
 
                 return ret
