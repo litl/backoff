@@ -172,6 +172,25 @@ gets a non-falsey result could be defined like like this:
 
 The jitter is disabled in order to keep the polling frequency fixed.  
 
+@backoff.runtime
+----------------
+
+You can also use the ``backoff.runtime`` generator to make use of the
+return value or thrown exception of the decorated method.
+
+For example, to use the value in the ``Retry-After`` header of the response:
+
+.. code-block:: python
+
+    @backoff.on_predicate(
+        backoff.runtime,
+        predicate=lambda r: r.status_code == 429,
+        value=lambda r: int(r.headers.get("Retry-After")),
+        jitter=None,
+    )
+    def get_url():
+        return requests.get(url)
+
 Jitter
 ------
 
