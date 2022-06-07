@@ -28,11 +28,8 @@ def retry_predicate(target, wait_gen, predicate,
 
     @functools.wraps(target)
     def retry(*args, **kwargs):
-
-        # update variables from outer function args
-        nonlocal max_tries, max_time
-        max_tries = _maybe_call(max_tries)
-        max_time = _maybe_call(max_time)
+        max_tries_value = _maybe_call(max_tries)
+        max_time_value = _maybe_call(max_time)
 
         tries = 0
         start = datetime.datetime.now()
@@ -50,9 +47,9 @@ def retry_predicate(target, wait_gen, predicate,
 
             ret = target(*args, **kwargs)
             if predicate(ret):
-                max_tries_exceeded = (tries == max_tries)
+                max_tries_exceeded = (tries == max_tries_value)
                 max_time_exceeded = (max_time is not None and
-                                     elapsed >= max_time)
+                                     elapsed >= max_time_value)
 
                 if max_tries_exceeded or max_time_exceeded:
                     _call_handlers(on_giveup, **details, value=ret)
@@ -86,11 +83,8 @@ def retry_exception(target, wait_gen, exception,
 
     @functools.wraps(target)
     def retry(*args, **kwargs):
-
-        # update variables from outer function args
-        nonlocal max_tries, max_time
-        max_tries = _maybe_call(max_tries)
-        max_time = _maybe_call(max_time)
+        max_tries_value = _maybe_call(max_tries)
+        max_time_value = _maybe_call(max_time)
 
         tries = 0
         start = datetime.datetime.now()
@@ -109,9 +103,9 @@ def retry_exception(target, wait_gen, exception,
             try:
                 ret = target(*args, **kwargs)
             except exception as e:
-                max_tries_exceeded = (tries == max_tries)
+                max_tries_exceeded = (tries == max_tries_value)
                 max_time_exceeded = (max_time is not None and
-                                     elapsed >= max_time)
+                                     elapsed >= max_time_value)
 
                 if giveup(e) or max_tries_exceeded or max_time_exceeded:
                     _call_handlers(on_giveup, **details)

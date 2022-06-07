@@ -548,6 +548,29 @@ def test_on_exception_callable_max_tries(monkeypatch):
     assert len(log) == 3
 
 
+def test_on_exception_callable_max_tries_reads_every_time(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
+    lookups = []
+    def lookup_max_tries():
+        lookups.append(True)
+        return 3
+
+    @backoff.on_exception(backoff.constant,
+                          ValueError,
+                          max_tries=lookup_max_tries)
+    def exceptor():
+        raise ValueError()
+
+    with pytest.raises(ValueError):
+        exceptor()
+
+    with pytest.raises(ValueError):
+        exceptor()
+
+    assert len(lookups) == 2
+
+
 def test_on_exception_callable_gen_kwargs():
 
     def lookup_foo():
