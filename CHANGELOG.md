@@ -1,5 +1,10 @@
 # Changelog
 
+## [v2.1.0] - 2022-06-07
+### Changed
+
+- Get max_tries/max_time values for every call fixes #160 (from @jvrsantacruz)
+
 ## [v2.0.1] - 2022-04-27
 ### Changed
 - Allow None for jitter keyword arg (typing)
