@@ -552,6 +552,7 @@ def test_on_exception_callable_max_tries_reads_every_time(monkeypatch):
     monkeypatch.setattr('time.sleep', lambda x: None)
 
     lookups = []
+
     def lookup_max_tries():
         lookups.append(True)
         return 3

@@ -1,10 +1,11 @@
 # coding:utf-8
 
 import asyncio  # Python 3.5 code and syntax is allowed in this file
-import backoff
-import pytest
 import random
 
+import pytest
+
+import backoff
 from tests.common import _log_hdlrs, _save_target
 
 
@@ -576,6 +577,7 @@ async def test_on_exception_callable_max_tries_reads_every_time(monkeypatch):
     monkeypatch.setattr('asyncio.sleep', _await_none)
 
     lookups = []
+
     def lookup_max_tries():
         lookups.append(True)
         return 3
@@ -593,7 +595,6 @@ async def test_on_exception_callable_max_tries_reads_every_time(monkeypatch):
         exceptor()
 
     assert len(lookups) == 2
-
 
 
 @pytest.mark.asyncio
