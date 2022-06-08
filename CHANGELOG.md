@@ -1,5 +1,10 @@
 # Changelog
 
+## [v2.1.2] - 2022-06-08
+### Fixed
+
+- Don't use importlib.metadata for __version__ https://github.com/litl/backoff/issues/166
+
 ## [v2.1.1] - 2022-06-08
 ### Fixed
 
