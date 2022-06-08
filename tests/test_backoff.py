@@ -77,6 +77,42 @@ def test_on_predicate_max_time(monkeypatch):
     assert len(log) == 3
 
 
+def test_on_predicate_max_time_callable(monkeypatch):
+    nows = [
+        datetime.datetime(2018, 1, 1, 12, 0, 10, 5),
+        datetime.datetime(2018, 1, 1, 12, 0, 9, 0),
+        datetime.datetime(2018, 1, 1, 12, 0, 1, 0),
+        datetime.datetime(2018, 1, 1, 12, 0, 0, 0),
+    ]
+
+    class Datetime:
+        @staticmethod
+        def now():
+            return nows.pop()
+
+    monkeypatch.setattr('time.sleep', lambda x: None)
+    monkeypatch.setattr('datetime.datetime', Datetime)
+
+    def giveup(details):
+        assert details['tries'] == 3
+        assert details['elapsed'] == 10.000005
+
+    def lookup_max_time():
+        return 10
+
+    @backoff.on_predicate(backoff.expo, jitter=None, max_time=lookup_max_time,
+                          on_giveup=giveup)
+    def return_true(log, n):
+        val = (len(log) == n)
+        log.append(val)
+        return val
+
+    log = []
+    ret = return_true(log, 10)
+    assert ret is False
+    assert len(log) == 3
+
+
 def test_on_exception(monkeypatch):
     monkeypatch.setattr('time.sleep', lambda x: None)
 
@@ -118,6 +154,25 @@ def test_on_exception_max_tries(monkeypatch):
     monkeypatch.setattr('time.sleep', lambda x: None)
 
     @backoff.on_exception(backoff.expo, KeyError, jitter=None, max_tries=3)
+    def keyerror_then_true(log, n, foo=None):
+        if len(log) == n:
+            return True
+        e = KeyError()
+        log.append(e)
+        raise e
+
+    log = []
+    with pytest.raises(KeyError):
+        keyerror_then_true(log, 10, foo="bar")
+
+    assert 3 == len(log)
+
+
+def test_on_exception_max_tries_callable(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
+    @backoff.on_exception(backoff.expo, KeyError, jitter=None,
+                          max_tries=lambda: 3)
     def keyerror_then_true(log, n, foo=None):
         if len(log) == n:
             return True
@@ -530,14 +585,9 @@ def test_on_predicate_success_0_arg_jitter(monkeypatch):
 def test_on_exception_callable_max_tries(monkeypatch):
     monkeypatch.setattr('time.sleep', lambda x: None)
 
-    def lookup_max_tries():
-        return 3
-
     log = []
 
-    @backoff.on_exception(backoff.constant,
-                          ValueError,
-                          max_tries=lookup_max_tries)
+    @backoff.on_exception(backoff.constant, ValueError, max_tries=lambda: 3)
     def exceptor():
         log.append(True)
         raise ValueError()

@@ -46,6 +46,22 @@ async def test_on_predicate_max_tries(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_on_predicate_max_tries_callable(monkeypatch):
+    monkeypatch.setattr('asyncio.sleep', _await_none)
+
+    @backoff.on_predicate(backoff.expo, jitter=None, max_tries=lambda: 3)
+    async def return_true(log, n):
+        val = (len(log) == n)
+        log.append(val)
+        return val
+
+    log = []
+    ret = await return_true(log, 10)
+    assert ret is False
+    assert 3 == len(log)
+
+
+@pytest.mark.asyncio
 async def test_on_exception(monkeypatch):
     monkeypatch.setattr('asyncio.sleep', _await_none)
 
@@ -89,6 +105,26 @@ async def test_on_exception_max_tries(monkeypatch):
     monkeypatch.setattr('asyncio.sleep', _await_none)
 
     @backoff.on_exception(backoff.expo, KeyError, jitter=None, max_tries=3)
+    async def keyerror_then_true(log, n, foo=None):
+        if len(log) == n:
+            return True
+        e = KeyError()
+        log.append(e)
+        raise e
+
+    log = []
+    with pytest.raises(KeyError):
+        await keyerror_then_true(log, 10, foo="bar")
+
+    assert 3 == len(log)
+
+
+@pytest.mark.asyncio
+async def test_on_exception_max_tries_callable(monkeypatch):
+    monkeypatch.setattr('asyncio.sleep', _await_none)
+
+    @backoff.on_exception(backoff.expo, KeyError, jitter=None,
+                          max_tries=lambda: 3)
     async def keyerror_then_true(log, n, foo=None):
         if len(log) == n:
             return True
