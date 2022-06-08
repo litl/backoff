@@ -585,14 +585,14 @@ async def test_on_exception_callable_max_tries_reads_every_time(monkeypatch):
     @backoff.on_exception(backoff.constant,
                           ValueError,
                           max_tries=lookup_max_tries)
-    def exceptor():
+    async def exceptor():
         raise ValueError()
 
     with pytest.raises(ValueError):
-        exceptor()
+        await exceptor()
 
     with pytest.raises(ValueError):
-        exceptor()
+        await exceptor()
 
     assert len(lookups) == 2
 
