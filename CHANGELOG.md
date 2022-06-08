@@ -1,5 +1,10 @@
 # Changelog
 
+## [v2.1.1] - 2022-06-08
+### Fixed
+
+- Fix bug with max_tries/max_time callables https://github.com/litl/backoff/issues/164
+
 ## [v2.1.0] - 2022-06-07
 ### Changed
 
