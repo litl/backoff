@@ -288,7 +288,9 @@ In the case of the ``on_exception`` decorator, all ``on_backoff`` and
 ``on_giveup`` handlers are called from within the except block for the
 exception being handled. Therefore exception info is available to the
 handler functions via the python standard library, specifically
-``sys.exc_info()`` or the ``traceback`` module.
+``sys.exc_info()`` or the ``traceback`` module. The exception is also
+available at the *exception* key in the `details` dict passed to the
+handlers.
 
 Asynchronous code
 -----------------
