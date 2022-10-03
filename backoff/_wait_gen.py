@@ -5,10 +5,10 @@ from typing import Any, Callable, Generator, Iterable, Optional, Union
 
 
 def expo(
-    base: int = 2,
-    factor: int = 1,
-    max_value: Optional[int] = None
-) -> Generator[int, Any, None]:
+    base: float = 2,
+    factor: float = 1,
+    max_value: Optional[float] = None
+) -> Generator[float, Any, None]:
 
     """Generator for exponential decay.
 
