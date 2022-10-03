@@ -8,7 +8,7 @@ def expo(
     base: float = 2,
     factor: float = 1,
     max_value: Optional[float] = None
-) -> Generator[float, Any, None]:
+) -> Generator[Optional[float], Any, None]:
 
     """Generator for exponential decay.
 
