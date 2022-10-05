@@ -1,5 +1,11 @@
 # Changelog
 
+## [v2.2.0] - 2022-10-05
+
+- Improve type annotation for wait generators from @hauntsaninja
+- Include exception in details dict of call handlers from @petamas
+- Improve type hints for call handlers from @cdce8p
+
 ## [v2.1.2] - 2022-06-08
 ### Fixed
 
