@@ -1,4 +1,3 @@
-# coding:utf-8
 """
 Function decoration for backoff and retry
 
