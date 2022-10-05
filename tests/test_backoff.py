@@ -299,7 +299,9 @@ def test_on_exception_success():
     for i in range(2):
         details = backoffs[i]
         elapsed = details.pop('elapsed')
+        exception = details.pop('exception')
         assert isinstance(elapsed, float)
+        assert isinstance(exception, ValueError)
         assert details == {'args': (1, 2, 3),
                            'kwargs': {'foo': 1, 'bar': 2},
                            'target': succeeder._target,
@@ -345,7 +347,9 @@ def test_on_exception_giveup(raise_on_giveup):
 
     details = giveups[0]
     elapsed = details.pop('elapsed')
+    exception = details.pop('exception')
     assert isinstance(elapsed, float)
+    assert isinstance(exception, ValueError)
     assert details == {'args': (1, 2, 3),
                        'kwargs': {'foo': 1, 'bar': 2},
                        'target': exceptor._target,
@@ -517,7 +521,9 @@ def test_on_exception_success_0_arg_jitter(monkeypatch):
     for i in range(2):
         details = backoffs[i]
         elapsed = details.pop('elapsed')
+        exception = details.pop('exception')
         assert isinstance(elapsed, float)
+        assert isinstance(exception, ValueError)
         assert details == {'args': (1, 2, 3),
                            'kwargs': {'foo': 1, 'bar': 2},
                            'target': succeeder._target,

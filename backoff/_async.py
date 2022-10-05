@@ -156,7 +156,7 @@ def retry_exception(target, wait_gen, exception,
                                      elapsed >= max_time_value)
 
                 if giveup_result or max_tries_exceeded or max_time_exceeded:
-                    await _call_handlers(on_giveup, **details)
+                    await _call_handlers(on_giveup, **details, exception=e)
                     if raise_on_giveup:
                         raise
                     return None
@@ -165,10 +165,11 @@ def retry_exception(target, wait_gen, exception,
                     seconds = _next_wait(wait, e, jitter, elapsed,
                                          max_time_value)
                 except StopIteration:
-                    await _call_handlers(on_giveup, **details)
+                    await _call_handlers(on_giveup, **details, exception=e)
                     raise e
 
-                await _call_handlers(on_backoff, **details, wait=seconds)
+                await _call_handlers(on_backoff, **details, wait=seconds,
+                                     exception=e)
 
                 # Note: there is no convenient way to pass explicit event
                 # loop to decorator, so here we assume that either default

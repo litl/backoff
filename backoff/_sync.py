@@ -109,7 +109,7 @@ def retry_exception(target, wait_gen, exception,
                                      elapsed >= max_time_value)
 
                 if giveup(e) or max_tries_exceeded or max_time_exceeded:
-                    _call_handlers(on_giveup, **details)
+                    _call_handlers(on_giveup, **details, exception=e)
                     if raise_on_giveup:
                         raise
                     return None
@@ -118,10 +118,11 @@ def retry_exception(target, wait_gen, exception,
                     seconds = _next_wait(wait, e, jitter, elapsed,
                                          max_time_value)
                 except StopIteration:
-                    _call_handlers(on_giveup, **details)
+                    _call_handlers(on_giveup, **details, exception=e)
                     raise e
 
-                _call_handlers(on_backoff, **details, wait=seconds)
+                _call_handlers(on_backoff, **details, wait=seconds,
+                               exception=e)
 
                 time.sleep(seconds)
             else:
