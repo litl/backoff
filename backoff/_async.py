@@ -168,7 +168,8 @@ def retry_exception(target, wait_gen, exception,
                     await _call_handlers(on_giveup, **details, exception=e)
                     raise e
 
-                await _call_handlers(on_backoff, **details, wait=seconds, exception=e)
+                await _call_handlers(on_backoff, **details, wait=seconds,
+                                     exception=e)
 
                 # Note: there is no convenient way to pass explicit event
                 # loop to decorator, so here we assume that either default

@@ -121,7 +121,8 @@ def retry_exception(target, wait_gen, exception,
                     _call_handlers(on_giveup, **details, exception=e)
                     raise e
 
-                _call_handlers(on_backoff, **details, wait=seconds, exception=e)
+                _call_handlers(on_backoff, **details, wait=seconds,
+                               exception=e)
 
                 time.sleep(seconds)
             else:
