@@ -1,5 +1,9 @@
 # Changelog
 
+## [v2.2.1] - 2022-10-05
+
+- Fix type hint for wait generators https://github.com/litl/backoff/issues/177
+
 ## [v2.2.0] - 2022-10-05
 
 - Improve type annotation for wait generators from @hauntsaninja
