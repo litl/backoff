@@ -1,11 +1,8 @@
 # coding:utf-8
 import logging
 import sys
-from typing import (Any, Callable, Dict, Generator, Sequence, Tuple, Union,
-                    TypeVar)
-
-
-details_kwargs = {"total": False}
+from typing import (Any, Callable, Coroutine, Dict, Generator, Sequence, Tuple,
+                    TypeVar, Union)
 
 if sys.version_info >= (3, 8):  # pragma: no cover
     from typing import TypedDict
@@ -14,8 +11,9 @@ else:  # pragma: no cover
     try:
         from typing_extensions import TypedDict
     except ImportError:
-        TypedDict = Dict[str, Any]
-        del details_kwargs["total"]
+        class TypedDict(dict):
+            def __init_subclass__(cls, **kwargs: Any) -> None:
+                return super().__init_subclass__()
 
 
 class _Details(TypedDict):
@@ -26,7 +24,7 @@ class _Details(TypedDict):
     elapsed: float
 
 
-class Details(_Details, **details_kwargs):
+class Details(_Details, total=False):
     wait: float  # present in the on_backoff handler case for either decorator
     value: Any  # present in the on_predicate decorator case
 
@@ -34,7 +32,10 @@ class Details(_Details, **details_kwargs):
 T = TypeVar("T")
 
 _CallableT = TypeVar('_CallableT', bound=Callable[..., Any])
-_Handler = Callable[[Details], None]
+_Handler = Union[
+    Callable[[Details], None],
+    Callable[[Details], Coroutine[Any, Any, None]],
+]
 _Jitterer = Callable[[float], float]
 _MaybeCallable = Union[T, Callable[[], T]]
 _MaybeLogger = Union[str, logging.Logger, None]
