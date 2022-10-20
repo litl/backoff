@@ -1,3 +1,5 @@
+# coding:utf-8
+
 import asyncio  # Python 3.5 code and syntax is allowed in this file
 import random
 

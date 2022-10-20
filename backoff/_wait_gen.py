@@ -1,3 +1,5 @@
+# coding:utf-8
+
 import itertools
 from typing import Any, Callable, Generator, Iterable, Optional, Union
 
@@ -66,7 +68,8 @@ def constant(
     except TypeError:
         itr = itertools.repeat(interval)  # type: ignore
 
-    yield from itr
+    for val in itr:
+        yield val
 
 
 def runtime(
