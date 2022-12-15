@@ -2,7 +2,7 @@
 import asyncio
 import logging
 import operator
-from typing import Any, Callable, Iterable, Optional, Type, Union
+from typing import Any, Callable, Iterable, Optional, Type, TypeVar, Union
 
 from backoff._common import (
     _prepare_logger,
@@ -119,14 +119,15 @@ def on_predicate(wait_gen: _WaitGenerator,
     # Return a function which decorates a target with a retry loop.
     return decorate
 
+ET = TypeVar("ET", bound=Exception)
 
 def on_exception(wait_gen: _WaitGenerator,
-                 exception: _MaybeSequence[Type[Exception]],
+                 exception: _MaybeSequence[Type[ET]],
                  *,
                  max_tries: Optional[_MaybeCallable[int]] = None,
                  max_time: Optional[_MaybeCallable[float]] = None,
                  jitter: Union[_Jitterer, None] = full_jitter,
-                 giveup: _Predicate[Exception] = lambda e: False,
+                 giveup: _Predicate[ET] = lambda e: False,
                  on_success: Union[_Handler, Iterable[_Handler], None] = None,
                  on_backoff: Union[_Handler, Iterable[_Handler], None] = None,
                  on_giveup: Union[_Handler, Iterable[_Handler], None] = None,
