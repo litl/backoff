@@ -2,6 +2,7 @@
 import datetime
 import functools
 import time
+import timeit
 from datetime import timedelta
 
 from backoff._common import (_init_wait_gen, _maybe_call, _next_wait)
@@ -32,11 +33,11 @@ def retry_predicate(target, wait_gen, predicate,
         max_time_value = _maybe_call(max_time)
 
         tries = 0
-        start = datetime.datetime.now()
+        start = timeit.default_timer()
         wait = _init_wait_gen(wait_gen, wait_gen_kwargs)
         while True:
             tries += 1
-            elapsed = timedelta.total_seconds(datetime.datetime.now() - start)
+            elapsed = timeit.default_timer() - start
             details = {
                 "target": target,
                 "args": args,
@@ -88,11 +89,11 @@ def retry_exception(target, wait_gen, exception,
         max_time_value = _maybe_call(max_time)
 
         tries = 0
-        start = datetime.datetime.now()
+        start = timeit.default_timer()
         wait = _init_wait_gen(wait_gen, wait_gen_kwargs)
         while True:
             tries += 1
-            elapsed = timedelta.total_seconds(datetime.datetime.now() - start)
+            elapsed = timeit.default_timer() - start
             details = {
                 "target": target,
                 "args": args,
