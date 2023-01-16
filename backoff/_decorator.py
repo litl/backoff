@@ -51,7 +51,7 @@ def on_predicate(wait_gen: _WaitGenerator,
             will be returned. The default value of None means there
             is no limit to the number of tries. If a callable is passed,
             it will be evaluated at runtime and its return value used.
-        max_time: The maximum total amount of time to try for before
+        max_time: The maximum total amount of time in seconds to try for before
             giving up. If this time expires, the result of the last
             attempt will be returned. If a callable is passed, it will
             be evaluated at runtime and its return value used.
