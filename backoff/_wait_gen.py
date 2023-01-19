@@ -1,6 +1,7 @@
 # coding:utf-8
 
 import itertools
+import math
 from typing import Any, Callable, Generator, Iterable, Optional, Union
 
 
@@ -29,6 +30,33 @@ def expo(
             n += 1
         else:
             yield max_value
+
+
+def decay(
+    initial_value: float = 1,
+    decay_factor: float = 1,
+    min_value: Optional[float] = None
+) -> Generator[float, Any, None]:
+
+    """Generator for exponential decay.
+
+    Args:
+        base: The mathematical base of the exponentiation operation
+        factor: Factor to multiply the exponentiation by.
+        max_value: The maximum value to yield. Once the value in the
+             true exponential sequence exceeds this, the value
+             of max_value will forever after be yielded.
+    """
+    # Advance past initial .send() call
+    yield  # type: ignore[misc]
+    t = 0
+    while True:
+        a = initial_value * math.e ** (-t*decay_factor)
+        if min_value is None or a > min_value:
+            yield a
+            t += 1
+        else:
+            yield min_value
 
 
 def fibo(max_value: Optional[int] = None) -> Generator[int, None, None]:
