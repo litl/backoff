@@ -41,11 +41,11 @@ def decay(
     """Generator for exponential decay.
 
     Args:
-        base: The mathematical base of the exponentiation operation
-        factor: Factor to multiply the exponentiation by.
-        max_value: The maximum value to yield. Once the value in the
-             true exponential sequence exceeds this, the value
-             of max_value will forever after be yielded.
+        initial_value: initial quantity
+        decay_factor: exponential decay constant.
+        min_value: The minimum value to yield. Once the value in the
+             true exponential sequence is lower than this, the value
+             of min_value will forever after be yielded.
     """
     # Advance past initial .send() call
     yield  # type: ignore[misc]
