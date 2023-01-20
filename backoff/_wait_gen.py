@@ -38,7 +38,7 @@ def decay(
     min_value: Optional[float] = None
 ) -> Generator[float, Any, None]:
 
-    """Generator for exponential decay.
+    """Generator for exponential decay[1]:
 
     Args:
         initial_value: initial quantity
@@ -46,12 +46,14 @@ def decay(
         min_value: The minimum value to yield. Once the value in the
              true exponential sequence is lower than this, the value
              of min_value will forever after be yielded.
+
+    [1] https://en.wikipedia.org/wiki/Exponential_decay
     """
     # Advance past initial .send() call
     yield  # type: ignore[misc]
     t = 0
     while True:
-        a = initial_value * math.e ** (-t*decay_factor)
+        a = initial_value * math.e ** (-t * decay_factor)
         if min_value is None or a > min_value:
             yield a
             t += 1

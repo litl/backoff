@@ -21,14 +21,15 @@ def test_decay_init100_decay3():
     gen = backoff.decay(initial_value=100, decay_factor=3)
     gen.send(None)
     for i in range(10):
-        assert 100 * math.e ** (-i*3) == next(gen)
+        assert 100 * math.e ** (-i * 3) == next(gen)
 
 
 def test_decay_init100_decay3_min5():
     gen = backoff.decay(initial_value=100, decay_factor=3, min_value=5)
     gen.send(None)
     for i in range(10):
-        assert max(100 * math.e ** (-i*3), 5) == next(gen)
+        assert max(100 * math.e ** (-i * 3), 5) == next(gen)
+
 
 def test_expo():
     gen = backoff.expo()
