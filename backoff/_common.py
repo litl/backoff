@@ -32,12 +32,18 @@ def _init_wait_gen(wait_gen, wait_gen_kwargs):
 
 
 def _next_wait(wait, send_value, jitter, elapsed, max_time):
+    remaining_time = None
+    if max_time is not None:
+        remaining_time = max_time - elapsed
+        if remaining_time <= 0:  # we equal/exceed time limit
+            return 0
+
     value = wait.send(send_value)
+    if remaining_time and value >= remaining_time:
+        return remaining_time
+
     try:
-        if jitter is not None:
-            seconds = jitter(value)
-        else:
-            seconds = value
+        seconds = jitter(value) if jitter is not None else value
     except TypeError:
         warnings.warn(
             "Nullary jitter function signature is deprecated. Use "
@@ -46,12 +52,11 @@ def _next_wait(wait, send_value, jitter, elapsed, max_time):
             DeprecationWarning,
             stacklevel=2,
         )
-
         seconds = value + jitter()
 
-    # don't sleep longer than remaining allotted max_time
-    if max_time is not None:
-        seconds = min(seconds, max_time - elapsed)
+    # adding jitter may push value over max_limit
+    if remaining_time and seconds >= remaining_time:
+        return remaining_time
 
     return seconds
 
