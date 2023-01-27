@@ -48,8 +48,9 @@ def retry_predicate(target, wait_gen, predicate,
             ret = target(*args, **kwargs)
             if predicate(ret):
                 max_tries_exceeded = (tries == max_tries_value)
-                max_time_exceeded = (max_time_value is not None and
-                                     elapsed >= max_time_value)
+                max_time_exceeded = (max_time_value is not None) and (
+                    elapsed >= max_time_value
+                )
 
                 if max_tries_exceeded or max_time_exceeded:
                     _call_handlers(on_giveup, **details, value=ret)
@@ -105,8 +106,9 @@ def retry_exception(target, wait_gen, exception,
                 ret = target(*args, **kwargs)
             except exception as e:
                 max_tries_exceeded = (tries == max_tries_value)
-                max_time_exceeded = (max_time_value is not None and
-                                     elapsed >= max_time_value)
+                max_time_exceeded = (max_time_value is not None) and (
+                    elapsed >= max_time_value
+                )
 
                 if giveup(e) or max_tries_exceeded or max_time_exceeded:
                     _call_handlers(on_giveup, **details, exception=e)

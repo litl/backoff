@@ -1,0 +1,19 @@
+[flake8]
+max-line-length = 90
+ignore = B902, D203, D211, D212, D401, D413, I100, I101, I201, N818, W503
+max-complexity = 10
+docstring-convention=all
+
+# Provide a comma-separated list of glob patterns to exclude from checks.
+exclude =
+    # git folder
+    .git,
+    # python cache
+    __pycache__,
+    # virtual environment
+    venv, .venv
+# Provide a comma-separate list of glob patterns to include for checks.
+filename =
+    *.py
+per-file-ignores =
+    tests/*:D
