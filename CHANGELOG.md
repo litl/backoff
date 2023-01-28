@@ -1,5 +1,12 @@
 # Changelog
 
+## [v1.0] - 2023-01-28
+
+- Forked repo as `improved_backoff`
+- Moved tests and code coverage to use Github workflows
+- Changed time measurement to use `timeit` instead of `datetime.now()`
+
+
 ## [v2.2.1] - 2022-10-05
 
 - Fix type hint for wait generators https://github.com/litl/backoff/issues/177
