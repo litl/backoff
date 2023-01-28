@@ -1,5 +1,5 @@
 # coding:utf-8
-import backoff
+import improved_backoff as backoff
 import math
 
 

@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "backoff"
-version = "2.2.1"
-description = "Function decoration for backoff and retry"
-authors = ["Bob Green <rgreen@aquent.com>"]
-readme = "README.rst"
-repository = "https://github.com/litl/backoff"
+name = "improved_backoff"
+version = "1.0"
+description = "Fork of a popular backoff library with a few fixed bugs"
+authors = ["Kirusi Msafiri <kirusi.msafiri@gmail.com>"]
+readme = "README.md"
+repository = "https://github.com/Kirusi/improved_backoff"
 license = "MIT"
-keywords = ["retry", "backoff", "decorators"]
+keywords = ["retry", "backoff", "decorators", "improved_backoff"]
 classifiers = ['Development Status :: 5 - Production/Stable',
                'Intended Audience :: Developers',
                'Programming Language :: Python',
@@ -22,14 +22,16 @@ classifiers = ['Development Status :: 5 - Production/Stable',
                'Topic :: Internet :: WWW/HTTP',
                'Topic :: Software Development :: Libraries :: Python Modules',
                'Topic :: Utilities']
+include = ["CHANGELOG.md", "README.md", "LICENSE"]
 packages = [
-    { include = "backoff" },
+    { include = "improved_backoff" },
 ]
 
 [tool.poetry.dependencies]
 python = "^3.7"
 
 [tool.poetry.dev-dependencies]
+coverage-badge = "^1.1.0"
 flake8 = "^4.0.1"
 mypy = "^0.942"
 pytest = "^7.1.2"

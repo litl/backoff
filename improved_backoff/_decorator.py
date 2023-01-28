@@ -4,15 +4,15 @@ import logging
 import operator
 from typing import Any, Callable, Iterable, Optional, Type, Union
 
-from backoff._common import (
+from improved_backoff._common import (
     _prepare_logger,
     _config_handlers,
     _log_backoff,
     _log_giveup
 )
-from backoff._jitter import full_jitter
-from backoff import _async, _sync
-from backoff._typing import (
+from improved_backoff._jitter import full_jitter
+from improved_backoff import _async, _sync
+from improved_backoff._typing import (
     _CallableT,
     _Handler,
     _Jitterer,

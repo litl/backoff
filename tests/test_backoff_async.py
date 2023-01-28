@@ -5,7 +5,7 @@ import random
 
 import pytest
 
-import backoff
+import improved_backoff as backoff
 from tests.common import _log_hdlrs, _save_target
 
 

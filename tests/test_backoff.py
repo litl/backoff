@@ -10,7 +10,7 @@ import unittest.mock
 
 import pytest
 
-import backoff
+import improved_backoff as backoff
 from tests.common import _save_target
 
 
@@ -46,23 +46,21 @@ def test_on_predicate_max_tries(monkeypatch):
 
 def test_on_predicate_max_time(monkeypatch):
     nows = [
-        datetime.datetime(2018, 1, 1, 12, 0, 10, 5),
-        datetime.datetime(2018, 1, 1, 12, 0, 9, 0),
-        datetime.datetime(2018, 1, 1, 12, 0, 1, 0),
-        datetime.datetime(2018, 1, 1, 12, 0, 0, 0),
+        datetime.datetime(2018, 1, 1, 12, 0, 10, 5).timestamp(),
+        datetime.datetime(2018, 1, 1, 12, 0, 9, 0).timestamp(),
+        datetime.datetime(2018, 1, 1, 12, 0, 1, 0).timestamp(),
+        datetime.datetime(2018, 1, 1, 12, 0, 0, 0).timestamp(),
     ]
 
-    class Datetime:
-        @staticmethod
-        def now():
-            return nows.pop()
+    def now():
+        return nows.pop()
 
     monkeypatch.setattr('time.sleep', lambda x: None)
-    monkeypatch.setattr('datetime.datetime', Datetime)
+    monkeypatch.setattr('timeit.default_timer', now)
 
     def giveup(details):
         assert details['tries'] == 3
-        assert details['elapsed'] == 10.000005
+        assert abs(details['elapsed'] - 10.000005) < 0.0000001
 
     @backoff.on_predicate(backoff.expo, jitter=None, max_time=10,
                           on_giveup=giveup)
@@ -77,25 +75,55 @@ def test_on_predicate_max_time(monkeypatch):
     assert len(log) == 3
 
 
-def test_on_predicate_max_time_callable(monkeypatch):
+def test_on_predicate_max_time_zero(monkeypatch):
     nows = [
-        datetime.datetime(2018, 1, 1, 12, 0, 10, 5),
-        datetime.datetime(2018, 1, 1, 12, 0, 9, 0),
-        datetime.datetime(2018, 1, 1, 12, 0, 1, 0),
-        datetime.datetime(2018, 1, 1, 12, 0, 0, 0),
+        datetime.datetime(2018, 1, 1, 12, 0, 10, 5).timestamp(),
+        datetime.datetime(2018, 1, 1, 12, 0, 9, 0).timestamp(),
+        datetime.datetime(2018, 1, 1, 12, 0, 1, 0).timestamp(),
+        datetime.datetime(2018, 1, 1, 12, 0, 0, 0).timestamp(),
     ]
 
-    class Datetime:
-        @staticmethod
-        def now():
-            return nows.pop()
+    def now():
+        return nows.pop()
 
     monkeypatch.setattr('time.sleep', lambda x: None)
-    monkeypatch.setattr('datetime.datetime', Datetime)
+    monkeypatch.setattr('timeit.default_timer', now)
+
+    def giveup(details):
+        assert details['tries'] == 1
+        assert abs(details['elapsed'] - 1) < 0.0000001
+
+    # the function is executed once, even if max_time is zero
+    @backoff.on_predicate(backoff.expo, jitter=None, max_time=0,
+                          on_giveup=giveup)
+    def return_true(log, n):
+        val = (len(log) == n)
+        log.append(val)
+        return val
+
+    log = []
+    ret = return_true(log, 10)
+    assert ret is False
+    assert len(log) == 1
+
+
+def test_on_predicate_max_time_callable(monkeypatch):
+    nows = [
+        datetime.datetime(2018, 1, 1, 12, 0, 10, 5).timestamp(),
+        datetime.datetime(2018, 1, 1, 12, 0, 9, 0).timestamp(),
+        datetime.datetime(2018, 1, 1, 12, 0, 1, 0).timestamp(),
+        datetime.datetime(2018, 1, 1, 12, 0, 0, 0).timestamp(),
+    ]
+
+    def now():
+        return nows.pop()
+
+    monkeypatch.setattr('time.sleep', lambda x: None)
+    monkeypatch.setattr('timeit.default_timer', now)
 
     def giveup(details):
         assert details['tries'] == 3
-        assert details['elapsed'] == 10.000005
+        assert abs(details['elapsed'] - 10.000005) < 0.0000001
 
     def lookup_max_time():
         return 10

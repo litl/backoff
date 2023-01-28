@@ -4,7 +4,7 @@ Higher-level tests integrating with 3rd party modules using iodiomatic
 backoff patterns.
 """
 
-import backoff
+import improved_backoff as backoff
 
 
 import requests

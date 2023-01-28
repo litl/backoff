@@ -1,4 +1,4 @@
-import backoff
+import improved_backoff as backoff
 
 
 # No pyunit tests are defined here yet, but the following decorator calls will
