@@ -1,7 +1,7 @@
 # coding:utf-8
 import logging
 import sys
-from typing import (Any, Callable, Coroutine, Dict, Generator, Sequence, Tuple,
+from typing import (Any, Callable, Coroutine, Dict, Generator, Tuple,
                     TypeVar, Union)
 
 if sys.version_info >= (3, 8):  # pragma: no cover
@@ -39,6 +39,6 @@ _Handler = Union[
 _Jitterer = Callable[[float], float]
 _MaybeCallable = Union[T, Callable[[], T]]
 _MaybeLogger = Union[str, logging.Logger, None]
-_MaybeSequence = Union[T, Sequence[T]]
+_MaybeTuple = Union[T, Tuple[T]]
 _Predicate = Callable[[T], bool]
 _WaitGenerator = Callable[..., Generator[float, None, None]]
