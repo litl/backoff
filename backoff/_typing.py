@@ -1,7 +1,7 @@
 # coding:utf-8
 import logging
 import sys
-from typing import (Any, Callable, Coroutine, Dict, Generator, Sequence, Tuple,
+from typing import (Any, Callable, Coroutine, Dict, Generator, Tuple,
                     TypeVar, Union)
 
 if sys.version_info >= (3, 8):  # pragma: no cover
