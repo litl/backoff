@@ -32,3 +32,17 @@ def bar():
 )
 def baz():
     pass
+
+
+# Type Successes
+for exception in OSError, tuple([OSError]), (OSError, ValueError):
+    backoff.on_exception(backoff.expo, exception)
+
+
+# Type Failures
+for exception in OSError(), [OSError], (OSError, ValueError()), "hi", (2, 3):
+    try:
+        backoff.on_exception(backoff.expo, exception)
+        raise AssertionError(f"Expected TypeError for {exception}")
+    except TypeError:
+        pass

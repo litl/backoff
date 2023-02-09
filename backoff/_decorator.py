@@ -18,7 +18,7 @@ from backoff._typing import (
     _Jitterer,
     _MaybeCallable,
     _MaybeLogger,
-    _MaybeSequence,
+    _MaybeTuple,
     _Predicate,
     _WaitGenerator,
 )
@@ -120,8 +120,23 @@ def on_predicate(wait_gen: _WaitGenerator,
     return decorate
 
 
+def _check_exception_type(exception: _MaybeTuple[Type[Exception]]) -> None:
+    """
+    Raise TypeError if exception is not a valid type, otherwise return None
+    """
+    if isinstance(exception, Type) and issubclass(exception, Exception):
+        return
+    if isinstance(exception, tuple) and all(isinstance(e, Type)
+            and issubclass(e, Exception) for e in exception):
+        return
+    raise TypeError(
+        f"exception '{exception}' of type {type(exception)} is not"
+        " an Exception type or a tuple of Exception types"
+    )
+
+
 def on_exception(wait_gen: _WaitGenerator,
-                 exception: _MaybeSequence[Type[Exception]],
+                 exception: _MaybeTuple[Type[Exception]],
                  *,
                  max_tries: Optional[_MaybeCallable[int]] = None,
                  max_time: Optional[_MaybeCallable[float]] = None,
@@ -180,6 +195,7 @@ def on_exception(wait_gen: _WaitGenerator,
             args will first be evaluated and their return values passed.
             This is useful for runtime configuration.
     """
+    _check_exception_type(exception)
     def decorate(target):
         nonlocal logger, on_success, on_backoff, on_giveup
 

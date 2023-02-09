@@ -39,6 +39,6 @@ _Handler = Union[
 _Jitterer = Callable[[float], float]
 _MaybeCallable = Union[T, Callable[[], T]]
 _MaybeLogger = Union[str, logging.Logger, None]
-_MaybeSequence = Union[T, Sequence[T]]
+_MaybeTuple = Union[T, Tuple[T]]
 _Predicate = Callable[[T], bool]
 _WaitGenerator = Callable[..., Generator[float, None, None]]
