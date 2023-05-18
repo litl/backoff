@@ -8,7 +8,8 @@ from backoff._common import (
     _prepare_logger,
     _config_handlers,
     _log_backoff,
-    _log_giveup
+    _log_giveup,
+    _get_func
 )
 from backoff._jitter import full_jitter
 from backoff import _async, _sync
@@ -83,6 +84,8 @@ def on_predicate(wait_gen: _WaitGenerator,
     def decorate(target):
         nonlocal logger, on_success, on_backoff, on_giveup
 
+        target_func = _get_func(target)
+
         logger = _prepare_logger(logger)
         on_success = _config_handlers(on_success)
         on_backoff = _config_handlers(
@@ -98,13 +101,13 @@ def on_predicate(wait_gen: _WaitGenerator,
             log_level=giveup_log_level
         )
 
-        if asyncio.iscoroutinefunction(target):
+        if asyncio.iscoroutinefunction(target_func):
             retry = _async.retry_predicate
         else:
             retry = _sync.retry_predicate
 
         return retry(
-            target,
+            target_func,
             wait_gen,
             predicate,
             max_tries=max_tries,
@@ -198,13 +201,15 @@ def on_exception(wait_gen: _WaitGenerator,
             log_level=giveup_log_level,
         )
 
-        if asyncio.iscoroutinefunction(target):
+        target_func = _get_func(target)
+
+        if asyncio.iscoroutinefunction(target_func):
             retry = _async.retry_exception
         else:
             retry = _sync.retry_exception
 
         return retry(
-            target,
+            target_func,
             wait_gen,
             exception,
             max_tries=max_tries,

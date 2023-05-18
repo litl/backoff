@@ -31,6 +31,13 @@ def _init_wait_gen(wait_gen, wait_gen_kwargs):
     return initialized
 
 
+def _get_func(func):
+    if isinstance(func, staticmethod):
+        return func.__func__
+    else:
+        return func
+
+
 def _next_wait(wait, send_value, jitter, elapsed, max_time):
     value = wait.send(send_value)
     try:
@@ -88,7 +95,7 @@ def _config_handlers(
         # append a single handler
         handlers.append(user_handlers)
 
-    return handlers
+    return [_get_func(h) for h in handlers]
 
 
 # Default backoff handler
