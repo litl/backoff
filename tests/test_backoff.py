@@ -1,5 +1,6 @@
 # coding:utf-8
 import datetime
+import inspect
 import itertools
 import logging
 import random
@@ -25,6 +26,23 @@ def test_on_predicate(monkeypatch):
 
     log = []
     ret = return_true(log, 3)
+    assert ret is True
+    assert 3 == len(log)
+
+
+def test_on_predicate_static(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
+    class A:
+        @backoff.on_predicate(backoff.expo)
+        @staticmethod
+        def return_true(log, n):
+            val = (len(log) == n - 1)
+            log.append(val)
+            return val
+
+    log = []
+    ret = A.return_true(log, 3)
     assert ret is True
     assert 3 == len(log)
 
@@ -126,6 +144,24 @@ def test_on_exception(monkeypatch):
 
     log = []
     assert keyerror_then_true(log, 3) is True
+    assert 3 == len(log)
+
+
+def test_on_exception_static(monkeypatch):
+    monkeypatch.setattr('time.sleep', lambda x: None)
+
+    class A:
+        @backoff.on_exception(backoff.expo, KeyError)
+        @staticmethod
+        def keyerror_then_true(log, n):
+            if len(log) == n:
+                return True
+            e = KeyError()
+            log.append(e)
+            raise e
+
+    log = []
+    assert A.keyerror_then_true(log, 3) is True
     assert 3 == len(log)
 
 
@@ -486,6 +522,60 @@ def test_on_predicate_iterable_handlers():
                            'kwargs': {'foo': 1, 'bar': 2},
                            'target': emptiness._target,
                            'tries': 3,
+                           'value': None}
+
+
+def test_on_static_predicate_iterable_handlers():
+
+    class Logger:
+        def __init__(self):
+            self.backoffs = []
+            self.giveups = []
+            self.successes = []
+
+    static_calls = []
+
+    loggers = [Logger() for _ in range(3)]
+
+    class Tester:
+        @staticmethod
+        def static_log(details):
+            static_calls.append(details)
+
+        @backoff.on_predicate(
+            backoff.constant,
+            on_backoff=[lg.backoffs.append for lg in loggers],
+            on_giveup=[lg.giveups.append for lg in loggers] + [static_log],
+            on_success=(lg.successes.append for lg in loggers),
+            max_tries=4,
+            jitter=None,
+            interval=0)
+        @staticmethod
+        def emptiness(*args, **kwargs):
+            pass
+
+    Tester.emptiness(1, 2, 3, foo=1, bar=2)
+
+    for logger in loggers:
+
+        assert len(logger.successes) == 0
+        assert len(logger.backoffs) == 3
+        assert len(logger.giveups) == 1
+
+        details = dict(logger.giveups[0])
+        print(details)
+        elapsed = details.pop('elapsed')
+        assert isinstance(elapsed, float)
+        # the staticmethod is instantiated individually for the different
+        # frames so _save_target won't save the same function. We will
+        # compare source code instead.
+        assert (
+            inspect.getsource(details['target']) == inspect.getsource(Tester.emptiness)
+        )
+        del details['target']
+        assert details == {'args': (1, 2, 3),
+                           'kwargs': {'foo': 1, 'bar': 2},
+                           'tries': 4,
                            'value': None}
 
 
