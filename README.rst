@@ -25,6 +25,12 @@ Decorators support both regular functions for synchronous code and
 `asyncio <https://docs.python.org/3/library/asyncio.html>`__'s coroutines
 for asynchronous code.
 
+Installation
+============
+::
+
+    pip install backoff
+
 Examples
 ========
 
