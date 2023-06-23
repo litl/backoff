@@ -1,5 +1,9 @@
 # Changelog
 
+## [v2.2.2] - 2023-06-23
+
+- Fix loggers duplication https://github.com/litl/backoff/issues/179
+
 ## [v2.2.1] - 2022-10-05
 
 - Fix type hint for wait generators https://github.com/litl/backoff/issues/177
