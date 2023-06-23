@@ -80,24 +80,22 @@ def on_predicate(wait_gen: _WaitGenerator,
             args will first be evaluated and their return values passed.
             This is useful for runtime configuration.
     """
+    logger = _prepare_logger(logger)
+    on_success = _config_handlers(on_success)
+    on_backoff = _config_handlers(
+        on_backoff,
+        default_handler=_log_backoff,
+        logger=logger,
+        log_level=backoff_log_level
+    )
+    on_giveup = _config_handlers(
+        on_giveup,
+        default_handler=_log_giveup,
+        logger=logger,
+        log_level=giveup_log_level
+    )
+
     def decorate(target):
-        nonlocal logger, on_success, on_backoff, on_giveup
-
-        logger = _prepare_logger(logger)
-        on_success = _config_handlers(on_success)
-        on_backoff = _config_handlers(
-            on_backoff,
-            default_handler=_log_backoff,
-            logger=logger,
-            log_level=backoff_log_level
-        )
-        on_giveup = _config_handlers(
-            on_giveup,
-            default_handler=_log_giveup,
-            logger=logger,
-            log_level=giveup_log_level
-        )
-
         if asyncio.iscoroutinefunction(target):
             retry = _async.retry_predicate
         else:
@@ -180,24 +178,22 @@ def on_exception(wait_gen: _WaitGenerator,
             args will first be evaluated and their return values passed.
             This is useful for runtime configuration.
     """
+    logger = _prepare_logger(logger)
+    on_success = _config_handlers(on_success)
+    on_backoff = _config_handlers(
+        on_backoff,
+        default_handler=_log_backoff,
+        logger=logger,
+        log_level=backoff_log_level,
+    )
+    on_giveup = _config_handlers(
+        on_giveup,
+        default_handler=_log_giveup,
+        logger=logger,
+        log_level=giveup_log_level,
+    )
+
     def decorate(target):
-        nonlocal logger, on_success, on_backoff, on_giveup
-
-        logger = _prepare_logger(logger)
-        on_success = _config_handlers(on_success)
-        on_backoff = _config_handlers(
-            on_backoff,
-            default_handler=_log_backoff,
-            logger=logger,
-            log_level=backoff_log_level,
-        )
-        on_giveup = _config_handlers(
-            on_giveup,
-            default_handler=_log_giveup,
-            logger=logger,
-            log_level=giveup_log_level,
-        )
-
         if asyncio.iscoroutinefunction(target):
             retry = _async.retry_exception
         else:
