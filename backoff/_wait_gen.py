@@ -22,20 +22,19 @@ def expo(
     """
     # Advance past initial .send() call
     yield  # type: ignore[misc]
-    n = 0
+
+    a = factor
+    while max_value is None or a < max_value:
+        yield a
+        a *= base
     while True:
-        a = factor * base ** n
-        if max_value is None or a < max_value:
-            yield a
-            n += 1
-        else:
-            yield max_value
+        yield max_value
 
 
 def decay(
     initial_value: float = 1,
     decay_factor: float = 1,
-    min_value: Optional[float] = None
+    min_value: float = 0
 ) -> Generator[float, Any, None]:
 
     """Generator for exponential decay[1]:
@@ -51,14 +50,15 @@ def decay(
     """
     # Advance past initial .send() call
     yield  # type: ignore[misc]
+
     t = 0
-    while True:
+    a = initial_value
+    while a > min_value:
+        yield a
+        t += 1
         a = initial_value * math.e ** (-t * decay_factor)
-        if min_value is None or a > min_value:
-            yield a
-            t += 1
-        else:
-            yield min_value
+    while True:
+        yield min_value
 
 
 def fibo(max_value: Optional[int] = None) -> Generator[int, None, None]:
@@ -74,12 +74,11 @@ def fibo(max_value: Optional[int] = None) -> Generator[int, None, None]:
 
     a = 1
     b = 1
+    while max_value is None or a < max_value:
+        yield a
+        a, b = b, a + b
     while True:
-        if max_value is None or a < max_value:
-            yield a
-            a, b = b, a + b
-        else:
-            yield max_value
+        yield max_value
 
 
 def constant(
