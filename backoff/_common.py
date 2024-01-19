@@ -93,7 +93,7 @@ def _config_handlers(
 
 # Default backoff handler
 def _log_backoff(details, logger, log_level):
-    msg = "Backing off %s(...) for %.1fs (%s)"
+    msg = "Backing off {0}(...) for {1:.2f}s ({2})"
     log_args = [details['target'].__name__, details['wait']]
 
     exc_typ, exc, _ = sys.exc_info()
@@ -102,12 +102,12 @@ def _log_backoff(details, logger, log_level):
         log_args.append(exc_fmt.rstrip("\n"))
     else:
         log_args.append(details['value'])
-    logger.log(log_level, msg, *log_args)
+    logger.log(log_level, msg.format(*log_args))
 
 
 # Default giveup handler
 def _log_giveup(details, logger, log_level):
-    msg = "Giving up %s(...) after %d tries (%s)"
+    msg = "Giving up {0}(...) after {1} tries ({2})"
     log_args = [details['target'].__name__, details['tries']]
 
     exc_typ, exc, _ = sys.exc_info()
@@ -117,4 +117,4 @@ def _log_giveup(details, logger, log_level):
     else:
         log_args.append(details['value'])
 
-    logger.log(log_level, msg, *log_args)
+    logger.log(log_level, msg, msg.format(*log_args))
