@@ -170,13 +170,14 @@ gets a non-falsey result could be defined like like this:
     def poll_for_message(queue):
         return queue.get()
 
-The jitter is disabled in order to keep the polling frequency fixed.  
+The jitter is disabled in order to keep the polling frequency fixed.
 
 @backoff.runtime
 ----------------
 
 You can also use the ``backoff.runtime`` generator to make use of the
-return value or thrown exception of the decorated method.
+return value (in the case of `on_predicate`) or thrown exception (in the case of `on_exception`)
+of the decorated method.
 
 For example, to use the value in the ``Retry-After`` header of the response:
 
@@ -190,6 +191,37 @@ For example, to use the value in the ``Retry-After`` header of the response:
     )
     def get_url():
         return requests.get(url)
+
+Or, if you are using `raise_for_status` you can setup a custom handler for 429s and use `backoff.expo` for everythig else:
+
+.. code-block:: python
+
+    def extract_retry_time(exception):
+        if (
+            not isinstance(exception, requests.exceptions.HTTPError)
+            or exception.response.status_code != 429
+        ):
+            # re-raise the exception if it's not a 429 so it's processed by the `backoff.expo` decorator
+            raise exception
+
+        return int(exception.response.headers.get("Retry-After"))
+
+    @backoff.on_exception(
+        backoff.expo,
+        (requests.exceptions.HTTPError),
+        max_tries=8,
+    )
+    @backoff.on_exception(
+        backoff.runtime,
+        (requests.exceptions.HTTPError),
+        value=extract_retry_time
+    )
+    def get_url(url):
+        response = requests.get(url)
+        response.raise_for_status()
+
+        json_response = response.json()
+        return json_response
 
 Jitter
 ------
