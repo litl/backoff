@@ -1,5 +1,5 @@
 # coding:utf-8
-
+import inspect
 import functools
 import logging
 import sys
@@ -17,7 +17,10 @@ _logger.setLevel(logging.INFO)
 def _maybe_call(f, *args, **kwargs):
     if callable(f):
         try:
-            return f(*args, **kwargs)
+            if len(inspect.signature(f).parameters) == 0:
+                f()
+            else:
+                return f(*args, **kwargs)
         except TypeError:
             return f
     else:
