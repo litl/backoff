@@ -37,7 +37,7 @@ _Handler = Union[
     Callable[[Details], Coroutine[Any, Any, None]],
 ]
 _Jitterer = Callable[[float], float]
-_MaybeCallable = Union[T, Callable[[], T]]
+_MaybeCallable = Union[T, Callable[..., T]]
 _MaybeLogger = Union[str, logging.Logger, None]
 _MaybeSequence = Union[T, Sequence[T]]
 _Predicate = Callable[[T], bool]

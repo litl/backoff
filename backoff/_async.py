@@ -56,8 +56,8 @@ def retry_predicate(target, wait_gen, predicate,
     async def retry(*args, **kwargs):
 
         # update variables from outer function args
-        max_tries_value = _maybe_call(max_tries)
-        max_time_value = _maybe_call(max_time)
+        max_tries_value = _maybe_call(max_tries, *args, **kwargs)
+        max_time_value = _maybe_call(max_time, *args, **kwargs)
 
         tries = 0
         start = datetime.datetime.now()
@@ -130,8 +130,8 @@ def retry_exception(target, wait_gen, exception,
     @functools.wraps(target)
     async def retry(*args, **kwargs):
 
-        max_tries_value = _maybe_call(max_tries)
-        max_time_value = _maybe_call(max_time)
+        max_tries_value = _maybe_call(max_tries, *args, **kwargs)
+        max_time_value = _maybe_call(max_time, *args, **kwargs)
 
         tries = 0
         start = datetime.datetime.now()
