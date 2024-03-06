@@ -46,19 +46,19 @@ def test_on_predicate_max_tries(monkeypatch):
 
 def test_on_predicate_max_time(monkeypatch):
     nows = [
-        datetime.datetime(2018, 1, 1, 12, 0, 10, 5),
-        datetime.datetime(2018, 1, 1, 12, 0, 9, 0),
-        datetime.datetime(2018, 1, 1, 12, 0, 1, 0),
-        datetime.datetime(2018, 1, 1, 12, 0, 0, 0),
+        10.000005,
+        9,
+        1,
+        0
     ]
 
-    class Datetime:
+    class Time:
         @staticmethod
-        def now():
+        def monotonic():
             return nows.pop()
 
     monkeypatch.setattr('time.sleep', lambda x: None)
-    monkeypatch.setattr('datetime.datetime', Datetime)
+    monkeypatch.setattr('time.monotonic', Time.monotonic)
 
     def giveup(details):
         assert details['tries'] == 3
@@ -79,19 +79,19 @@ def test_on_predicate_max_time(monkeypatch):
 
 def test_on_predicate_max_time_callable(monkeypatch):
     nows = [
-        datetime.datetime(2018, 1, 1, 12, 0, 10, 5),
-        datetime.datetime(2018, 1, 1, 12, 0, 9, 0),
-        datetime.datetime(2018, 1, 1, 12, 0, 1, 0),
-        datetime.datetime(2018, 1, 1, 12, 0, 0, 0),
+        10.000005,
+        9,
+        1,
+        0
     ]
 
-    class Datetime:
+    class Time:
         @staticmethod
-        def now():
+        def monotonic():
             return nows.pop()
 
     monkeypatch.setattr('time.sleep', lambda x: None)
-    monkeypatch.setattr('datetime.datetime', Datetime)
+    monkeypatch.setattr('time.monotonic', Time.monotonic)
 
     def giveup(details):
         assert details['tries'] == 3
