@@ -479,6 +479,7 @@ def test_on_predicate_iterable_handlers():
         assert len(logger.giveups) == 1
 
         details = dict(logger.giveups[0])
+        print(details)
         elapsed = details.pop('elapsed')
         assert isinstance(elapsed, float)
         assert details == {'args': (1, 2, 3),
@@ -568,6 +569,7 @@ def test_on_predicate_success_0_arg_jitter(monkeypatch):
     for i in range(2):
         details = backoffs[i]
         elapsed = details.pop('elapsed')
+        print(details)
         assert isinstance(elapsed, float)
         assert details == {'args': (1, 2, 3),
                            'kwargs': {'foo': 1, 'bar': 2},
